@@ -17,20 +17,36 @@ import token.TokenType
 import java.util.Optional
 
 class Lexer(val reader: Reader, val reservedWords: ImmutableMap<String, TokenType>) {
-    fun nextToken(): Token{
+    fun nextToken(): Token {
         val initialPos: Position = reader.getCurrentPosition()
         val first = skipWhitespace()
         val firstChar: Char = first.toChar()
 
-        when(firstChar){
-            in 'a'..'z' , in 'A'..'Z' -> return readIdentifier(firstChar, initialPos)
-            in '0'..'9' -> return readNumber(firstChar, initialPos)
-            '"', '\'' -> return readString(firstChar, initialPos)
-            '+','-','*','/' -> return Token(Operator(), Optional.of(first.toString()), initialPos, initialPos)
-            '=' -> return Token(Assign(), Optional.empty(), initialPos, initialPos)
-            '(' -> return Token(LeftParen(), Optional.empty(), initialPos, initialPos)
-            ')' -> return Token(RightParen(), Optional.empty(), initialPos, initialPos)
-            ';' -> return Token(Semicolon(), Optional.empty(), initialPos, initialPos)
+        return when(firstChar) {
+            in 'a'..'z' , in 'A'..'Z' ->
+                readIdentifier(firstChar, initialPos)
+
+            in '0'..'9' ->
+                readNumber(firstChar, initialPos)
+
+            '"', '\'' ->
+                readString(firstChar, initialPos)
+
+            '+','-','*','/' ->
+                Token(Operator(), Optional.of(first.toString()), initialPos, initialPos)
+
+            '=' ->
+                Token(Assign(), Optional.empty(), initialPos, initialPos)
+
+            '(' ->
+                Token(LeftParen(), Optional.empty(), initialPos, initialPos)
+
+            ')' ->
+                Token(RightParen(), Optional.empty(), initialPos, initialPos)
+
+            ';' ->
+                Token(Semicolon(), Optional.empty(), initialPos, initialPos)
+
             else -> throw Error("Unexpected character on line ${initialPos.line}")
         }
     }
