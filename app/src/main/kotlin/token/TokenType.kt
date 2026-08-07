@@ -13,3 +13,4 @@ class LeftParen: TokenType
 class RightParen: TokenType
 class Type: TokenType
 class Print: TokenType
+class Eof: TokenType
