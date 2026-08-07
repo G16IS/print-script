@@ -1,10 +1,10 @@
 package printscript.common.reader
 
-import printscript.common.Position
+import printscript.common.reader.CharPosition
 import java.util.Optional
 
-interface Reader {
+interface CodeReader {
     fun read(): Optional<Char>
     fun peek(): Optional<Char>
-    fun currentPosition(): Position
+    fun currentPosition(): CharPosition
 }

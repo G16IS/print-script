@@ -1,10 +1,10 @@
 package lexer
 
-import lexer.reader.Reader
-import token.Position
+import printscript.common.reader.CharPosition
+import printscript.common.reader.CodeReader
 import java.util.Optional
 
-class MockReader(val statement: String): Reader {
+class MockReader(val statement: String) : CodeReader {
     var index: Int = 0
     override fun read(): Optional<Char> {
         val result = Optional.of(statement[index])
@@ -16,7 +16,7 @@ class MockReader(val statement: String): Reader {
         return Optional.of(statement[index])
     }
 
-    override fun currentPosition(): Position {
-        return Position(0, index)
+    override fun currentPosition(): CharPosition {
+        return CharPosition(0, index)
     }
 }
