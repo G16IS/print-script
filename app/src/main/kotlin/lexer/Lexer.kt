@@ -3,9 +3,9 @@ package lexer
 import com.google.common.collect.ImmutableMap
 import lexer.reader.Reader
 import token.Assign
+import token.Eof
 import token.Identifier
 import token.LeftParen
-import token.Let
 import token.NumberLiteral
 import token.Operator
 import token.Position
@@ -18,61 +18,48 @@ import java.util.Optional
 
 class Lexer(val reader: Reader, val reservedWords: ImmutableMap<String, TokenType>) {
     fun nextToken(): Token {
-        val initialPos: Position = reader.getCurrentPosition()
+        val initialPos: Position = reader.currentPosition()
         val first = skipWhitespace()
-        val firstChar: Char = first.toChar()
+        val firstChar: Char = if (first.isPresent) first.get() else return Token(Eof(), Optional.empty(), initialPos, initialPos)
 
-        return when(firstChar) {
-            in 'a'..'z' , in 'A'..'Z' ->
-                readIdentifier(firstChar, initialPos)
-
-            in '0'..'9' ->
-                readNumber(firstChar, initialPos)
-
-            '"', '\'' ->
-                readString(firstChar, initialPos)
-
-            '+','-','*','/' ->
-                Token(Operator(), Optional.of(first.toString()), initialPos, initialPos)
-
-            '=' ->
-                Token(Assign(), Optional.empty(), initialPos, initialPos)
-
-            '(' ->
-                Token(LeftParen(), Optional.empty(), initialPos, initialPos)
-
-            ')' ->
-                Token(RightParen(), Optional.empty(), initialPos, initialPos)
-
-            ';' ->
-                Token(Semicolon(), Optional.empty(), initialPos, initialPos)
-
+        when(firstChar) {
+            in 'a'..'z' , in 'A'..'Z' -> return readIdentifier(firstChar, initialPos)
+            in '0'..'9' -> return readNumber(firstChar, initialPos)
+            '"', '\'' -> return readString(firstChar, initialPos)
+            '+','-','*','/' -> return Token(Operator(), Optional.of(first.toString()), initialPos, initialPos)
+            '=' -> return Token(Assign(), Optional.empty(), initialPos, initialPos)
+            '(' -> return Token(LeftParen(), Optional.empty(), initialPos, initialPos)
+            ')' -> return Token(RightParen(), Optional.empty(), initialPos, initialPos)
+            ';' -> return Token(Semicolon(), Optional.empty(), initialPos, initialPos)
             else -> throw Error("Unexpected character on line ${initialPos.line}")
         }
     }
 
-    private fun skipWhitespace(): Int {
+    private fun skipWhitespace(): Optional<Char> {
         var current = reader.read()
-        while (current != -1){
-            val char = current.toChar()
-            if (!char.isWhitespace()){
+        while (current.isPresent){
+            if (!current.get().isWhitespace()){
                 return current
             }
             current = reader.read()
         }
-        return -1
+        return Optional.empty()
     }
 
     //idea: hacer que cada uno de estos sea una implementación de una interfaz
     private fun readIdentifier(first: Char, initialPos: Position): Token{
         var text: String = first.toString()
-        var current: Char = reader.read().toChar()
 
-        while (current.isLetter() || current.isDigit() || current == '_') {
-            text += current
-            current = reader.read().toChar()
+        while (true){
+            val current = reader.peek()
+            if (current.isEmpty) return Token(Eof(), Optional.empty(), initialPos, initialPos)
+
+            if (!current.get().isLetterOrDigit() && current.get() != '_') break
+
+            text += reader.read().get()
+
         }
-        val finalPos: Position = reader.getCurrentPosition();
+        val finalPos: Position = reader.currentPosition();
 
         if (text in reservedWords) {
             val type: TokenType = reservedWords[text]!!
@@ -84,13 +71,16 @@ class Lexer(val reader: Reader, val reservedWords: ImmutableMap<String, TokenTyp
 
     private fun readNumber(first: Char, initialPos: Position): Token{
         var text: String = first.toString()
-        var current = reader.read().toChar()
 
-        while (current.isDigit() || current == '.'){
-            text+= current
-            current = reader.read().toChar()
+        while (true){
+            val current = reader.peek()
+            if (current.isEmpty) return Token(Eof(), Optional.empty(), initialPos, initialPos)
+
+            if (!current.get().isDigit() || current.get() != '.') break
+
+            text+= reader.read().get()
         }
-        val finalPos: Position = reader.getCurrentPosition()
+        val finalPos: Position = reader.currentPosition()
 
         val periodCount: Int = text.count {ch -> ch == '.'}
         if (periodCount > 1 ) throw Error("Unexpected token in line ${finalPos.line} column ${finalPos.col}")
@@ -100,14 +90,16 @@ class Lexer(val reader: Reader, val reservedWords: ImmutableMap<String, TokenTyp
 
     private fun readString(first: Char, initialPos: Position): Token{
         var text: String = first.toString()
-        var current = reader.read().toChar()
         val closingChar: Char = if (first == '"') '"' else '\''
 
-        while (current != closingChar){
-            text += current
-            current = reader.read().toChar()
+        while (true){
+            val current = reader.peek()
+            if (current.isEmpty) return Token(Eof(), Optional.empty(), initialPos, initialPos)
+            if (current.get() == closingChar) break
+
+            text += reader.read().get()
         }
-        val finalPos: Position = reader.getCurrentPosition()
+        val finalPos: Position = reader.currentPosition()
         return Token(StringLiteral(), Optional.of(text), initialPos, finalPos)
     }
 }
