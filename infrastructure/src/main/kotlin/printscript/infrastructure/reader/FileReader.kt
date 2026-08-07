@@ -1,12 +1,13 @@
-package lexer.reader
+package printscript.infrastructure.reader
 
-import token.Position
+import printscript.common.Position
+import printscript.common.reader.Reader
 import java.io.File
 import java.util.Optional
 
 class FileReader(path: String): Reader {
     private val realReader = File(path).bufferedReader()
-    private var currentPosition = Position(1,1)
+    private var currentPosition = Position(1, 1)
     private var lookahead = realReader.read()
 
     override fun read(): Optional<Char> {

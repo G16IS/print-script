@@ -1,4 +1,4 @@
-package token
+package printscript.lexer
 
 sealed interface TokenType
 

@@ -1,6 +1,6 @@
-package lexer.reader
+package printscript.common.reader
 
-import token.Position
+import printscript.common.Position
 import java.util.Optional
 
 interface Reader {

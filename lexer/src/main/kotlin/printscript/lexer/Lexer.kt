@@ -1,21 +1,12 @@
-package lexer
+package printscript.lexer
 
-import com.google.common.collect.ImmutableMap
-import lexer.reader.Reader
-import token.Assign
-import token.Eof
-import token.Identifier
-import token.LeftParen
-import token.NumberLiteral
-import token.Operator
-import token.Position
-import token.RightParen
-import token.Semicolon
-import token.StringLiteral
-import token.Token
-import token.TokenType
+import kotlinx.collections.immutable.ImmutableMap
+import printscript.common.reader.Reader
+import printscript.common.Position
 import java.util.Optional
-
+import kotlin.text.isDigit
+import kotlin.text.isLetterOrDigit
+import kotlin.text.isWhitespace
 class Lexer(val reader: Reader, val reservedWords: ImmutableMap<String, TokenType>) {
     fun nextToken(): Token {
         val initialPos: Position = reader.currentPosition()
@@ -61,7 +52,7 @@ class Lexer(val reader: Reader, val reservedWords: ImmutableMap<String, TokenTyp
         }
         val finalPos: Position = reader.currentPosition();
 
-        if (text in reservedWords) {
+        if (reservedWords.contains(text)) {
             val type: TokenType = reservedWords[text]!!
             return Token(type, Optional.empty(), initialPos, finalPos)
         }
