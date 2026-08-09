@@ -1,5 +1,6 @@
 package printscript.common.ast
 
+import printscript.common.VariableType
 import printscript.common.reader.CharPosition
 
 data class Location(
@@ -24,9 +25,11 @@ data class VariableStatement(
 ) : Statement
 
 data class VariableDeclaration(
-    val id: Identifier, val value: String,
+    val id: Identifier,
+    val declaredType: VariableType,
+    val initializer: Expression?,
     override val location: Location
-) : Node
+) : Statement
 
 sealed interface Expression : Node
 
@@ -39,4 +42,4 @@ data class CallExpression(
 data class NumberLiteral(val value: Double, override val location: Location) : Expression
 data class StringLiteral(val value: String, override val location: Location) : Expression
 
-data class BinaryExpression(val left: Expression, val right: Expression, val operation: String)
+data class BinaryExpression(val left: Expression, val right: Expression, val operation: String, override val location: Location) : Expression
