@@ -7,14 +7,20 @@ data class Location(
     val end: CharPosition
 )
 
-
 sealed interface Node {
     val location: Location
 }
 
+/** Root of a parsed program. */
+data class Program(
+    val statements: List<Statement>,
+    override val location: Location
+) : Node
+
 sealed interface Statement : Node
 
-sealed interface ExpressionStatement : Statement {
+/** Marker for statements whose primary payload is an expression. */
+sealed interface ExpressionStmt : Statement {
     val expression: Expression
 }
 
@@ -24,19 +30,44 @@ data class VariableStatement(
 ) : Statement
 
 data class VariableDeclaration(
-    val id: Identifier, val value: String,
+    val id: Identifier,
+    val typeAnnotation: String,
+    val initializer: Expression,
     override val location: Location
 ) : Node
 
+/** Statement form of an expression, e.g. `println(x);`. */
+data class ExpressionStatement(
+    override val expression: Expression,
+    override val location: Location
+) : ExpressionStmt
+
 sealed interface Expression : Node
 
-data class Identifier(val name: String, override val location: Location) : Expression
-data class CallExpression(
-    val callee: String, val args: Array<String>,
+data class Identifier(
+    val name: String,
     override val location: Location
 ) : Expression
 
-data class NumberLiteral(val value: Double, override val location: Location) : Expression
-data class StringLiteral(val value: String, override val location: Location) : Expression
+data class CallExpression(
+    val callee: String,
+    val args: List<Expression>,
+    override val location: Location
+) : Expression
 
-data class BinaryExpression(val left: Expression, val right: Expression, val operation: String)
+data class NumberLiteral(
+    val value: Double,
+    override val location: Location
+) : Expression
+
+data class StringLiteral(
+    val value: String,
+    override val location: Location
+) : Expression
+
+data class BinaryExpression(
+    val left: Expression,
+    val right: Expression,
+    val operation: String,
+    override val location: Location
+) : Expression

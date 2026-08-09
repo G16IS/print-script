@@ -9,6 +9,7 @@ class StringLiteral : TokenType
 class Operator : TokenType
 class Semicolon : TokenType
 class Assign : TokenType
+class Colon : TokenType
 class LeftParen : TokenType
 class RightParen : TokenType
 class Type : TokenType
