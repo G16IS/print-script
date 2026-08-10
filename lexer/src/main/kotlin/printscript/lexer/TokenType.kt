@@ -12,5 +12,6 @@ class Assign : TokenType
 class LeftParen : TokenType
 class RightParen : TokenType
 class Type : TokenType
-class Print : TokenType
+class Call: TokenType
+class Comma: TokenType
 class Eof : TokenType
