@@ -8,9 +8,7 @@ import printscript.common.ast.Identifier
 import printscript.common.ast.NumberLiteral
 import printscript.common.ast.StringLiteral
 
-class ExpressionTypeChecker(
-    private val context: SemanticContext,
-) {
+class ExpressionTypeChecker(private val context: SemanticContext ) {
 
     fun typeOf(expression: Expression): VariableType? =
         when (expression) {

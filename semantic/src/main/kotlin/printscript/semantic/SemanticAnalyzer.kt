@@ -8,7 +8,7 @@ import printscript.common.ast.VariableStatement
 
 class SemanticAnalyzer {
 
-    fun analyze(program: Program): List<SemanticError> {
+    fun analyze(program: Program): SemanticResult {
         val context = SemanticContext()
         val typeChecker = ExpressionTypeChecker(context)
 
@@ -20,7 +20,11 @@ class SemanticAnalyzer {
             )
         }
 
-        return context.errors.toList()
+        return if (context.errors.isEmpty()) {
+            SemanticResult.Success(program)
+        } else {
+            SemanticResult.Failure(context.errors.toList())
+        }
     }
 
     private fun analyzeStatement(
