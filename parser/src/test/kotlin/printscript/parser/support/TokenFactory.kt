@@ -1,25 +1,25 @@
 package printscript.parser.support
 
-import printscript.common.reader.CharPosition
 import printscript.common.domain.Assign
-import printscript.lexer.Colon
+import printscript.common.domain.Call
+import printscript.common.domain.Colon
 import printscript.common.domain.Eof
 import printscript.common.domain.Identifier
 import printscript.common.domain.LeftParen
 import printscript.common.domain.Let
 import printscript.common.domain.NumberLiteral
 import printscript.common.domain.Operator
-import printscript.lexer.Print
 import printscript.common.domain.RightParen
 import printscript.common.domain.Semicolon
 import printscript.common.domain.StringLiteral
 import printscript.common.domain.Token
 import printscript.common.domain.TokenType
 import printscript.common.domain.Type
+import printscript.common.reader.CharPosition
 import java.util.Optional
 
 /**
- * Builds tokens for parser unit tests without going through the lexer.
+ * Builds tokens for parser unit tests without going through the real lexer.
  */
 object TokenFactory {
     private var col: Int = 1
@@ -35,7 +35,7 @@ object TokenFactory {
     fun lparen(): Token = tok(LeftParen())
     fun rparen(): Token = tok(RightParen())
     fun eof(): Token = tok(Eof())
-    fun print(): Token = tok(Print())
+    fun print(): Token = tok(Call(), "println")
 
     fun id(name: String): Token = tok(Identifier(), name)
     fun number(value: String): Token = tok(NumberLiteral(), value)

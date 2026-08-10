@@ -9,10 +9,13 @@ import printscript.common.ast.BinaryExpression
 import printscript.common.ast.Identifier
 import printscript.common.ast.NumberLiteral
 import printscript.common.ast.StringLiteral
+import printscript.common.domain.Token
 import printscript.parser.error.ParseException
 import printscript.parser.expression.PrecedenceExpressionParser
+import printscript.parser.support.MockLexer
 import printscript.parser.support.TokenFactory
-import printscript.parser.token.ListTokenSource
+import printscript.parser.token.LexerTokenSource
+import printscript.parser.token.TokenSource
 
 class ExpressionParserTest {
     private val parser = PrecedenceExpressionParser()
@@ -24,24 +27,21 @@ class ExpressionParserTest {
 
     @Test
     fun `parses number literal`() {
-        val tokens = ListTokenSource(listOf(TokenFactory.number("42")))
-        val expr = parser.parse(tokens)
+        val expr = parser.parse(source(TokenFactory.number("42")))
         assertTrue(expr is NumberLiteral)
         assertEquals(42.0, (expr as NumberLiteral).value)
     }
 
     @Test
     fun `parses string literal stripping quotes if present`() {
-        val tokens = ListTokenSource(listOf(TokenFactory.string("\"hola\"")))
-        val expr = parser.parse(tokens)
+        val expr = parser.parse(source(TokenFactory.string("\"hola\"")))
         assertTrue(expr is StringLiteral)
         assertEquals("hola", (expr as StringLiteral).value)
     }
 
     @Test
     fun `parses identifier`() {
-        val tokens = ListTokenSource(listOf(TokenFactory.id("x")))
-        val expr = parser.parse(tokens)
+        val expr = parser.parse(source(TokenFactory.id("x")))
         assertTrue(expr is Identifier)
         assertEquals("x", (expr as Identifier).name)
     }
@@ -49,9 +49,8 @@ class ExpressionParserTest {
     @Test
     fun `respects multiplication over addition precedence`() {
         // 1 + 2 * 3  =>  +(1, *(2, 3))
-        TokenFactory.reset()
-        val tokens = ListTokenSource(
-            listOf(
+        val expr = parser.parse(
+            source(
                 TokenFactory.number("1"),
                 TokenFactory.op("+"),
                 TokenFactory.number("2"),
@@ -59,7 +58,6 @@ class ExpressionParserTest {
                 TokenFactory.number("3")
             )
         )
-        val expr = parser.parse(tokens)
         assertTrue(expr is BinaryExpression)
         val add = expr as BinaryExpression
         assertEquals("+", add.operation)
@@ -73,9 +71,8 @@ class ExpressionParserTest {
     @Test
     fun `parentheses override precedence`() {
         // (1 + 2) * 3  =>  *(+(1, 2), 3)
-        TokenFactory.reset()
-        val tokens = ListTokenSource(
-            listOf(
+        val expr = parser.parse(
+            source(
                 TokenFactory.lparen(),
                 TokenFactory.number("1"),
                 TokenFactory.op("+"),
@@ -85,7 +82,6 @@ class ExpressionParserTest {
                 TokenFactory.number("3")
             )
         )
-        val expr = parser.parse(tokens)
         val mul = expr as BinaryExpression
         assertEquals("*", mul.operation)
         val add = mul.left as BinaryExpression
@@ -98,17 +94,15 @@ class ExpressionParserTest {
     @Test
     fun `left associativity for same precedence`() {
         // 1 - 2 - 3  =>  -(-(1, 2), 3)
-        TokenFactory.reset()
-        val tokens = ListTokenSource(
-            listOf(
+        val expr = parser.parse(
+            source(
                 TokenFactory.number("1"),
                 TokenFactory.op("-"),
                 TokenFactory.number("2"),
                 TokenFactory.op("-"),
                 TokenFactory.number("3")
             )
-        )
-        val expr = parser.parse(tokens) as BinaryExpression
+        ) as BinaryExpression
         assertEquals("-", expr.operation)
         val left = expr.left as BinaryExpression
         assertEquals("-", left.operation)
@@ -119,8 +113,11 @@ class ExpressionParserTest {
 
     @Test
     fun `rejects empty expression`() {
-        TokenFactory.reset()
-        val tokens = ListTokenSource(listOf(TokenFactory.semicolon()))
-        assertThrows<ParseException> { parser.parse(tokens) }
+        assertThrows<ParseException> {
+            parser.parse(source(TokenFactory.semicolon()))
+        }
     }
+
+    private fun source(vararg tokens: Token): TokenSource =
+        LexerTokenSource(MockLexer(tokens.toList() + TokenFactory.eof()))
 }
