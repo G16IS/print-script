@@ -2,18 +2,18 @@ package lexer
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import printscript.lexer.Eof
-import printscript.lexer.TokenStream
+import printscript.lexer.Lexer
 import printscript.lexer.Token
+import printscript.lexer.TokenType
 
 class TokenLister {
-    fun listTokens(tokenStream: TokenStream): ImmutableList<Token>{
+    fun listTokens(tokenStream: Lexer): ImmutableList<Token>{
         val tokenList: MutableList<Token> = mutableListOf()
 
         while (true){
             val token: Token = tokenStream.nextToken()
             tokenList.add(token)
-            if (token.type is Eof) return tokenList.toImmutableList()
+            if (token.type is TokenType.Eof) return tokenList.toImmutableList()
         }
     }
 }

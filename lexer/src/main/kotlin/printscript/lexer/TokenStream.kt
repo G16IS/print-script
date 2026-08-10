@@ -11,42 +11,52 @@ import java.util.Optional
 import kotlin.text.isWhitespace
 
 class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry): Lexer {
-    override fun nextToken(): Token {
-        val initialPos: CharPosition = reader.currentPosition()
+    private val buffer = ArrayDeque<Token>();
+
+    override fun nextToken(): Token = buffer.removeFirstOrNull()?: readNextToken()
+    override fun peek(offset: Int?): Token {
+        val realOffset: Int = offset?: 0
+
+        while (buffer.size <= realOffset) buffer.addLast(readNextToken())
+        return buffer[realOffset]
+    }
+
+    private fun readNextToken(): Token {
         val first = skipWhitespace()
+        val initialPos: CharPosition = reader.currentPosition()
         val firstChar: Char =
-            if (first.isPresent) first.get() else return Token(Eof(), Optional.empty(), initialPos, initialPos)
+            if (first.isPresent) first.get() else return Token(TokenType.Eof(), Optional.empty(), initialPos, initialPos)
 
         return when (firstChar) {
             in 'a'..'z', in 'A'..'Z' ->
-                IdentifierReader(mapper).read(reader)
+                IdentifierReader(mapper).read(firstChar, reader)
 
             in '0'..'9' ->
-                NumberReader().read(reader)
+                NumberReader().read(firstChar, reader)
 
             '"', '\'' ->
-                StringReader().read(reader)
+                StringReader().read(firstChar, reader)
 
             '+', '-', '*', '/' ->
-                Token(Operator(), Optional.of(firstChar.toString()), initialPos, initialPos)
+                Token(TokenType.Operator(), Optional.of(firstChar.toString()), initialPos, initialPos)
 
             '=' ->
-                Token(Assign(), Optional.empty(), initialPos, initialPos)
+                Token(TokenType.Assign(), Optional.empty(), initialPos, initialPos)
 
             '(' ->
-                Token(LeftParen(), Optional.empty(), initialPos, initialPos)
+                Token(TokenType.LeftParen(), Optional.empty(), initialPos, initialPos)
 
             ')' ->
-                Token(RightParen(), Optional.empty(), initialPos, initialPos)
+                Token(TokenType.RightParen(), Optional.empty(), initialPos, initialPos)
 
             ';' ->
-                Token(Semicolon(), Optional.empty(), initialPos, initialPos)
+                Token(TokenType.Semicolon(), Optional.empty(), initialPos, initialPos)
 
             ',' ->
-                Token(Comma(), Optional.empty(), initialPos, initialPos)
+                Token(TokenType.Comma(), Optional.empty(), initialPos, initialPos)
 
             ':' ->
-                TypeReader().read(reader)
+                TypeReader().read(firstChar, reader)
 
             else ->
                 throw Error("Unexpected character on line ${initialPos.line}")

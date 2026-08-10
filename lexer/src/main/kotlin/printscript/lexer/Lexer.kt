@@ -4,5 +4,5 @@ import printscript.common.reader.CodeReader
 
 interface Lexer {
     fun nextToken(): Token
-    fun peek(offset: Int?)
+    fun peek(offset: Int?): Token
 }
