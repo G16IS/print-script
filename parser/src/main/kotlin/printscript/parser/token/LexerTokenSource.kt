@@ -1,32 +1,24 @@
 package printscript.parser.token
 
-import printscript.lexer.Eof
-import printscript.lexer.Token
-import printscript.lexer.TokenType
+import printscript.common.domain.Eof
+import printscript.lexer.Lexer
+import printscript.common.domain.Token
+import printscript.common.domain.TokenType
 import printscript.parser.error.ParseException
 import printscript.parser.util.Locations
 import java.util.Optional
 
-class ListTokenSource(tokens: List<Token>) : TokenSource {
-    private val tokens: List<Token> = if (tokens.isEmpty() || tokens.last().type !is Eof) {
-        tokens + syntheticEof(tokens)
-    } else {
-        tokens
-    }
-    private var index: Int = 0
-
-    override fun peek(): Token = tokens[index.coerceAtMost(tokens.lastIndex)]
-
-    override fun peek(offset: Int): Token {
-        val i = (index + offset).coerceIn(0, tokens.lastIndex)
-        return tokens[i]
-    }
+data class LexerTokenSource(val tokens: Lexer) : TokenSource {
+    override fun peek(): Token = tokens.peek(null)
+    override fun peek(offset: Int): Token = tokens.peek(offset)
 
     override fun advance(): Token {
         val current = peek()
+
         if (!isAtEnd()) {
-            index++
+            return tokens.nextToken()
         }
+
         return current
     }
 

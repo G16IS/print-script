@@ -1,4 +1,4 @@
-package printscript.lexer
+package printscript.common.domain
 
 sealed interface TokenType
 
@@ -9,9 +9,10 @@ class StringLiteral : TokenType
 class Operator : TokenType
 class Semicolon : TokenType
 class Assign : TokenType
-class Colon : TokenType
 class LeftParen : TokenType
 class RightParen : TokenType
 class Type : TokenType
-class Print : TokenType
+class Call: TokenType
+class Comma: TokenType
+class Colon: TokenType
 class Eof : TokenType

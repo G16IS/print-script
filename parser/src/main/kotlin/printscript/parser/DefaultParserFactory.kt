@@ -1,7 +1,9 @@
 package printscript.parser
 
-import printscript.lexer.Token
+import printscript.common.ast.Location
+import printscript.common.domain.Token
 import printscript.common.ast.Program
+import printscript.lexer.Lexer
 import printscript.parser.expression.PrecedenceExpressionParser
 import printscript.parser.statement.PrintStatementParser
 import printscript.parser.statement.VariableStatementParser
@@ -20,4 +22,5 @@ object DefaultParserFactory {
 }
 
 /** Convenience entry point using [DefaultParserFactory]. */
-fun parse(tokens: List<Token>): Program = DefaultParserFactory.create().parse(tokens)
+fun parse(tokens: Lexer): Program = DefaultParserFactory.create().parseNextStatement(tokens, Program(emptyList(),
+    Location.empty()))

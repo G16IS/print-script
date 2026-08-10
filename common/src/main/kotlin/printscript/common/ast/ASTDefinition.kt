@@ -5,7 +5,14 @@ import printscript.common.reader.CharPosition
 data class Location(
     val start: CharPosition,
     val end: CharPosition
-)
+) {
+    companion object {
+        fun empty(): Location = Location(
+            CharPosition(0, 0),
+            CharPosition(0, 0)
+        )
+    }
+}
 
 sealed interface Node {
     val location: Location
@@ -15,7 +22,22 @@ sealed interface Node {
 data class Program(
     val statements: List<Statement>,
     override val location: Location
-) : Node
+) : Node {
+    fun withStatement(statement: Statement): Program = Program(
+        statements = statements + statement,
+        location = Location(
+            start = location.start,
+            end = statement.location.end
+        )
+    )
+
+    companion object {
+        fun empty(): Program = Program(
+            statements = emptyList(),
+            location = Location.empty()
+        )
+    }
+}
 
 sealed interface Statement : Node
 

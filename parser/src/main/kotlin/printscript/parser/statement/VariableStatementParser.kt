@@ -1,58 +1,49 @@
 package printscript.parser.statement
 
+import printscript.common.ast.*
 import printscript.common.ast.Identifier
-import printscript.common.ast.Statement
-import printscript.common.ast.VariableDeclaration
-import printscript.common.ast.VariableStatement
-import printscript.lexer.Assign
-import printscript.lexer.Colon
-import printscript.lexer.Identifier as IdentifierToken
-import printscript.lexer.Let
-import printscript.lexer.Semicolon
-import printscript.lexer.Type
-import printscript.parser.error.ParseException
+import printscript.common.domain.*
 import printscript.parser.expression.ExpressionParser
 import printscript.parser.token.TokenSource
-import printscript.parser.util.Locations
+import printscript.common.domain.Identifier as IdentifierToken
 
 /**
  * let <id> : <type> = <expression> ;
  */
 class VariableStatementParser : StatementParser {
+
+    override fun getSteps(): List<Step> {
+        return listOf(
+            Step.Expect(Let()),
+            Step.ExpectWithValue(IdentifierToken()),
+            Step.Expect(Colon()),
+            Step.ExpectWithValue(Type()),
+            Step.Expect(Assign()),
+            Step.Expr,
+            Step.Expect(Semicolon())
+        )
+    }
+
     override fun parse(tokens: TokenSource, expressions: ExpressionParser): Statement? {
-        if (tokens.peek().type !is Let) return null
+        val match = matchSteps(getSteps(), tokens, expressions) ?: return null
 
-        val letToken = tokens.advance()
-
-        val idToken = tokens.expect({ it is IdentifierToken }, "Expected identifier after 'let'")
-        val name = idToken.value.orElseThrow {
-            ParseException("Identifier missing value", Locations.of(idToken))
-        }
-        val identifier = Identifier(name, Locations.of(idToken))
-
-        tokens.expect({ it is Colon }, "Expected ':' after identifier in variable declaration")
-
-        val typeToken = tokens.expect({ it is Type }, "Expected type after ':' in variable declaration")
-        val typeAnnotation = typeToken.value.orElseThrow {
-            ParseException("Type token missing value", Locations.of(typeToken))
-        }
-
-        tokens.expect({ it is Assign }, "Expected '=' after type in variable declaration")
-
-        val initializer = expressions.parse(tokens)
-
-        val semicolon = tokens.expect({ it is Semicolon }, "Expected ';' after variable declaration")
+        val identifier = match.valuedTokens[0]
+        val typeToken = match.valuedTokens[1]
+        val initializer = match.expressions.single()
 
         val declaration = VariableDeclaration(
-            id = identifier,
-            typeAnnotation = typeAnnotation,
+            id = Identifier(
+                name = identifier.value.get(),
+                location = Location(identifier.start, identifier.end)
+            ),
+            typeAnnotation = typeToken.value.get(),
             initializer = initializer,
-            location = Locations.between(identifier, initializer)
+            location = match.location
         )
 
         return VariableStatement(
             declaration = declaration,
-            location = Locations.between(letToken, semicolon)
+            location = match.location
         )
     }
 }

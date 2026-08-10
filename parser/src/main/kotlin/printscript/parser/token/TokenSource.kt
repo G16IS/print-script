@@ -1,7 +1,7 @@
 package printscript.parser.token
 
-import printscript.lexer.Token
-import printscript.lexer.TokenType
+import printscript.common.domain.Token
+import printscript.common.domain.TokenType
 
 /**
  * Cursor over a token stream. Keeps statement/expression parsers decoupled from

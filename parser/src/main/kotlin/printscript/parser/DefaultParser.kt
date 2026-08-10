@@ -1,12 +1,14 @@
 package printscript.parser
 
+import printscript.common.ast.Location
 import printscript.common.ast.Program
 import printscript.common.ast.Statement
-import printscript.lexer.Token
+import printscript.lexer.Lexer
+import printscript.common.domain.Token
 import printscript.parser.error.ParseException
 import printscript.parser.expression.ExpressionParser
 import printscript.parser.statement.StatementParser
-import printscript.parser.token.ListTokenSource
+import printscript.parser.token.LexerTokenSource
 import printscript.parser.token.TokenSource
 import printscript.parser.util.Locations
 
@@ -18,28 +20,23 @@ class DefaultParser(
     private val statementParsers: List<StatementParser>,
     private val expressionParser: ExpressionParser
 ) : Parser {
-    override fun parse(tokens: List<Token>): Program {
-        val source = ListTokenSource(tokens)
-        val statements = mutableListOf<Statement>()
+    override fun parseNextStatement(tokenStream: Lexer, program: Program): Program {
+        val source = LexerTokenSource(tokenStream)
 
-        while (!source.isAtEnd()) {
-            statements += parseStatement(source)
-        }
+        val statement: Statement = parseStatement(source)
+        val location = Locations.between(program.location, statement.location)
 
-        val location = if (statements.isEmpty()) {
-            Locations.empty()
-        } else {
-            Locations.between(statements.first(), statements.last())
-        }
-
-        return Program(statements.toList(), location)
+        return program.withStatement(statement).copy(location = location)
     }
 
     private fun parseStatement(source: TokenSource): Statement {
         for (parser in statementParsers) {
-            val statement = parser.parse(source, expressionParser)
-            if (statement != null) return statement
+            val statement = parser
+                .parse(source, expressionParser) ?: continue
+
+            return statement
         }
+
         val token = source.peek()
         throw ParseException(
             "Unexpected token ${token.type::class.simpleName}; expected start of statement",

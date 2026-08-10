@@ -1,0 +1,20 @@
+package printscript.parser.error
+
+
+import printscript.common.domain.Token
+import printscript.parser.util.Locations
+
+object ParseErrors {
+
+    fun missingValue(token: Token, kind: String): ParseException =
+        ParseException("$kind missing value", Locations.of(token))
+
+    fun unexpectedToken(token: Token, expected: String): ParseException =
+        ParseException(
+            "Expected $expected, found ${token.type::class.simpleName}",
+            Locations.of(token)
+        )
+
+    fun expected(token: Token, message: String): ParseException =
+        ParseException(message, Locations.of(token))
+}

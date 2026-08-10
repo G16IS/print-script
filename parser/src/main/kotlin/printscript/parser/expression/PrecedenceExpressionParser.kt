@@ -5,16 +5,18 @@ import printscript.common.ast.Expression
 import printscript.common.ast.Identifier
 import printscript.common.ast.NumberLiteral
 import printscript.common.ast.StringLiteral
-import printscript.lexer.Identifier as IdentifierToken
-import printscript.lexer.LeftParen
-import printscript.lexer.NumberLiteral as NumberLiteralToken
-import printscript.lexer.Operator
-import printscript.lexer.RightParen
-import printscript.lexer.StringLiteral as StringLiteralToken
-import printscript.lexer.Token
+import printscript.common.domain.Identifier as IdentifierToken
+import printscript.common.domain.LeftParen
+import printscript.common.domain.NumberLiteral as NumberLiteralToken
+import printscript.common.domain.Operator
+import printscript.common.domain.RightParen
+import printscript.common.domain.StringLiteral as StringLiteralToken
+import printscript.common.domain.Token
+import printscript.parser.error.ParseErrors
 import printscript.parser.error.ParseException
 import printscript.parser.token.TokenSource
 import printscript.parser.util.Locations
+import printscript.parser.util.requireValue
 
 /**
  * Classic recursive-descent expression parser:
@@ -25,28 +27,25 @@ import printscript.parser.util.Locations
  * No semantic checks — only structure.
  */
 class PrecedenceExpressionParser : ExpressionParser {
+
     override fun parse(tokens: TokenSource): Expression = parseExpression(tokens)
 
-    private fun parseExpression(tokens: TokenSource): Expression {
-        var left = parseTerm(tokens)
-        while (isOperator(tokens.peek(), "+", "-")) {
-            val opToken = tokens.advance()
-            val right = parseTerm(tokens)
-            left = BinaryExpression(
-                left = left,
-                right = right,
-                operation = operatorValue(opToken),
-                location = Locations.between(left, right)
-            )
-        }
-        return left
-    }
+    private fun parseExpression(tokens: TokenSource): Expression =
+        parseBinary(tokens, setOf("+", "-"), ::parseTerm)
 
-    private fun parseTerm(tokens: TokenSource): Expression {
-        var left = parseFactor(tokens)
-        while (isOperator(tokens.peek(), "*", "/")) {
+    private fun parseTerm(tokens: TokenSource): Expression =
+        parseBinary(tokens, setOf("*", "/"), ::parseFactor)
+
+    private fun parseBinary(
+        tokens: TokenSource,
+        operators: Set<String>,
+        next: (TokenSource) -> Expression
+    ): Expression {
+        var left = next(tokens)
+
+        while (isOperator(tokens.peek(), operators)) {
             val opToken = tokens.advance()
-            val right = parseFactor(tokens)
+            val right = next(tokens)
             left = BinaryExpression(
                 left = left,
                 right = right,
@@ -54,50 +53,60 @@ class PrecedenceExpressionParser : ExpressionParser {
                 location = Locations.between(left, right)
             )
         }
+
         return left
     }
 
     private fun parseFactor(tokens: TokenSource): Expression {
         val token = tokens.peek()
+
         return when (token.type) {
-            is NumberLiteralToken -> {
-                tokens.advance()
-                val raw = token.value.orElseThrow {
-                    ParseException("Number literal missing value", Locations.of(token))
-                }
-                NumberLiteral(raw.toDouble(), Locations.of(token))
-            }
-            is StringLiteralToken -> {
-                tokens.advance()
-                val raw = token.value.orElseThrow {
-                    ParseException("String literal missing value", Locations.of(token))
-                }
-                StringLiteral(normalizeStringLiteral(raw), Locations.of(token))
-            }
-            is IdentifierToken -> {
-                tokens.advance()
-                val name = token.value.orElseThrow {
-                    ParseException("Identifier missing value", Locations.of(token))
-                }
-                Identifier(name, Locations.of(token))
-            }
-            is LeftParen -> {
-                tokens.advance()
-                val expr = parseExpression(tokens)
-                tokens.expect({ it is RightParen }, "Expected ')' after expression")
-                expr
-            }
-            else -> throw ParseException(
-                "Expected expression, found ${token.type::class.simpleName}",
-                Locations.of(token)
-            )
+            is NumberLiteralToken -> parseNumberLiteral(tokens, token)
+            is StringLiteralToken -> parseStringLiteral(tokens, token)
+            is IdentifierToken -> parseIdentifier(tokens, token)
+            is LeftParen -> parseGroupedExpression(tokens)
+
+            else -> throw ParseErrors.unexpectedToken(token, "expression")
         }
     }
 
-    private fun isOperator(token: Token, vararg ops: String): Boolean {
+    private fun parseNumberLiteral(tokens: TokenSource, token: Token): NumberLiteral {
+        tokens.advance()
+        return NumberLiteral(
+            value = token.requireValue("Number literal").toDouble(),
+            location = Locations.of(token)
+        )
+    }
+
+    private fun parseStringLiteral(tokens: TokenSource, token: Token): StringLiteral {
+        tokens.advance()
+        return StringLiteral(
+            value = normalizeStringLiteral(token.requireValue("String literal")),
+            location = Locations.of(token)
+        )
+    }
+
+    private fun parseIdentifier(tokens: TokenSource, token: Token): Identifier {
+        tokens.advance()
+        return Identifier(
+            name = token.requireValue("Identifier"),
+            location = Locations.of(token)
+        )
+    }
+
+    private fun parseGroupedExpression(tokens: TokenSource): Expression {
+        tokens.advance() // consume '('
+        val expr = parseExpression(tokens)
+        tokens.expect({ it is RightParen }, "Expected ')' after expression")
+        return expr
+    }
+
+    // Helpers
+
+    private fun isOperator(token: Token, operators: Set<String>): Boolean {
         if (token.type !is Operator) return false
         val value = token.value.orElse(null) ?: return false
-        return value in ops
+        return value in operators
     }
 
     private fun operatorValue(token: Token): String =
@@ -105,9 +114,6 @@ class PrecedenceExpressionParser : ExpressionParser {
             ParseException("Operator missing value", Locations.of(token))
         }
 
-    /**
-     * Lexer may keep surrounding quotes; strip one matching pair if present.
-     */
     private fun normalizeStringLiteral(raw: String): String {
         if (raw.length >= 2) {
             val first = raw.first()

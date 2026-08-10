@@ -3,13 +3,12 @@ package printscript.parser.statement
 import printscript.common.ast.CallExpression
 import printscript.common.ast.ExpressionStatement
 import printscript.common.ast.Statement
-import printscript.lexer.LeftParen
-import printscript.lexer.Print
-import printscript.lexer.RightParen
-import printscript.lexer.Semicolon
+import printscript.common.domain.Call
+import printscript.common.domain.LeftParen
+import printscript.common.domain.RightParen
+import printscript.common.domain.Semicolon
 import printscript.parser.expression.ExpressionParser
 import printscript.parser.token.TokenSource
-import printscript.parser.util.Locations
 
 /**
  * println ( <expression> ) ;
@@ -17,26 +16,25 @@ import printscript.parser.util.Locations
  * Represented as ExpressionStatement(CallExpression("println", ...)).
  */
 class PrintStatementParser : StatementParser {
+    override fun getSteps(): List<Step> {
+        return listOf(
+            Step.Expect(Call()),
+            Step.Expect(LeftParen()),
+            Step.Expr,
+            Step.Expect(RightParen()),
+            Step.Expect(Semicolon())
+        )
+    }
+
     override fun parse(tokens: TokenSource, expressions: ExpressionParser): Statement? {
-        if (tokens.peek().type !is Print) return null
-
-        val printToken = tokens.advance()
-        tokens.expect({ it is LeftParen }, "Expected '(' after 'println'")
-
-        val arg = expressions.parse(tokens)
-
-        tokens.expect({ it is RightParen }, "Expected ')' after println argument")
-        val semicolon = tokens.expect({ it is Semicolon }, "Expected ';' after println statement")
+        val match = matchSteps(getSteps(), tokens, expressions) ?: return null
 
         val call = CallExpression(
             callee = "println",
-            args = listOf(arg),
-            location = Locations.between(printToken, semicolon)
+            args = listOf(match.expressions.single()),
+            location = match.location
         )
 
-        return ExpressionStatement(
-            expression = call,
-            location = Locations.between(printToken, semicolon)
-        )
+        return ExpressionStatement(call, match.location)
     }
 }

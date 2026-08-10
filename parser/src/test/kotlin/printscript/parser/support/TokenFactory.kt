@@ -1,21 +1,21 @@
 package printscript.parser.support
 
 import printscript.common.reader.CharPosition
-import printscript.lexer.Assign
+import printscript.common.domain.Assign
 import printscript.lexer.Colon
-import printscript.lexer.Eof
-import printscript.lexer.Identifier
-import printscript.lexer.LeftParen
-import printscript.lexer.Let
-import printscript.lexer.NumberLiteral
-import printscript.lexer.Operator
+import printscript.common.domain.Eof
+import printscript.common.domain.Identifier
+import printscript.common.domain.LeftParen
+import printscript.common.domain.Let
+import printscript.common.domain.NumberLiteral
+import printscript.common.domain.Operator
 import printscript.lexer.Print
-import printscript.lexer.RightParen
-import printscript.lexer.Semicolon
-import printscript.lexer.StringLiteral
-import printscript.lexer.Token
-import printscript.lexer.TokenType
-import printscript.lexer.Type
+import printscript.common.domain.RightParen
+import printscript.common.domain.Semicolon
+import printscript.common.domain.StringLiteral
+import printscript.common.domain.Token
+import printscript.common.domain.TokenType
+import printscript.common.domain.Type
 import java.util.Optional
 
 /**

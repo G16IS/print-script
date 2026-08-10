@@ -3,7 +3,7 @@ package printscript.parser.util
 import printscript.common.ast.Location
 import printscript.common.ast.Node
 import printscript.common.reader.CharPosition
-import printscript.lexer.Token
+import printscript.common.domain.Token
 
 object Locations {
     fun of(token: Token): Location = Location(token.start, token.end)
