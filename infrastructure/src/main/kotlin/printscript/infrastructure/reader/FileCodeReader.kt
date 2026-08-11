@@ -1,7 +1,7 @@
 package printscript.infrastructure.reader
 
-import printscript.common.reader.CharPosition
-import printscript.common.reader.CodeReader
+import printscript.reader.CharPosition
+import printscript.reader.CodeReader
 import java.io.File
 import java.util.Optional
 

@@ -1,8 +1,8 @@
 package printscript
 
-import printscript.common.ast.Location
-import printscript.common.domain.Token
-import printscript.common.reader.CharPosition
+import printscript.ast.Location
+import printscript.domain.Token
+import printscript.reader.CharPosition
 
 class TokenRegistry(val wordMap: Map<String, (Location) -> Token>) {
     fun hasToken(tokenString: String): Boolean {

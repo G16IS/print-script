@@ -14,4 +14,7 @@ rootProject.name = "print-script-g16"
 include("common")
 include("lexer")
 include("infrastructure")
+include("semantic")
 include("parser")
+
+include("application")

@@ -3,8 +3,8 @@ package lexer
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import printscript.Lexer
-import printscript.common.domain.Token
-import printscript.common.domain.TokenType
+import printscript.domain.Token
+import printscript.domain.TokenType
 
 class TokenLister {
     fun listTokens(tokenStream: Lexer): ImmutableList<Token> {

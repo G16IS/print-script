@@ -1,13 +1,12 @@
 package printscript
 
-import printscript.common.domain.Token
-import printscript.common.domain.TokenType
-import printscript.common.reader.CharPosition
-import printscript.common.reader.CodeReader
+import printscript.domain.Token
+import printscript.domain.TokenType
+import printscript.reader.CharPosition
+import printscript.reader.CodeReader
 import printscript.readers.IdentifierReader
 import printscript.readers.NumberReader
 import printscript.readers.StringReader
-import printscript.readers.TypeReader
 import java.util.Optional
 
 class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry) : Lexer {
@@ -56,7 +55,7 @@ class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry) : L
                 Token(TokenType.COMMA, Optional.empty(), initialPos, initialPos)
 
             ':' ->
-                TypeReader().read(firstChar, reader)
+                Token(TokenType.COLON, Optional.empty(), initialPos, initialPos)
 
             else ->
                 throw Error("Unexpected character on line ${initialPos.line}")

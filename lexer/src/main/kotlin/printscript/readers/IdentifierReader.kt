@@ -1,10 +1,10 @@
 package printscript.readers
 
-import printscript.common.reader.CharPosition
-import printscript.common.reader.CodeReader
+import printscript.reader.CharPosition
+import printscript.reader.CodeReader
 import printscript.TokenRegistry
-import printscript.common.domain.Token
-import printscript.common.domain.TokenType
+import printscript.domain.Token
+import printscript.domain.TokenType
 import java.util.Optional
 
 class IdentifierReader(val tokenRegistry: TokenRegistry) : FormatReader {
