@@ -1,4 +1,4 @@
-package printscript.lexer
+package printscript
 
 import printscript.common.domain.Token
 

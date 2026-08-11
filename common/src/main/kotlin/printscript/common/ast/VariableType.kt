@@ -1,4 +1,4 @@
-package printscript.lexer
+package printscript.common.ast
 
 enum class VariableType {
     NUMBER,

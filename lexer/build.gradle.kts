@@ -8,6 +8,7 @@ repositories {
 dependencies {
     implementation(project(":common"))
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.8")
+    implementation(kotlin("test"))
 }
 
 kotlin {

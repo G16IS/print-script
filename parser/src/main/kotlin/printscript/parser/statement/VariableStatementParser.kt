@@ -2,10 +2,9 @@ package printscript.parser.statement
 
 import printscript.common.ast.*
 import printscript.common.ast.Identifier
-import printscript.common.domain.*
+import printscript.common.domain.TokenType
 import printscript.parser.expression.ExpressionParser
 import printscript.parser.token.TokenSource
-import printscript.common.domain.Identifier as IdentifierToken
 
 /**
  * let <id> : <type> = <expression> ;
@@ -14,13 +13,13 @@ class VariableStatementParser : StatementParser {
 
     override fun getSteps(): List<Step> {
         return listOf(
-            Step.Expect(Let()),
-            Step.ExpectWithValue(IdentifierToken()),
-            Step.Expect(Colon()),
-            Step.ExpectWithValue(Type()),
-            Step.Expect(Assign()),
+            Step.Expect(TokenType.LET),
+            Step.ExpectWithValue(TokenType.IDENTIFIER),
+            Step.Expect(TokenType.COLON),
+            Step.ExpectWithValue(TokenType.TYPE),
+            Step.Expect(TokenType.ASSIGN),
             Step.Expr,
-            Step.Expect(Semicolon())
+            Step.Expect(TokenType.SEMICOLON)
         )
     }
 

@@ -5,13 +5,8 @@ import printscript.common.ast.Expression
 import printscript.common.ast.Identifier
 import printscript.common.ast.NumberLiteral
 import printscript.common.ast.StringLiteral
-import printscript.common.domain.Identifier as IdentifierToken
-import printscript.common.domain.LeftParen
-import printscript.common.domain.NumberLiteral as NumberLiteralToken
-import printscript.common.domain.Operator
-import printscript.common.domain.RightParen
-import printscript.common.domain.StringLiteral as StringLiteralToken
 import printscript.common.domain.Token
+import printscript.common.domain.TokenType
 import printscript.parser.error.ParseErrors
 import printscript.parser.error.ParseException
 import printscript.parser.token.TokenSource
@@ -61,10 +56,10 @@ class PrecedenceExpressionParser : ExpressionParser {
         val token = tokens.peek()
 
         return when (token.type) {
-            is NumberLiteralToken -> parseNumberLiteral(tokens, token)
-            is StringLiteralToken -> parseStringLiteral(tokens, token)
-            is IdentifierToken -> parseIdentifier(tokens, token)
-            is LeftParen -> parseGroupedExpression(tokens)
+            TokenType.NUMBER_LITERAL -> parseNumberLiteral(tokens, token)
+            TokenType.STRING_LITERAL -> parseStringLiteral(tokens, token)
+            TokenType.IDENTIFIER -> parseIdentifier(tokens, token)
+            TokenType.LEFT_PAREN -> parseGroupedExpression(tokens)
 
             else -> throw ParseErrors.unexpectedToken(token, "expression")
         }
@@ -97,14 +92,14 @@ class PrecedenceExpressionParser : ExpressionParser {
     private fun parseGroupedExpression(tokens: TokenSource): Expression {
         tokens.advance() // consume '('
         val expr = parseExpression(tokens)
-        tokens.expect({ it is RightParen }, "Expected ')' after expression")
+        tokens.expect({ it == TokenType.RIGHT_PAREN }, "Expected ')' after expression")
         return expr
     }
 
     // Helpers
 
     private fun isOperator(token: Token, operators: Set<String>): Boolean {
-        if (token.type !is Operator) return false
+        if (token.type != TokenType.OPERATOR) return false
         val value = token.value.orElse(null) ?: return false
         return value in operators
     }

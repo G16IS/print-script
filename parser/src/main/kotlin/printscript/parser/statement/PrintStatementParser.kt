@@ -3,10 +3,7 @@ package printscript.parser.statement
 import printscript.common.ast.CallExpression
 import printscript.common.ast.ExpressionStatement
 import printscript.common.ast.Statement
-import printscript.common.domain.Call
-import printscript.common.domain.LeftParen
-import printscript.common.domain.RightParen
-import printscript.common.domain.Semicolon
+import printscript.common.domain.TokenType
 import printscript.parser.expression.ExpressionParser
 import printscript.parser.token.TokenSource
 
@@ -18,11 +15,11 @@ import printscript.parser.token.TokenSource
 class PrintStatementParser : StatementParser {
     override fun getSteps(): List<Step> {
         return listOf(
-            Step.Expect(Call()),
-            Step.Expect(LeftParen()),
+            Step.Expect(TokenType.CALL),
+            Step.Expect(TokenType.LEFT_PAREN),
             Step.Expr,
-            Step.Expect(RightParen()),
-            Step.Expect(Semicolon())
+            Step.Expect(TokenType.RIGHT_PAREN),
+            Step.Expect(TokenType.SEMICOLON)
         )
     }
 

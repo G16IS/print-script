@@ -11,7 +11,7 @@ object ParseErrors {
 
     fun unexpectedToken(token: Token, expected: String): ParseException =
         ParseException(
-            "Expected $expected, found ${token.type::class.simpleName}",
+            "Expected $expected, found ${token.type.name}",
             Locations.of(token)
         )
 

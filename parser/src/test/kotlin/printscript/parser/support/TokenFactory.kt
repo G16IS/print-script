@@ -1,20 +1,7 @@
 package printscript.parser.support
 
-import printscript.common.domain.Assign
-import printscript.common.domain.Call
-import printscript.common.domain.Colon
-import printscript.common.domain.Eof
-import printscript.common.domain.Identifier
-import printscript.common.domain.LeftParen
-import printscript.common.domain.Let
-import printscript.common.domain.NumberLiteral
-import printscript.common.domain.Operator
-import printscript.common.domain.RightParen
-import printscript.common.domain.Semicolon
-import printscript.common.domain.StringLiteral
 import printscript.common.domain.Token
 import printscript.common.domain.TokenType
-import printscript.common.domain.Type
 import printscript.common.reader.CharPosition
 import java.util.Optional
 
@@ -28,20 +15,20 @@ object TokenFactory {
         col = 1
     }
 
-    fun let(): Token = tok(Let())
-    fun colon(): Token = tok(Colon())
-    fun assign(): Token = tok(Assign())
-    fun semicolon(): Token = tok(Semicolon())
-    fun lparen(): Token = tok(LeftParen())
-    fun rparen(): Token = tok(RightParen())
-    fun eof(): Token = tok(Eof())
-    fun print(): Token = tok(Call(), "println")
+    fun let(): Token = tok(TokenType.LET)
+    fun colon(): Token = tok(TokenType.COLON)
+    fun assign(): Token = tok(TokenType.ASSIGN)
+    fun semicolon(): Token = tok(TokenType.SEMICOLON)
+    fun lparen(): Token = tok(TokenType.LEFT_PAREN)
+    fun rparen(): Token = tok(TokenType.RIGHT_PAREN)
+    fun eof(): Token = tok(TokenType.EOF)
+    fun print(): Token = tok(TokenType.CALL, "println")
 
-    fun id(name: String): Token = tok(Identifier(), name)
-    fun number(value: String): Token = tok(NumberLiteral(), value)
-    fun string(value: String): Token = tok(StringLiteral(), value)
-    fun type(name: String): Token = tok(Type(), name)
-    fun op(symbol: String): Token = tok(Operator(), symbol)
+    fun id(name: String): Token = tok(TokenType.IDENTIFIER, name)
+    fun number(value: String): Token = tok(TokenType.NUMBER_LITERAL, value)
+    fun string(value: String): Token = tok(TokenType.STRING_LITERAL, value)
+    fun type(name: String): Token = tok(TokenType.TYPE, name)
+    fun op(symbol: String): Token = tok(TokenType.OPERATOR, symbol)
 
     /** Sequence helper: builds tokens and appends EOF. */
     fun program(vararg tokens: Token): List<Token> = tokens.toList() + eof()

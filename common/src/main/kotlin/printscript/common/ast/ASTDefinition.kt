@@ -53,7 +53,7 @@ data class VariableStatement(
 
 data class VariableDeclaration(
     val id: Identifier,
-    val typeAnnotation: String,
+    val typeAnnotation: VariableType,
     val initializer: Expression,
     override val location: Location
 ) : Node

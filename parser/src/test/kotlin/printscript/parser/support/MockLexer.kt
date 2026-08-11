@@ -1,9 +1,9 @@
 package printscript.parser.support
 
-import printscript.common.domain.Eof
 import printscript.common.domain.Token
+import printscript.common.domain.TokenType
 import printscript.common.reader.CharPosition
-import printscript.lexer.Lexer
+import printscript.Lexer
 import java.util.Optional
 
 /**
@@ -32,11 +32,11 @@ class MockLexer(tokens: List<Token>) : Lexer {
         fun of(vararg tokens: Token): MockLexer = MockLexer(tokens.toList())
 
         private fun ensureEof(tokens: List<Token>): List<Token> {
-            if (tokens.isNotEmpty() && tokens.last().type is Eof) {
+            if (tokens.isNotEmpty() && tokens.last().type == TokenType.EOF) {
                 return tokens
             }
             val pos = tokens.lastOrNull()?.end ?: CharPosition(1, 1)
-            return tokens + Token(Eof(), Optional.empty(), pos, pos)
+            return tokens + Token(TokenType.EOF, Optional.empty(), pos, pos)
         }
     }
 }

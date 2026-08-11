@@ -1,18 +1,28 @@
 package printscript.common.domain
 
-sealed interface TokenType
+/**
+ * Lexical categories of the language.
+ */
+enum class TokenType {
+    // Keywords / declarations
+    LET,
+    TYPE,
+    CALL,
 
-class Let : TokenType
-class Identifier : TokenType
-class NumberLiteral : TokenType
-class StringLiteral : TokenType
-class Operator : TokenType
-class Semicolon : TokenType
-class Assign : TokenType
-class LeftParen : TokenType
-class RightParen : TokenType
-class Type : TokenType
-class Call: TokenType
-class Comma: TokenType
-class Colon: TokenType
-class Eof : TokenType
+    // Literals and identifiers
+    IDENTIFIER,
+    NUMBER_LITERAL,
+    STRING_LITERAL,
+
+    // Operators and punctuation
+    OPERATOR,
+    ASSIGN,
+    COLON,
+    SEMICOLON,
+    COMMA,
+    LEFT_PAREN,
+    RIGHT_PAREN,
+
+    // Stream control
+    EOF,
+}

@@ -1,9 +1,8 @@
 package printscript.parser
 
 import printscript.common.ast.Location
-import printscript.common.domain.Token
 import printscript.common.ast.Program
-import printscript.lexer.Lexer
+import printscript.Lexer
 import printscript.parser.expression.PrecedenceExpressionParser
 import printscript.parser.statement.PrintStatementParser
 import printscript.parser.statement.VariableStatementParser

@@ -30,7 +30,7 @@ data class MatchResult(
 
 private fun expectToken(tokens: TokenSource, type: TokenType): Token? {
     val current = tokens.peek()
-    if (current.type::class != type::class) return null
+    if (current.type != type) return null
     return tokens.advance()
 }
 

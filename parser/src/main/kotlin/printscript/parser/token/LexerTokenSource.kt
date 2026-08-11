@@ -1,7 +1,6 @@
 package printscript.parser.token
 
-import printscript.common.domain.Eof
-import printscript.lexer.Lexer
+import printscript.Lexer
 import printscript.common.domain.Token
 import printscript.common.domain.TokenType
 import printscript.parser.error.ParseException
@@ -40,11 +39,11 @@ data class LexerTokenSource(val tokens: Lexer) : TokenSource {
         return advance()
     }
 
-    override fun isAtEnd(): Boolean = peek().type is Eof
+    override fun isAtEnd(): Boolean = peek().type == TokenType.EOF
 
     private fun syntheticEof(existing: List<Token>): Token {
         val pos = existing.lastOrNull()?.end
             ?: printscript.common.reader.CharPosition(1, 1)
-        return Token(Eof(), Optional.empty(), pos, pos)
+        return Token(TokenType.EOF, Optional.empty(), pos, pos)
     }
 }

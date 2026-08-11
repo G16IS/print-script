@@ -1,10 +1,8 @@
 package printscript.parser
 
-import printscript.common.ast.Location
 import printscript.common.ast.Program
 import printscript.common.ast.Statement
-import printscript.lexer.Lexer
-import printscript.common.domain.Token
+import printscript.Lexer
 import printscript.parser.error.ParseException
 import printscript.parser.expression.ExpressionParser
 import printscript.parser.statement.StatementParser
@@ -39,7 +37,7 @@ class DefaultParser(
 
         val token = source.peek()
         throw ParseException(
-            "Unexpected token ${token.type::class.simpleName}; expected start of statement",
+            "Unexpected token ${token.type.name}; expected start of statement",
             Locations.of(token)
         )
     }
