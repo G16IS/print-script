@@ -1,4 +1,4 @@
-package printscript.semantic
+package printscript
 
 import printscript.common.ast.ExpressionStatement
 import printscript.common.ast.Program
@@ -6,9 +6,9 @@ import printscript.common.ast.Statement
 import printscript.common.ast.VariableDeclaration
 import printscript.common.ast.VariableStatement
 
-class SemanticAnalyzer {
+class DefaultSemanticAnalyzer : SemanticAnalyzer {
 
-    fun analyze(program: Program): SemanticResult {
+    override fun analyze(program: Program): SemanticResult {
         val context = SemanticContext()
         val typeChecker = ExpressionTypeChecker(context)
 

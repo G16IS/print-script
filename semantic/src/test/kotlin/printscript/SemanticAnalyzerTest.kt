@@ -1,6 +1,5 @@
-package printscript.semantic
+package printscript
 
-import printscript.common.VariableType
 import printscript.common.ast.BinaryExpression
 import printscript.common.ast.CallExpression
 import printscript.common.ast.Expression
@@ -13,6 +12,7 @@ import printscript.common.ast.Statement
 import printscript.common.ast.StringLiteral
 import printscript.common.ast.VariableDeclaration
 import printscript.common.ast.VariableStatement
+import printscript.common.ast.VariableType
 import printscript.common.reader.CharPosition
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,7 +32,7 @@ class SemanticAnalyzerTest {
             ),
         )
 
-        val result = SemanticAnalyzer().analyze(program)
+        val result = DefaultSemanticAnalyzer().analyze(program)
 
         val success = assertIs<SemanticResult.Success>(result)
         assertSame(program, success.program)
@@ -48,7 +48,7 @@ class SemanticAnalyzerTest {
             ),
         )
 
-        val result = SemanticAnalyzer().analyze(program)
+        val result = DefaultSemanticAnalyzer().analyze(program)
 
         assertIs<SemanticResult.Success>(result)
     }
@@ -63,7 +63,7 @@ class SemanticAnalyzerTest {
             ),
         )
 
-        val failure = assertFailure(SemanticAnalyzer().analyze(program))
+        val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
         assertTrue(failure.errors.single().messageError.contains("NUMBER"))
@@ -77,7 +77,7 @@ class SemanticAnalyzerTest {
             variable("age", VariableType.NUMBER, number(21.0)),
         )
 
-        val failure = assertFailure(SemanticAnalyzer().analyze(program))
+        val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
         assertTrue(failure.errors.single().messageError.contains("ya fue declarada"))
@@ -90,7 +90,7 @@ class SemanticAnalyzerTest {
             variable("nextAge", VariableType.NUMBER, identifier("age")),
         )
 
-        val result = SemanticAnalyzer().analyze(program)
+        val result = DefaultSemanticAnalyzer().analyze(program)
 
         assertIs<SemanticResult.Success>(result)
     }
@@ -101,7 +101,7 @@ class SemanticAnalyzerTest {
             expressionStatement(identifier("missing")),
         )
 
-        val failure = assertFailure(SemanticAnalyzer().analyze(program))
+        val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
         assertTrue(failure.errors.single().messageError.contains("missing"))
@@ -115,7 +115,7 @@ class SemanticAnalyzerTest {
             variable("result", VariableType.NUMBER, multiplication),
         )
 
-        val result = SemanticAnalyzer().analyze(program)
+        val result = DefaultSemanticAnalyzer().analyze(program)
 
         assertIs<SemanticResult.Success>(result)
     }
@@ -127,7 +127,7 @@ class SemanticAnalyzerTest {
             variable("message", VariableType.STRING, concatenation),
         )
 
-        val result = SemanticAnalyzer().analyze(program)
+        val result = DefaultSemanticAnalyzer().analyze(program)
 
         assertIs<SemanticResult.Success>(result)
     }
@@ -139,7 +139,7 @@ class SemanticAnalyzerTest {
             variable("result", VariableType.NUMBER, invalidAddition),
         )
 
-        val failure = assertFailure(SemanticAnalyzer().analyze(program))
+        val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
         assertTrue(failure.errors.single().messageError.contains("no acepta"))
@@ -152,7 +152,7 @@ class SemanticAnalyzerTest {
             variable("result", VariableType.NUMBER, unknownOperation),
         )
 
-        val failure = assertFailure(SemanticAnalyzer().analyze(program))
+        val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
         assertTrue(failure.errors.single().messageError.contains("Operador desconocido"))
@@ -167,7 +167,7 @@ class SemanticAnalyzerTest {
         )
         val program = programOf(expressionStatement(call))
 
-        val failure = assertFailure(SemanticAnalyzer().analyze(program))
+        val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
         assertTrue(failure.errors.single().messageError.contains("missing"))
@@ -175,7 +175,7 @@ class SemanticAnalyzerTest {
 
     @Test
     fun `does not share symbols between analyses`() {
-        val analyzer = SemanticAnalyzer()
+        val analyzer = DefaultSemanticAnalyzer()
         val firstProgram = programOf(
             variable("age", VariableType.NUMBER, number(20.0)),
         )

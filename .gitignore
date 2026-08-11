@@ -14,3 +14,4 @@ out/
 Thumbs.db
 
 *.log
+*.db

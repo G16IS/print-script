@@ -1,4 +1,4 @@
-package printscript.semantic
+package printscript
 
 import printscript.common.ast.Location
 

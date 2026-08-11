@@ -1,6 +1,5 @@
 package printscript.common.ast
 
-import printscript.common.VariableType
 import printscript.common.reader.CharPosition
 
 data class Location(

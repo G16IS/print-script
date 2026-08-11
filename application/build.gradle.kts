@@ -7,7 +7,10 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":common"))
+    implementation(project(":infrastructure"))
+    implementation(project(":lexer"))
+
+    implementation(kotlin("test"))
 }
 
 kotlin {

@@ -1,4 +1,4 @@
-package printscript.lexer
+package printscript.common.domain
 
 import printscript.common.reader.CharPosition
 import java.util.Optional
@@ -9,3 +9,4 @@ data class Token(
     val start: CharPosition,
     val end: CharPosition
 )
+

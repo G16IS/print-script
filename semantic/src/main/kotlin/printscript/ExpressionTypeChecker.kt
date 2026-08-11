@@ -1,12 +1,12 @@
-package printscript.semantic
+package printscript
 
-import printscript.common.VariableType
 import printscript.common.ast.BinaryExpression
 import printscript.common.ast.CallExpression
 import printscript.common.ast.Expression
 import printscript.common.ast.Identifier
 import printscript.common.ast.NumberLiteral
 import printscript.common.ast.StringLiteral
+import printscript.common.ast.VariableType
 
 class ExpressionTypeChecker(private val context: SemanticContext ) {
 

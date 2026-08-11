@@ -1,6 +1,10 @@
-package printscript.semantic
+package printscript
 
 import printscript.common.ast.Program
+
+interface SemanticAnalyzer {
+    fun analyze(program: Program): SemanticResult
+}
 
 sealed interface SemanticResult {
     data class Success(

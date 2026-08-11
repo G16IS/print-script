@@ -1,4 +1,4 @@
-package printscript.semantic
+package printscript
 
 data class SemanticContext(
     val symbolTable: SymbolTable = SymbolTable(),
