@@ -1,8 +1,8 @@
 package printscript.statement
 
-import printscript.common.ast.Statement
-import printscript.parser.expression.ExpressionParser
-import printscript.parser.token.TokenSource
+import printscript.ast.Statement
+import printscript.expression.ExpressionParser
+import printscript.token.TokenSource
 
 /**
  * Strategy for one kind of statement. Returns null if the current token

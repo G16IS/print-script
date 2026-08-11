@@ -1,11 +1,11 @@
 package lexer
 
 import org.junit.Test
-import printscript.common.reader.CharPosition
+import printscript.reader.CharPosition
 import printscript.DefaultLexerFactory
 import printscript.Lexer
-import printscript.common.domain.Token
-import printscript.common.domain.TokenType
+import printscript.domain.Token
+import printscript.domain.TokenType
 import java.util.Optional
 import kotlin.test.assertEquals
 
@@ -23,7 +23,8 @@ class TokenizeTest {
         return listOf(
             Token(TokenType.LET, Optional.empty(), CharPosition(0, 1), CharPosition(0, 3)),
             Token(TokenType.IDENTIFIER, Optional.of("x"), CharPosition(0, 5), CharPosition(0, 5)),
-            Token(TokenType.TYPE, Optional.of("string"), CharPosition(0, 6), CharPosition(0, 13)),
+            Token(TokenType.COLON, Optional.empty(), CharPosition(0, 6), CharPosition(0, 6)),
+            Token(TokenType.TYPE, Optional.of("string"), CharPosition(0, 8), CharPosition(0, 13)),
             Token(TokenType.ASSIGN, Optional.empty(), CharPosition(0, 15), CharPosition(0, 15)),
             Token(TokenType.STRING_LITERAL, Optional.of("hello"), CharPosition(0, 17), CharPosition(0, 23)),
             Token(TokenType.SEMICOLON, Optional.empty(), CharPosition(0, 24), CharPosition(0, 24)),

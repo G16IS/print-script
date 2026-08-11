@@ -1,11 +1,11 @@
 package printscript.statement
 
-import printscript.common.ast.CallExpression
-import printscript.common.ast.ExpressionStatement
-import printscript.common.ast.Statement
-import printscript.common.domain.TokenType
-import printscript.parser.expression.ExpressionParser
-import printscript.parser.token.TokenSource
+import printscript.ast.CallExpression
+import printscript.ast.ExpressionStatement
+import printscript.ast.Statement
+import printscript.domain.TokenType
+import printscript.expression.ExpressionParser
+import printscript.token.TokenSource
 
 /**
  * println ( <expression> ) ;

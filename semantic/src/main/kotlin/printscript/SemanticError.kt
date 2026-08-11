@@ -1,6 +1,6 @@
 package printscript
 
-import printscript.common.ast.Location
+import printscript.ast.Location
 
 data class SemanticError(
     val messageError: String,

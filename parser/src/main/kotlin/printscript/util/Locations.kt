@@ -1,9 +1,9 @@
 package printscript.util
 
-import printscript.common.ast.Location
-import printscript.common.ast.Node
-import printscript.common.reader.CharPosition
-import printscript.common.domain.Token
+import printscript.ast.Location
+import printscript.ast.Node
+import printscript.reader.CharPosition
+import printscript.domain.Token
 
 object Locations {
     fun of(token: Token): Location = Location(token.start, token.end)

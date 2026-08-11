@@ -1,8 +1,8 @@
 package printscript.error
 
 
-import printscript.common.domain.Token
-import printscript.parser.util.Locations
+import printscript.domain.Token
+import printscript.util.Locations
 
 object ParseErrors {
 

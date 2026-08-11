@@ -1,10 +1,14 @@
 package printscript.statement
 
-import printscript.common.ast.*
-import printscript.common.ast.Identifier
-import printscript.common.domain.TokenType
-import printscript.parser.expression.ExpressionParser
-import printscript.parser.token.TokenSource
+import printscript.ast.Identifier
+import printscript.ast.Location
+import printscript.ast.Statement
+import printscript.ast.VariableDeclaration
+import printscript.ast.VariableStatement
+import printscript.ast.VariableType
+import printscript.domain.TokenType
+import printscript.expression.ExpressionParser
+import printscript.token.TokenSource
 
 /**
  * let <id> : <type> = <expression> ;

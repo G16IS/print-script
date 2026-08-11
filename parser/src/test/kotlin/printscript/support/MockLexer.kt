@@ -1,8 +1,8 @@
 package printscript.support
 
-import printscript.common.domain.Token
-import printscript.common.domain.TokenType
-import printscript.common.reader.CharPosition
+import printscript.domain.Token
+import printscript.domain.TokenType
+import printscript.reader.CharPosition
 import printscript.Lexer
 import java.util.Optional
 

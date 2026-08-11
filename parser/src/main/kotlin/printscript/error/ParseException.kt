@@ -1,6 +1,6 @@
 package printscript.error
 
-import printscript.common.ast.Location
+import printscript.ast.Location
 
 /**
  * Thrown when the token stream does not match the expected grammar.

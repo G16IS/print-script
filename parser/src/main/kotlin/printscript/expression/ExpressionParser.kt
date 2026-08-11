@@ -1,7 +1,7 @@
 package printscript.expression
 
-import printscript.common.ast.Expression
-import printscript.parser.token.TokenSource
+import printscript.ast.Expression
+import printscript.token.TokenSource
 
 /**
  * Parses expression productions. Implementations own operator precedence.

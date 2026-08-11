@@ -1,9 +1,9 @@
 package printscript.readers
 
-import printscript.common.domain.Token
-import printscript.common.domain.TokenType
-import printscript.common.reader.CharPosition
-import printscript.common.reader.CodeReader
+import printscript.domain.Token
+import printscript.domain.TokenType
+import printscript.reader.CharPosition
+import printscript.reader.CodeReader
 import java.util.Optional
 
 class NumberReader : FormatReader {
@@ -14,7 +14,7 @@ class NumberReader : FormatReader {
             val current = reader.peek()
             if (current.isEmpty) return Token(TokenType.EOF, Optional.empty(), initialPos, initialPos)
 
-            if (!current.get().isDigit() || current.get() != '.') break
+            if (!current.get().isDigit() && current.get() != '.') break
 
             text += reader.read().get()
         }

@@ -1,6 +1,6 @@
-package printscript.common.ast
+package printscript.ast
 
-import printscript.common.reader.CharPosition
+import printscript.reader.CharPosition
 
 data class Location(
     val start: CharPosition,

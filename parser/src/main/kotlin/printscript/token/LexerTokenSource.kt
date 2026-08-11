@@ -1,10 +1,11 @@
 package printscript.token
 
 import printscript.Lexer
-import printscript.common.domain.Token
-import printscript.common.domain.TokenType
-import printscript.parser.error.ParseException
-import printscript.parser.util.Locations
+import printscript.domain.Token
+import printscript.domain.TokenType
+import printscript.error.ParseException
+import printscript.util.Locations
+import printscript.reader.CharPosition
 import java.util.Optional
 
 data class LexerTokenSource(val tokens: Lexer) : TokenSource {
@@ -43,7 +44,7 @@ data class LexerTokenSource(val tokens: Lexer) : TokenSource {
 
     private fun syntheticEof(existing: List<Token>): Token {
         val pos = existing.lastOrNull()?.end
-            ?: printscript.common.reader.CharPosition(1, 1)
+            ?: CharPosition(1, 1)
         return Token(TokenType.EOF, Optional.empty(), pos, pos)
     }
 }

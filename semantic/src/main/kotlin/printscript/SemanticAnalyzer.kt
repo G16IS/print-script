@@ -1,6 +1,6 @@
 package printscript
 
-import printscript.common.ast.Program
+import printscript.ast.Program
 
 interface SemanticAnalyzer {
     fun analyze(program: Program): SemanticResult

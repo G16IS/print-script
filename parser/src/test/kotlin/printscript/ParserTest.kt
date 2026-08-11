@@ -5,19 +5,19 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import printscript.common.ast.BinaryExpression
-import printscript.common.ast.CallExpression
-import printscript.common.ast.ExpressionStatement
-import printscript.common.ast.Identifier
-import printscript.common.ast.NumberLiteral
-import printscript.common.ast.Program
-import printscript.common.ast.StringLiteral
-import printscript.common.ast.VariableStatement
-import printscript.common.ast.VariableType
-import printscript.common.domain.Token
-import printscript.parser.error.ParseException
-import printscript.parser.support.MockLexer
-import printscript.parser.support.TokenFactory
+import printscript.ast.BinaryExpression
+import printscript.ast.CallExpression
+import printscript.ast.ExpressionStatement
+import printscript.ast.Identifier
+import printscript.ast.NumberLiteral
+import printscript.ast.Program
+import printscript.ast.StringLiteral
+import printscript.ast.VariableStatement
+import printscript.ast.VariableType
+import printscript.domain.Token
+import printscript.error.ParseException
+import printscript.support.MockLexer
+import printscript.support.TokenFactory
 
 class ParserTest {
     private lateinit var parser: Parser

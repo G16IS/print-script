@@ -1,6 +1,6 @@
-package printscript.common.domain
+package printscript.domain
 
-import printscript.common.reader.CharPosition
+import printscript.reader.CharPosition
 import java.util.Optional
 
 data class Token(

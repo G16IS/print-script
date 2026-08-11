@@ -5,17 +5,17 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import printscript.common.ast.BinaryExpression
-import printscript.common.ast.Identifier
-import printscript.common.ast.NumberLiteral
-import printscript.common.ast.StringLiteral
-import printscript.common.domain.Token
-import printscript.parser.error.ParseException
-import printscript.parser.expression.PrecedenceExpressionParser
-import printscript.parser.support.MockLexer
-import printscript.parser.support.TokenFactory
-import printscript.parser.token.LexerTokenSource
-import printscript.parser.token.TokenSource
+import printscript.ast.BinaryExpression
+import printscript.ast.Identifier
+import printscript.ast.NumberLiteral
+import printscript.ast.StringLiteral
+import printscript.domain.Token
+import printscript.error.ParseException
+import printscript.expression.PrecedenceExpressionParser
+import printscript.support.MockLexer
+import printscript.support.TokenFactory
+import printscript.token.LexerTokenSource
+import printscript.token.TokenSource
 
 class ExpressionParserTest {
     private val parser = PrecedenceExpressionParser()

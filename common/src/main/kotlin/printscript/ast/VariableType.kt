@@ -1,4 +1,4 @@
-package printscript.common.ast
+package printscript.ast
 
 enum class VariableType {
     NUMBER,

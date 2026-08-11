@@ -1,7 +1,6 @@
 package printscript
 
-import printscript.common.ast.Program
-import printscript.Lexer
+import printscript.ast.Program
 
 /**
  * Transforms a token stream into an AST [Program] step.

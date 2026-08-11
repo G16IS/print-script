@@ -1,5 +1,5 @@
 package printscript
-import printscript.common.ast.VariableType
+import printscript.ast.VariableType
 
 class SymbolTable {
     private val types = mutableMapOf<String, VariableType>()

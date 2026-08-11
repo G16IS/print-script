@@ -1,7 +1,7 @@
 package lexer
 
-import printscript.common.reader.CharPosition
-import printscript.common.reader.CodeReader
+import printscript.reader.CharPosition
+import printscript.reader.CodeReader
 import java.util.Optional
 
 class MockReader(val statement: String) : CodeReader {

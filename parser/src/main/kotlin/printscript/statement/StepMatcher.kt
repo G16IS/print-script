@@ -1,12 +1,12 @@
 package printscript.statement
 
-import printscript.common.ast.Expression
-import printscript.common.ast.Location
-import printscript.common.domain.Token
-import printscript.common.domain.TokenType
-import printscript.common.reader.CharPosition
-import printscript.parser.expression.ExpressionParser
-import printscript.parser.token.TokenSource
+import printscript.ast.Expression
+import printscript.ast.Location
+import printscript.domain.Token
+import printscript.domain.TokenType
+import printscript.reader.CharPosition
+import printscript.expression.ExpressionParser
+import printscript.token.TokenSource
 
 // ─────────────────────────────────────────────
 // Modelos

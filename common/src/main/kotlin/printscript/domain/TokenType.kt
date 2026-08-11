@@ -1,4 +1,4 @@
-package printscript.common.domain
+package printscript.domain
 
 /**
  * Lexical categories of the language.

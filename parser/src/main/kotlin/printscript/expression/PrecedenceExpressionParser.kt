@@ -1,17 +1,17 @@
 package printscript.expression
 
-import printscript.common.ast.BinaryExpression
-import printscript.common.ast.Expression
-import printscript.common.ast.Identifier
-import printscript.common.ast.NumberLiteral
-import printscript.common.ast.StringLiteral
-import printscript.common.domain.Token
-import printscript.common.domain.TokenType
-import printscript.parser.error.ParseErrors
-import printscript.parser.error.ParseException
-import printscript.parser.token.TokenSource
-import printscript.parser.util.Locations
-import printscript.parser.util.requireValue
+import printscript.ast.BinaryExpression
+import printscript.ast.Expression
+import printscript.ast.Identifier
+import printscript.ast.NumberLiteral
+import printscript.ast.StringLiteral
+import printscript.domain.Token
+import printscript.domain.TokenType
+import printscript.error.ParseErrors
+import printscript.error.ParseException
+import printscript.token.TokenSource
+import printscript.util.Locations
+import printscript.util.requireValue
 
 /**
  * Classic recursive-descent expression parser:

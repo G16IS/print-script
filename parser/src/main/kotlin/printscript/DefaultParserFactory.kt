@@ -1,11 +1,10 @@
 package printscript
 
-import printscript.common.ast.Location
-import printscript.common.ast.Program
-import printscript.Lexer
-import printscript.parser.expression.PrecedenceExpressionParser
-import printscript.parser.statement.PrintStatementParser
-import printscript.parser.statement.VariableStatementParser
+import printscript.ast.Location
+import printscript.ast.Program
+import printscript.expression.PrecedenceExpressionParser
+import printscript.statement.PrintStatementParser
+import printscript.statement.VariableStatementParser
 
 /**
  * Wires the default PrintScript v1 statement strategies and expression parser.
@@ -19,7 +18,3 @@ object DefaultParserFactory {
         expressionParser = PrecedenceExpressionParser()
     )
 }
-
-/** Convenience entry point using [DefaultParserFactory]. */
-fun parse(tokens: Lexer): Program = DefaultParserFactory.create().parseNextStatement(tokens, Program(emptyList(),
-    Location.empty()))

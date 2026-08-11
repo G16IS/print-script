@@ -1,10 +1,10 @@
 package printscript
 
-import printscript.common.ast.ExpressionStatement
-import printscript.common.ast.Program
-import printscript.common.ast.Statement
-import printscript.common.ast.VariableDeclaration
-import printscript.common.ast.VariableStatement
+import printscript.ast.ExpressionStatement
+import printscript.ast.Program
+import printscript.ast.Statement
+import printscript.ast.VariableDeclaration
+import printscript.ast.VariableStatement
 
 class DefaultSemanticAnalyzer : SemanticAnalyzer {
 

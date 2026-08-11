@@ -1,8 +1,7 @@
 package printscript
 
-import printscript.common.ast.Program
-import printscript.common.ast.Statement
-import printscript.Lexer
+import printscript.ast.Program
+import printscript.ast.Statement
 import printscript.error.ParseException
 import printscript.expression.ExpressionParser
 import printscript.statement.StatementParser
