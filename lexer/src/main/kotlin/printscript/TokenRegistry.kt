@@ -1,8 +1,8 @@
-package printscript.tokenregistry
+package printscript
 
 import printscript.common.ast.Location
+import printscript.common.domain.Token
 import printscript.common.reader.CharPosition
-import printscript.lexer.Token
 
 class TokenRegistry(val wordMap: Map<String, (Location) -> Token>) {
     fun hasToken(tokenString: String): Boolean {

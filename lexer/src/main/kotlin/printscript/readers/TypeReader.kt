@@ -1,13 +1,13 @@
-package printscript.formatreader
+package printscript.readers
 
+import printscript.common.domain.Token
+import printscript.common.domain.TokenType
 import printscript.common.reader.CharPosition
 import printscript.common.reader.CodeReader
-import printscript.lexer.Token
-import printscript.lexer.TokenType
 import java.util.Optional
 
-class TypeReader: FormatReader {
-    override fun read(firstChar:Char, reader: CodeReader): Token {
+class TypeReader : FormatReader {
+    override fun read(firstChar: Char, reader: CodeReader): Token {
         val initialPos: CharPosition = reader.currentPosition()
         val first: Optional<Char> = skipWhitespace(reader)
         if (first.isEmpty) throw Error("Unexpected token in line ${initialPos.line} column ${initialPos.col}")
@@ -22,11 +22,10 @@ class TypeReader: FormatReader {
             text += reader.read().get()
         }
         val finalPosition = reader.currentPosition()
-        return Token(TokenType.Type(), Optional.of(text), initialPos, finalPosition)
-
+        return Token(TokenType.TYPE, Optional.of(text), initialPos, finalPosition)
     }
 
-    private fun skipWhitespace(reader: CodeReader): Optional<Char>{
+    private fun skipWhitespace(reader: CodeReader): Optional<Char> {
         var current = reader.read()
         while (current.isPresent) {
             if (!current.get().isWhitespace()) {

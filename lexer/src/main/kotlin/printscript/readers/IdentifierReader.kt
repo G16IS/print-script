@@ -1,10 +1,10 @@
-package printscript.formatreader
+package printscript.readers
 
 import printscript.common.reader.CharPosition
 import printscript.common.reader.CodeReader
-import printscript.lexer.Token
-import printscript.lexer.TokenType
-import printscript.tokenregistry.TokenRegistry
+import printscript.TokenRegistry
+import printscript.common.domain.Token
+import printscript.common.domain.TokenType
 import java.util.Optional
 
 class IdentifierReader(val tokenRegistry: TokenRegistry) : FormatReader {
@@ -14,19 +14,18 @@ class IdentifierReader(val tokenRegistry: TokenRegistry) : FormatReader {
 
         while (true) {
             val current = reader.peek()
-            if (current.isEmpty) return Token(TokenType.Eof(), Optional.empty(), initialPos, initialPos)
+            if (current.isEmpty) return Token(TokenType.EOF, Optional.empty(), initialPos, initialPos)
 
             if (!current.get().isLetterOrDigit() && current.get() != '_') break
 
             text += reader.read().get()
-
         }
-        val finalPos: CharPosition = reader.currentPosition();
+        val finalPos: CharPosition = reader.currentPosition()
 
         if (tokenRegistry.hasToken(text)) {
             return tokenRegistry.getToken(text, initialPos, finalPos)
         }
 
-        return Token(TokenType.Identifier(), Optional.of(text), initialPos, finalPos)
+        return Token(TokenType.IDENTIFIER, Optional.of(text), initialPos, finalPos)
     }
 }

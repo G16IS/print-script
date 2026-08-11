@@ -1,21 +1,21 @@
-package printscript.lexer
+package printscript
 
+import printscript.common.domain.Token
+import printscript.common.domain.TokenType
 import printscript.common.reader.CharPosition
 import printscript.common.reader.CodeReader
-import printscript.formatreader.IdentifierReader
-import printscript.formatreader.NumberReader
-import printscript.formatreader.StringReader
-import printscript.formatreader.TypeReader
-import printscript.tokenregistry.TokenRegistry
+import printscript.readers.IdentifierReader
+import printscript.readers.NumberReader
+import printscript.readers.StringReader
+import printscript.readers.TypeReader
 import java.util.Optional
-import kotlin.text.isWhitespace
 
-class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry): Lexer {
-    private val buffer = ArrayDeque<Token>();
+class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry) : Lexer {
+    private val buffer = ArrayDeque<Token>()
 
-    override fun nextToken(): Token = buffer.removeFirstOrNull()?: readNextToken()
+    override fun nextToken(): Token = buffer.removeFirstOrNull() ?: readNextToken()
     override fun peek(offset: Int?): Token {
-        val realOffset: Int = offset?: 0
+        val realOffset: Int = offset ?: 0
 
         while (buffer.size <= realOffset) buffer.addLast(readNextToken())
         return buffer[realOffset]
@@ -25,7 +25,7 @@ class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry): Le
         val first = skipWhitespace()
         val initialPos: CharPosition = reader.currentPosition()
         val firstChar: Char =
-            if (first.isPresent) first.get() else return Token(TokenType.Eof(), Optional.empty(), initialPos, initialPos)
+            if (first.isPresent) first.get() else return Token(TokenType.EOF, Optional.empty(), initialPos, initialPos)
 
         return when (firstChar) {
             in 'a'..'z', in 'A'..'Z' ->
@@ -38,22 +38,22 @@ class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry): Le
                 StringReader().read(firstChar, reader)
 
             '+', '-', '*', '/' ->
-                Token(TokenType.Operator(), Optional.of(firstChar.toString()), initialPos, initialPos)
+                Token(TokenType.OPERATOR, Optional.of(firstChar.toString()), initialPos, initialPos)
 
             '=' ->
-                Token(TokenType.Assign(), Optional.empty(), initialPos, initialPos)
+                Token(TokenType.ASSIGN, Optional.empty(), initialPos, initialPos)
 
             '(' ->
-                Token(TokenType.LeftParen(), Optional.empty(), initialPos, initialPos)
+                Token(TokenType.LEFT_PAREN, Optional.empty(), initialPos, initialPos)
 
             ')' ->
-                Token(TokenType.RightParen(), Optional.empty(), initialPos, initialPos)
+                Token(TokenType.RIGHT_PAREN, Optional.empty(), initialPos, initialPos)
 
             ';' ->
-                Token(TokenType.Semicolon(), Optional.empty(), initialPos, initialPos)
+                Token(TokenType.SEMICOLON, Optional.empty(), initialPos, initialPos)
 
             ',' ->
-                Token(TokenType.Comma(), Optional.empty(), initialPos, initialPos)
+                Token(TokenType.COMMA, Optional.empty(), initialPos, initialPos)
 
             ':' ->
                 TypeReader().read(firstChar, reader)

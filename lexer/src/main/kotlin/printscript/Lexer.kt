@@ -1,6 +1,6 @@
-package printscript.lexer
+package printscript
 
-import printscript.common.reader.CodeReader
+import printscript.common.domain.Token
 
 interface Lexer {
     fun nextToken(): Token
