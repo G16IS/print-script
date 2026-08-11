@@ -13,6 +13,7 @@ import printscript.common.ast.NumberLiteral
 import printscript.common.ast.Program
 import printscript.common.ast.StringLiteral
 import printscript.common.ast.VariableStatement
+import printscript.common.ast.VariableType
 import printscript.common.domain.Token
 import printscript.parser.error.ParseException
 import printscript.parser.support.MockLexer
@@ -57,7 +58,7 @@ class ParserTest {
         assertEquals(1, program.statements.size)
         val stmt = program.statements[0] as VariableStatement
         assertEquals("x", stmt.declaration.id.name)
-        assertEquals("number", stmt.declaration.typeAnnotation)
+        assertEquals(VariableType.NUMBER, stmt.declaration.typeAnnotation)
         assertEquals(5.0, (stmt.declaration.initializer as NumberLiteral).value)
     }
 
@@ -158,7 +159,7 @@ class ParserTest {
         )
         val program = parser.parseNextStatement(lexer, Program.empty())
         val stmt = program.statements[0] as VariableStatement
-        assertEquals("number", stmt.declaration.typeAnnotation)
+        assertEquals(VariableType.NUMBER, stmt.declaration.typeAnnotation)
         assertTrue(stmt.declaration.initializer is StringLiteral)
     }
 

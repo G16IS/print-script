@@ -35,7 +35,7 @@ class VariableStatementParser : StatementParser {
                 name = identifier.value.get(),
                 location = Location(identifier.start, identifier.end)
             ),
-            typeAnnotation = typeToken.value.get(),
+            typeAnnotation = VariableType.from(typeToken.value.get()),
             initializer = initializer,
             location = match.location
         )
