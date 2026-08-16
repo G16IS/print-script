@@ -47,6 +47,7 @@ class TokenStream(
 
             val matchResults = ruleEvaluator.evaluate(text + nextChar.get())
             if (areAllMatchResultsInvalid(matchResults)) {
+                
                 return buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
             }
 
@@ -62,9 +63,14 @@ class TokenStream(
         initialPos: CharPosition,
         finalPos: CharPosition
     ): Token {
-        val rule = ruleDrawResolver.resolve(matchResults.map { it.tokenRule })
+        val rule = ruleDrawResolver.resolve(matchResults
+            .filter { it.matchType != MatchType.INVALID }
+            .map { it.tokenRule })
         return TokenFactory.create(rule, Location(initialPos, finalPos), text)
     }
+
+    private fun containsPartialMatch(matchResults: List<MatchResult>): Boolean =
+        matchResults.any {it.matchType == MatchType.PARTIAL }
 
     private fun areAllMatchResultsInvalid(matchResults: List<MatchResult>): Boolean =
         matchResults.none { it.matchType == MatchType.VALID || it.matchType == MatchType.PARTIAL }

@@ -1,4 +1,4 @@
-package lexer
+package lexer.tokenization
 
 import printscript.Lexer
 import printscript.RuleDrawResolver
@@ -20,7 +20,7 @@ class MockLexerFactory {
         }
 
         private fun createOrder(): List<String> =
-            listOf("keywords", "types", "operators", "literals", "identifiers")
+            listOf("identifiers", "literals", "operators", "types", "keywords")
 
         private fun createMockConfig(): Map<String, List<TokenRule>> =
             mapOf(
@@ -33,6 +33,7 @@ class MockLexerFactory {
                 ),
                 "operators" to listOf(
                     ExactRule(listOf(":"), "COLON", false),
+                    ExactRule(listOf("+"), "OPERATOR", true),
                     ExactRule(listOf("="), "ASSIGN", false),
                     ExactRule(listOf(";"), "SEMICOLON", false),
                     ExactRule(listOf("("), "LEFT_PAREN", false),
@@ -40,7 +41,7 @@ class MockLexerFactory {
                     ExactRule(listOf(","), "COMMA", false)
                 ),
                 "literals" to listOf(
-                    RegexRule(listOf("^\"[^\"]*\""), "STRING_LITERAL", true, "^\""),
+                    RegexRule(listOf("^\"[^\"]*\""), "STRING_LITERAL", true, "^\"[^\"]*\$"),
                     RegexRule(listOf("^[0-9]+(\\.[0-9]+)?"), "NUMBER_LITERAL", true, "^[0-9]")
                 ),
                 "identifiers" to listOf(

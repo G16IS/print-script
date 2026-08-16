@@ -1,4 +1,4 @@
-package lexer
+package lexer.tokenization
 
 import printscript.reader.CharPosition
 import printscript.reader.CodeReader

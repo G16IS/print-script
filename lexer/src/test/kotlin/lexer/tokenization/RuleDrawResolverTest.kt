@@ -1,4 +1,4 @@
-package lexer
+package lexer.tokenization
 
 import printscript.RuleDrawResolver
 import printscript.domain.ExactRule
