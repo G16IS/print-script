@@ -4,7 +4,7 @@ import printscript.domain.ExactRule
 import printscript.domain.RegexRule
 import printscript.domain.TokenRule
 
-class RuleEvaluator(val config: Map<String, List<TokenRule>>) {
+class RuleEvaluator(private val config: Map<String, List<TokenRule>>) {
 
     fun evaluate(currentToken: String): List<MatchResult> =
         config.flatMap { (category, rules) ->

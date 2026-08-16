@@ -1,16 +1,17 @@
 package printscript
 
+import printscript.ast.Location
 import printscript.domain.Token
-import printscript.domain.TokenType
 import printscript.reader.CharPosition
 import printscript.reader.CodeReader
-import printscript.readers.IdentifierReader
-import printscript.readers.NumberReader
-import printscript.readers.StringReader
 import java.util.Optional
+import printscript.evaluator.MatchResult
+import printscript.evaluator.MatchType
+import printscript.evaluator.RuleEvaluator
 
-class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry) : Lexer {
+class TokenStream(private val reader: CodeReader, val ruleEvaluator: RuleEvaluator) : Lexer {
     private val buffer = ArrayDeque<Token>()
+    private val lastMatchResults: List<MatchResult>? = null
 
     override fun nextToken(): Token = buffer.removeFirstOrNull() ?: readNextToken()
     override fun peek(offset: Int?): Token {
@@ -21,46 +22,30 @@ class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry) : L
     }
 
     private fun readNextToken(): Token {
-        val first = skipWhitespace()
-        val initialPos: CharPosition = reader.currentPosition()
-        val firstChar: Char =
-            if (first.isPresent) first.get() else return Token(TokenType.EOF, Optional.empty(), initialPos, initialPos)
-
-        return when (firstChar) {
-            in 'a'..'z', in 'A'..'Z' ->
-                IdentifierReader(mapper).read(firstChar, reader)
-
-            in '0'..'9' ->
-                NumberReader().read(firstChar, reader)
-
-            '"', '\'' ->
-                StringReader().read(firstChar, reader)
-
-            '+', '-', '*', '/' ->
-                Token(TokenType.OPERATOR, Optional.of(firstChar.toString()), initialPos, initialPos)
-
-            '=' ->
-                Token(TokenType.ASSIGN, Optional.empty(), initialPos, initialPos)
-
-            '(' ->
-                Token(TokenType.LEFT_PAREN, Optional.empty(), initialPos, initialPos)
-
-            ')' ->
-                Token(TokenType.RIGHT_PAREN, Optional.empty(), initialPos, initialPos)
-
-            ';' ->
-                Token(TokenType.SEMICOLON, Optional.empty(), initialPos, initialPos)
-
-            ',' ->
-                Token(TokenType.COMMA, Optional.empty(), initialPos, initialPos)
-
-            ':' ->
-                Token(TokenType.COLON, Optional.empty(), initialPos, initialPos)
-
-            else ->
-                throw Error("Unexpected character on line ${initialPos.line}")
+        var text: String = ""
+        while (true) {
+            val nextChar = reader.peek()
+            val initialPos = reader.currentPosition()
+            if (nextChar.isEmpty) {
+                if (text.isEmpty()) return Token(
+                    "EOF", Optional.empty(),
+                    Location(initialPos, initialPos)
+                )
+                else throw Error("Unexpected token at: line ${initialPos.col} col ${initialPos.col}")
+            }
+            val matchResults: List<MatchResult> = ruleEvaluator.evaluate(text)
+            if (areAllMatchResultsInvalid(matchResults)) {
+                
+            }
         }
     }
+
+    private fun handleEmptyChar(text: String, location: Location){
+
+    }
+
+    private fun areAllMatchResultsInvalid(matchResults: List<MatchResult>): Boolean =
+        matchResults.none { it.matchType == MatchType.VALID || it.matchType == MatchType.PARTIAL }
 
     private fun skipWhitespace(): Optional<Char> {
         var current = reader.read()
