@@ -9,6 +9,7 @@ import printscript.domain.RegexRule
 import printscript.domain.TokenRule
 import printscript.infrastructure.serializer.config.ExactRuleSerializer
 import printscript.infrastructure.serializer.config.RegexRuleSerializer
+import printscript.reader.LanguageConfigReader
 import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.readText
@@ -21,7 +22,7 @@ import kotlin.io.path.readText
  * val config = LanguageConfigLoader.load(Path.of("language.config.json"))
  * ```
  */
-object LanguageConfigLoader {
+object JSONLanguageConfigReader : LanguageConfigReader {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -33,13 +34,13 @@ object LanguageConfigLoader {
         }
     }
 
-    fun load(path: Path): LanguageConfig =
-        load(path.readText())
+    override fun read(path: Path): LanguageConfig =
+        read(path.readText())
 
-    fun load(input: InputStream): LanguageConfig =
-        load(input.bufferedReader().use { it.readText() })
+    override fun read(input: InputStream): LanguageConfig =
+        read(input.bufferedReader().use { it.readText() })
 
-    fun load(jsonString: String): LanguageConfig {
+    override fun read(jsonString: String): LanguageConfig {
         val config = json.decodeFromString<LanguageConfig>(jsonString)
         validate(config)
         return config
