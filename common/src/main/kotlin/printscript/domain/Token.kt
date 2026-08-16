@@ -1,12 +1,12 @@
 package printscript.domain
 
+import printscript.ast.Location
 import printscript.reader.CharPosition
 import java.util.Optional
 
 data class Token(
-    val type: TokenType,
+    val type: String,
     val value: Optional<String>,
-    val start: CharPosition,
-    val end: CharPosition
+    val location: Location
 )
 
