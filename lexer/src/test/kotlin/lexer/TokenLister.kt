@@ -13,7 +13,7 @@ class TokenLister {
         while (true) {
             val token: Token = tokenStream.nextToken()
             tokenList.add(token)
-            if (token.type == TokenType.EOF) return tokenList.toImmutableList()
+            if (token.type == "EOF") return tokenList.toImmutableList()
         }
     }
 }

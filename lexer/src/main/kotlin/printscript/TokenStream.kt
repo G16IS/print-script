@@ -9,9 +9,12 @@ import printscript.evaluator.MatchResult
 import printscript.evaluator.MatchType
 import printscript.evaluator.RuleEvaluator
 
-class TokenStream(private val reader: CodeReader, val ruleEvaluator: RuleEvaluator) : Lexer {
+class TokenStream(
+    private val reader: CodeReader,
+    val ruleEvaluator: RuleEvaluator,
+    val ruleDrawResolver: RuleDrawResolver
+) : Lexer {
     private val buffer = ArrayDeque<Token>()
-    private val lastMatchResults: List<MatchResult>? = null
 
     override fun nextToken(): Token = buffer.removeFirstOrNull() ?: readNextToken()
     override fun peek(offset: Int?): Token {
@@ -21,27 +24,46 @@ class TokenStream(private val reader: CodeReader, val ruleEvaluator: RuleEvaluat
         return buffer[realOffset]
     }
 
+
     private fun readNextToken(): Token {
-        var text: String = ""
+        val first = skipWhitespace()
+        if (first.isEmpty) {
+            val pos = reader.currentPosition()
+            return Token("EOF", Optional.empty(), Location(pos, pos))
+        }
+
+        val initialPos = reader.currentPosition()
+        var text = first.get().toString()
+        var lastMatchResults = ruleEvaluator.evaluate(text)
+        if (areAllMatchResultsInvalid(lastMatchResults)) {
+            throw Error("Unexpected token at line ${initialPos.line} col ${initialPos.col}")
+        }
+
         while (true) {
             val nextChar = reader.peek()
-            val initialPos = reader.currentPosition()
             if (nextChar.isEmpty) {
-                if (text.isEmpty()) return Token(
-                    "EOF", Optional.empty(),
-                    Location(initialPos, initialPos)
-                )
-                else throw Error("Unexpected token at: line ${initialPos.col} col ${initialPos.col}")
+                return buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
             }
-            val matchResults: List<MatchResult> = ruleEvaluator.evaluate(text)
+
+            val matchResults = ruleEvaluator.evaluate(text + nextChar.get())
             if (areAllMatchResultsInvalid(matchResults)) {
-                
+                return buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
             }
+
+            reader.read()
+            text += nextChar.get()
+            lastMatchResults = matchResults
         }
     }
 
-    private fun handleEmptyChar(text: String, location: Location){
-
+    private fun buildToken(
+        text: String,
+        matchResults: List<MatchResult>,
+        initialPos: CharPosition,
+        finalPos: CharPosition
+    ): Token {
+        val rule = ruleDrawResolver.resolve(matchResults.map { it.tokenRule })
+        return TokenFactory.create(rule, Location(initialPos, finalPos), text)
     }
 
     private fun areAllMatchResultsInvalid(matchResults: List<MatchResult>): Boolean =

@@ -6,10 +6,10 @@ import printscript.domain.TokenRule
 import java.util.Optional
 
 object TokenFactory {
-    fun create(rule: TokenRule, location: Location, value: Optional<String>): Token {
+    fun create(rule: TokenRule, location: Location, value: String): Token {
         return Token(
             type = rule.token,
-            value = if (rule.capture) value else Optional.empty(),
+            value = if (rule.capture) Optional.of(value) else Optional.empty(),
             location = location,
         )
     }
