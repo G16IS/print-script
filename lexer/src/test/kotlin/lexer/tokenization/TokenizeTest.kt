@@ -40,6 +40,14 @@ class TokenizeTest {
         assertEquals(expectedTokens, tokenLister.listTokens(lexer))
     }
 
+    @Test(expected = IllegalStateException::class)
+    fun tokenizeUnterminatedStringThrowsException() {
+        val statement = "\"hello"
+        val lexer: Lexer = MockLexerFactory.create(statement)
+        val tokenLister = TokenLister()
+        tokenLister.listTokens(lexer)
+    }
+
     private fun expectedTokens1(): List<Token> {
         return listOf(
             Token("CALL", Optional.of("println"), Location(CharPosition(0, 1), CharPosition(0, 7))),
@@ -54,4 +62,5 @@ class TokenizeTest {
             Token("EOF", Optional.empty(), Location(CharPosition(0, 31), CharPosition(0, 31))),
         )
     }
+
 }
