@@ -29,7 +29,7 @@ class TokenStream(
         val first = skipWhitespace()
         if (first.isEmpty) {
             val pos = reader.currentPosition()
-            return Token("EOF", Optional.empty(), Location(pos, pos))
+            return Token("EOF", Optional.empty(), Location(pos, pos)) //cambiar por TerminalToken
         }
 
         val initialPos = reader.currentPosition()
@@ -42,7 +42,12 @@ class TokenStream(
         while (true) {
             val nextChar = reader.peek()
             if (nextChar.isEmpty) {
-                return buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
+                if (lastMatchResults.any { it.matchType == MatchType.VALID }) {
+                    return buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
+                }
+                throw IllegalStateException(
+                    "Unexpected end of file at line ${reader.currentPosition().line} col ${reader.currentPosition().col} while reading token '$text'"
+                )
             }
 
             val matchResults = ruleEvaluator.evaluate(text + nextChar.get())
@@ -68,9 +73,6 @@ class TokenStream(
             .map { it.tokenRule })
         return TokenFactory.create(rule, Location(initialPos, finalPos), text)
     }
-
-    private fun containsPartialMatch(matchResults: List<MatchResult>): Boolean =
-        matchResults.any {it.matchType == MatchType.PARTIAL }
 
     private fun areAllMatchResultsInvalid(matchResults: List<MatchResult>): Boolean =
         matchResults.none { it.matchType == MatchType.VALID || it.matchType == MatchType.PARTIAL }
