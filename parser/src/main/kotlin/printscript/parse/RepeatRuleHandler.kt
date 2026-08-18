@@ -21,7 +21,10 @@ class RepeatRuleHandler : RuleHandler {
     private fun collect(item: String, ctx: ParseContext): List<SyntaxNode> {
         val items = mutableListOf<SyntaxNode>()
         while (true) {
+            val before = ctx.tokens.checkpoint()
             val next = ctx.tryEvaluate(item) ?: break
+            val after = ctx.tokens.checkpoint()
+            check(after != before) { "Repeat of '$item' matched without consuming tokens" }
             items += next
         }
         return items
