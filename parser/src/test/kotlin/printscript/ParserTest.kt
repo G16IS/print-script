@@ -10,11 +10,9 @@ import printscript.error.ParseException
 import printscript.support.MockLexer
 import printscript.support.PrintScriptGrammar
 import printscript.support.Tokens
-import printscript.support.child
 import printscript.support.lhs
 import printscript.support.op
 import printscript.support.rhs
-import printscript.support.value
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
 
@@ -138,7 +136,7 @@ class ParserTest {
             Tokens.semicolon()
         )
         assertEquals("number", stmt.child("TYPE").value())
-        assertEquals("string", leafNamed(stmt.child("expression"), "string").name)
+        assertEquals("string", stmt.child("expression").find("string").name)
     }
 
     @Test
@@ -245,18 +243,11 @@ class ParserTest {
     private fun mockLexer(vararg tokens: Token) = MockLexer(tokens.toList())
 
     private fun callOf(stmt: SyntaxNode): SyntaxNode =
-        leafNamed(stmt.child("expression"), "call")
+        stmt.child("expression").find("call")
 
     private fun numberValue(node: SyntaxNode): String =
-        leafNamed(node, "number").value()
+        node.find("number").value()
 
     private fun identifierValue(node: SyntaxNode): String =
-        leafNamed(node, "identifier").value()
-
-    private fun leafNamed(node: SyntaxNode, name: String): SyntaxNode {
-        if (node.name == name) return node
-        return node.children.firstNotNullOf { child ->
-            runCatching { leafNamed(child, name) }.getOrNull()
-        }
-    }
+        node.find("identifier").value()
 }

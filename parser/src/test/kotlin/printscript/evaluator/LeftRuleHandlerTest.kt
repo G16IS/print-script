@@ -14,7 +14,6 @@ import printscript.support.op
 import printscript.support.parse
 import printscript.support.rhs
 import printscript.support.source
-import printscript.support.value
 
 class LeftRuleHandlerTest {
     private val grammar = grammar(

@@ -15,7 +15,6 @@ import printscript.support.parse
 import printscript.support.ref
 import printscript.support.seq
 import printscript.support.source
-import printscript.support.value
 
 class SeqRuleHandlerTest {
     @Test
