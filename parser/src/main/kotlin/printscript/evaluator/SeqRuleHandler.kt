@@ -4,11 +4,11 @@ import printscript.ast.Location
 import printscript.error.ParseErrors
 import printscript.evaluator.step.StepEvaluator
 import printscript.evaluator.step.StepOutcome
-import printscript.grammar.GrammarRule
-import printscript.grammar.RuleRefStep
-import printscript.grammar.SeqRule
-import printscript.grammar.SeqStep
-import printscript.grammar.TokenStep
+import printscript.domain.GrammarRule
+import printscript.domain.RuleRefStep
+import printscript.domain.SeqRule
+import printscript.domain.SeqStep
+import printscript.domain.TokenStep
 import printscript.syntax.SyntaxNode
 
 class SeqRuleHandler(

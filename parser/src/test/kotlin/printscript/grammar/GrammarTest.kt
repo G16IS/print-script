@@ -1,4 +1,4 @@
-package printscript.grammar
+package printscript.domain
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

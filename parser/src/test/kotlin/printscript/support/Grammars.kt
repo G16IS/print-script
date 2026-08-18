@@ -1,16 +1,16 @@
 package printscript.support
 
-import printscript.grammar.AtomRule
-import printscript.grammar.Grammar
-import printscript.grammar.GrammarRule
-import printscript.grammar.LeftRule
-import printscript.grammar.OperatorSpec
-import printscript.grammar.OrRule
-import printscript.grammar.RepeatRule
-import printscript.grammar.RuleRefStep
-import printscript.grammar.SeqRule
-import printscript.grammar.SeqStep
-import printscript.grammar.TokenStep
+import printscript.domain.AtomRule
+import printscript.domain.Grammar
+import printscript.domain.GrammarRule
+import printscript.domain.LeftRule
+import printscript.domain.OperatorSpec
+import printscript.domain.OrRule
+import printscript.domain.RepeatRule
+import printscript.domain.RuleRefStep
+import printscript.domain.SeqRule
+import printscript.domain.SeqStep
+import printscript.domain.TokenStep
 
 fun grammar(start: String, vararg rules: Pair<String, GrammarRule>): Grammar =
     Grammar(start, rules.toMap())

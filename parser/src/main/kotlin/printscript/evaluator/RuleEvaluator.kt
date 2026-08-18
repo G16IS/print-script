@@ -1,7 +1,7 @@
 package printscript.evaluator
 
-import printscript.grammar.Grammar
-import printscript.grammar.GrammarRule
+import printscript.domain.Grammar
+import printscript.domain.GrammarRule
 import printscript.syntax.SyntaxNode
 import printscript.token.TokenSource
 

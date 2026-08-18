@@ -1,8 +1,8 @@
 package printscript.evaluator
 
 import printscript.ast.Location
-import printscript.grammar.GrammarRule
-import printscript.grammar.RepeatRule
+import printscript.domain.GrammarRule
+import printscript.domain.RepeatRule
 import printscript.syntax.SyntaxNode
 import printscript.util.Locations
 

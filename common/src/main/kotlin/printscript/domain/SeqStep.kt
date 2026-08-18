@@ -1,4 +1,4 @@
-package printscript.grammar
+package printscript.domain
 
 interface SeqStep {
     fun ruleName(): String? = null

@@ -2,7 +2,7 @@ package printscript.support
 
 import printscript.evaluator.RuleEvaluator
 import printscript.evaluator.RuleHandlers
-import printscript.grammar.Grammar
+import printscript.domain.Grammar
 import printscript.syntax.SyntaxNode
 import printscript.token.LexerTokenSource
 import printscript.token.TokenSource

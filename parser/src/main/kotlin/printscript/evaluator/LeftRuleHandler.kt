@@ -2,9 +2,9 @@ package printscript.evaluator
 
 import printscript.domain.Token
 import printscript.error.ParseErrors
-import printscript.grammar.GrammarRule
-import printscript.grammar.LeftRule
-import printscript.grammar.OperatorSpec
+import printscript.domain.GrammarRule
+import printscript.domain.LeftRule
+import printscript.domain.OperatorSpec
 import printscript.syntax.SyntaxNode
 import printscript.util.binary
 import printscript.util.wrap

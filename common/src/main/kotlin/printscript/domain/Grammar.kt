@@ -1,4 +1,4 @@
-package printscript.grammar
+package printscript.domain
 
 data class Grammar(
     val start: String,

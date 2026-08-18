@@ -1,6 +1,6 @@
 package printscript.evaluator
 
-import printscript.grammar.GrammarRule
+import printscript.domain.GrammarRule
 import printscript.syntax.SyntaxNode
 
 interface RuleHandler {

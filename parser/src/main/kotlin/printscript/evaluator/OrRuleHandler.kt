@@ -1,7 +1,7 @@
 package printscript.evaluator
 
-import printscript.grammar.GrammarRule
-import printscript.grammar.OrRule
+import printscript.domain.GrammarRule
+import printscript.domain.OrRule
 import printscript.syntax.SyntaxNode
 
 class OrRuleHandler : RuleHandler {

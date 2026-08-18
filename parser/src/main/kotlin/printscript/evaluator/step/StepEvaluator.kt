@@ -2,9 +2,9 @@ package printscript.evaluator.step
 
 import printscript.domain.Token
 import printscript.evaluator.ParseContext
-import printscript.grammar.RuleRefStep
-import printscript.grammar.SeqStep
-import printscript.grammar.TokenStep
+import printscript.domain.RuleRefStep
+import printscript.domain.SeqStep
+import printscript.domain.TokenStep
 import printscript.util.tokenLeaf
 
 class StepEvaluator {

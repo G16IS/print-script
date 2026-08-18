@@ -1,4 +1,4 @@
-package printscript.grammar
+package printscript.domain
 
 interface GrammarRule {
     fun references(): List<String>

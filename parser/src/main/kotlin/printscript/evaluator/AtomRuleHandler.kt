@@ -1,7 +1,7 @@
 package printscript.evaluator
 
-import printscript.grammar.AtomRule
-import printscript.grammar.GrammarRule
+import printscript.domain.AtomRule
+import printscript.domain.GrammarRule
 import printscript.syntax.SyntaxNode
 
 class AtomRuleHandler : RuleHandler {
