@@ -1,15 +1,19 @@
 package printscript
 
+import printscript.ast.Location
 import printscript.domain.Token
-import printscript.domain.TokenType
 import printscript.reader.CharPosition
 import printscript.reader.CodeReader
-import printscript.readers.IdentifierReader
-import printscript.readers.NumberReader
-import printscript.readers.StringReader
 import java.util.Optional
+import printscript.evaluator.MatchResult
+import printscript.evaluator.MatchType
+import printscript.evaluator.RuleEvaluator
 
-class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry) : Lexer {
+class TokenStream(
+    private val reader: CodeReader,
+    val ruleEvaluator: RuleEvaluator,
+    val ruleDrawResolver: RuleDrawResolver
+) : Lexer {
     private val buffer = ArrayDeque<Token>()
 
     override fun nextToken(): Token = buffer.removeFirstOrNull() ?: readNextToken()
@@ -20,47 +24,58 @@ class TokenStream(private val reader: CodeReader, val mapper: TokenRegistry) : L
         return buffer[realOffset]
     }
 
+
     private fun readNextToken(): Token {
         val first = skipWhitespace()
-        val initialPos: CharPosition = reader.currentPosition()
-        val firstChar: Char =
-            if (first.isPresent) first.get() else return Token(TokenType.EOF, Optional.empty(), initialPos, initialPos)
+        if (first.isEmpty) {
+            val pos = reader.currentPosition()
+            return Token("EOF", Optional.empty(), Location(pos, pos)) //cambiar por TerminalToken
+        }
 
-        return when (firstChar) {
-            in 'a'..'z', in 'A'..'Z' ->
-                IdentifierReader(mapper).read(firstChar, reader)
+        val initialPos = reader.currentPosition()
+        var text = first.get().toString()
+        var lastMatchResults = ruleEvaluator.evaluate(text)
+        if (areAllMatchResultsInvalid(lastMatchResults)) {
+            throw Error("Unexpected token at line ${initialPos.line} col ${initialPos.col}")
+        }
 
-            in '0'..'9' ->
-                NumberReader().read(firstChar, reader)
+        while (true) {
+            val nextChar = reader.peek()
+            if (nextChar.isEmpty) {
+                if (lastMatchResults.any { it.matchType == MatchType.VALID }) {
+                    return buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
+                }
+                throw IllegalStateException(
+                    "Unexpected end of file at line ${reader.currentPosition().line} col ${reader.currentPosition().col} while reading token '$text'"
+                )
+            }
 
-            '"', '\'' ->
-                StringReader().read(firstChar, reader)
+            val matchResults = ruleEvaluator.evaluate(text + nextChar.get())
+            if (areAllMatchResultsInvalid(matchResults)) {
+                
+                return buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
+            }
 
-            '+', '-', '*', '/' ->
-                Token(TokenType.OPERATOR, Optional.of(firstChar.toString()), initialPos, initialPos)
-
-            '=' ->
-                Token(TokenType.ASSIGN, Optional.empty(), initialPos, initialPos)
-
-            '(' ->
-                Token(TokenType.LEFT_PAREN, Optional.empty(), initialPos, initialPos)
-
-            ')' ->
-                Token(TokenType.RIGHT_PAREN, Optional.empty(), initialPos, initialPos)
-
-            ';' ->
-                Token(TokenType.SEMICOLON, Optional.empty(), initialPos, initialPos)
-
-            ',' ->
-                Token(TokenType.COMMA, Optional.empty(), initialPos, initialPos)
-
-            ':' ->
-                Token(TokenType.COLON, Optional.empty(), initialPos, initialPos)
-
-            else ->
-                throw Error("Unexpected character on line ${initialPos.line}")
+            reader.read()
+            text += nextChar.get()
+            lastMatchResults = matchResults
         }
     }
+
+    private fun buildToken(
+        text: String,
+        matchResults: List<MatchResult>,
+        initialPos: CharPosition,
+        finalPos: CharPosition
+    ): Token {
+        val rule = ruleDrawResolver.resolve(matchResults
+            .filter { it.matchType != MatchType.INVALID }
+            .map { it.tokenRule })
+        return TokenFactory.create(rule, Location(initialPos, finalPos), text)
+    }
+
+    private fun areAllMatchResultsInvalid(matchResults: List<MatchResult>): Boolean =
+        matchResults.none { it.matchType == MatchType.VALID || it.matchType == MatchType.PARTIAL }
 
     private fun skipWhitespace(): Optional<Char> {
         var current = reader.read()
