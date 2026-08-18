@@ -17,7 +17,7 @@ data class SyntaxNode(
         children.firstOrNull { it.name == name }
 
     fun child(name: String): SyntaxNode =
-        childOrNull(name) ?: error("No child named '$name' in '$this.name'")
+        childOrNull(name) ?: error("No child named '$name' in '${this.name}'")
 
     fun findOrNull(name: String): SyntaxNode? {
         if (this.name == name) return this
@@ -25,7 +25,7 @@ data class SyntaxNode(
     }
 
     fun find(name: String): SyntaxNode =
-        findOrNull(name) ?: error("No descendant named '$name' in '$this.name'")
+        findOrNull(name) ?: error("No descendant named '$name' in '${this.name}'")
 
     fun value(): String =
         token?.value?.orElse(null) ?: error("Node '$name' has no token value")
