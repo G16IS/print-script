@@ -1,4 +1,4 @@
-package printscript.evaluator
+package printscript.parse
 
 import printscript.domain.Grammar
 import printscript.domain.GrammarRule

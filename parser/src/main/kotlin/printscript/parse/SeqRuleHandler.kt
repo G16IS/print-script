@@ -1,9 +1,9 @@
-package printscript.evaluator
+package printscript.parse
 
 import printscript.ast.Location
 import printscript.error.ParseErrors
-import printscript.evaluator.step.StepEvaluator
-import printscript.evaluator.step.StepOutcome
+import printscript.parse.step.StepEvaluator
+import printscript.parse.step.StepOutcome
 import printscript.domain.GrammarRule
 import printscript.domain.RuleRefStep
 import printscript.domain.SeqRule

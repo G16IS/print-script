@@ -1,7 +1,7 @@
 package printscript
 
 import printscript.error.ParseErrors
-import printscript.evaluator.RuleEvaluator
+import printscript.parse.RuleEvaluator
 import printscript.domain.Grammar
 import printscript.syntax.SyntaxProgram
 import printscript.token.LexerTokenSource

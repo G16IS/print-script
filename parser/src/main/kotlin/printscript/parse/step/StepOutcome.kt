@@ -1,4 +1,4 @@
-package printscript.evaluator.step
+package printscript.parse.step
 
 import printscript.ast.Location
 import printscript.syntax.SyntaxNode

@@ -1,7 +1,7 @@
 package printscript.support
 
-import printscript.evaluator.RuleEvaluator
-import printscript.evaluator.RuleHandlers
+import printscript.parse.RuleEvaluator
+import printscript.parse.RuleHandlers
 import printscript.domain.Grammar
 import printscript.syntax.SyntaxNode
 import printscript.token.LexerTokenSource

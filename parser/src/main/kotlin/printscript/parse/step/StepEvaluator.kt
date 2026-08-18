@@ -1,7 +1,7 @@
-package printscript.evaluator.step
+package printscript.parse.step
 
 import printscript.domain.Token
-import printscript.evaluator.ParseContext
+import printscript.parse.ParseContext
 import printscript.domain.RuleRefStep
 import printscript.domain.SeqStep
 import printscript.domain.TokenStep
