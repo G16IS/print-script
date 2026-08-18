@@ -65,6 +65,12 @@
         "matcher": [","],
         "token": "COMMA",
         "capture": false
+      },
+      {
+        "type": "exact",
+        "matcher": ["+", "-", "*", "/"],
+        "token": "OPERATOR",
+        "capture": true
       }
     ],
     "literals": [
