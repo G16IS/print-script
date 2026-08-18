@@ -1,0 +1,52 @@
+package printscript.infrastructure.reader
+
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import printscript.domain.AtomRule
+import printscript.domain.Grammar
+import printscript.domain.GrammarRule
+import printscript.domain.LeftRule
+import printscript.domain.OrRule
+import printscript.domain.RepeatRule
+import printscript.domain.SeqRule
+import printscript.infrastructure.serializer.config.AtomRuleSerializer
+import printscript.infrastructure.serializer.config.GrammarSerializer
+import printscript.infrastructure.serializer.config.LeftRuleSerializer
+import printscript.infrastructure.serializer.config.OrRuleSerializer
+import printscript.infrastructure.serializer.config.RepeatRuleSerializer
+import printscript.infrastructure.serializer.config.SeqRuleSerializer
+import printscript.reader.GrammarConfigReader
+import java.io.InputStream
+import java.nio.file.Path
+import kotlin.io.path.readText
+
+/**
+ * Carga y deserializa archivos `grammar.config.json`.
+ */
+object JSONGrammarConfigReader : GrammarConfigReader {
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        serializersModule = grammarModule()
+    }
+
+    private fun grammarModule() = SerializersModule {
+        polymorphic(GrammarRule::class) {
+            subclass(OrRule::class, OrRuleSerializer)
+            subclass(AtomRule::class, AtomRuleSerializer)
+            subclass(SeqRule::class, SeqRuleSerializer)
+            subclass(LeftRule::class, LeftRuleSerializer)
+            subclass(RepeatRule::class, RepeatRuleSerializer)
+        }
+    }
+
+    override fun read(path: Path): Grammar =
+        read(path.readText())
+
+    override fun read(input: InputStream): Grammar =
+        read(input.bufferedReader().use { it.readText() })
+
+    override fun read(jsonString: String): Grammar =
+        json.decodeFromString(GrammarSerializer, jsonString)
+}

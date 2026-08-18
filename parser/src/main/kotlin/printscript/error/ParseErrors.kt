@@ -1,20 +1,17 @@
 package printscript.error
 
-
 import printscript.domain.Token
-import printscript.util.Locations
 
 object ParseErrors {
-
-    fun missingValue(token: Token, kind: String): ParseException =
-        ParseException("$kind missing value", Locations.of(token))
-
     fun unexpectedToken(token: Token, expected: String): ParseException =
         ParseException(
-            "Expected $expected, found ${token.type.name}",
-            Locations.of(token)
+            "Expected $expected, found ${token.type}",
+            token.location
         )
 
-    fun expected(token: Token, message: String): ParseException =
-        ParseException(message, Locations.of(token))
+    fun unexpectedStart(token: Token): ParseException =
+        ParseException(
+            "Unexpected token ${token.type}; expected start of statement",
+            token.location
+        )
 }

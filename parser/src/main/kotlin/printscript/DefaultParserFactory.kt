@@ -1,20 +1,10 @@
 package printscript
 
-import printscript.ast.Location
-import printscript.ast.Program
-import printscript.expression.PrecedenceExpressionParser
-import printscript.statement.PrintStatementParser
-import printscript.statement.VariableStatementParser
+import printscript.parse.RuleEvaluator
+import printscript.parse.RuleHandlers
+import printscript.domain.Grammar
 
-/**
- * Wires the default PrintScript v1 statement strategies and expression parser.
- */
 object DefaultParserFactory {
-    fun create(): Parser = DefaultParser(
-        statementParsers = listOf(
-            VariableStatementParser(),
-            PrintStatementParser()
-        ),
-        expressionParser = PrecedenceExpressionParser()
-    )
+    fun create(grammar: Grammar): Parser =
+        DefaultParser(grammar, RuleEvaluator(grammar, RuleHandlers.defaults()))
 }
