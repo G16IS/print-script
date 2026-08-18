@@ -1,25 +1,17 @@
 package printscript.support
 
-import printscript.domain.Token
-import printscript.domain.TokenType
-import printscript.reader.CharPosition
 import printscript.Lexer
+import printscript.ast.Location
+import printscript.domain.Token
 import java.util.Optional
 
-/**
- * Test double for [Lexer]. Yields tokens from a fixed list in order.
- * Appends a synthetic EOF if the list does not already end with one.
- * Once positioned on EOF, [nextToken] and [peek] remain stable.
- */
 class MockLexer(tokens: List<Token>) : Lexer {
     private val tokens: List<Token> = ensureEof(tokens)
     private var index: Int = 0
 
     override fun nextToken(): Token {
         val token = tokens[index]
-        if (index < tokens.lastIndex) {
-            index++
-        }
+        if (index < tokens.lastIndex) index += 1
         return token
     }
 
@@ -32,11 +24,9 @@ class MockLexer(tokens: List<Token>) : Lexer {
         fun of(vararg tokens: Token): MockLexer = MockLexer(tokens.toList())
 
         private fun ensureEof(tokens: List<Token>): List<Token> {
-            if (tokens.isNotEmpty() && tokens.last().type == TokenType.EOF) {
-                return tokens
-            }
-            val pos = tokens.lastOrNull()?.end ?: CharPosition(1, 1)
-            return tokens + Token(TokenType.EOF, Optional.empty(), pos, pos)
+            if (tokens.isNotEmpty() && tokens.last().type == "EOF") return tokens
+            val location = tokens.lastOrNull()?.location ?: Location.empty()
+            return tokens + Token("EOF", Optional.empty(), location)
         }
     }
 }

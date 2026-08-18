@@ -1,43 +1,33 @@
 package printscript
 
-import printscript.ast.Program
-import printscript.ast.Statement
-import printscript.error.ParseException
-import printscript.expression.ExpressionParser
-import printscript.statement.StatementParser
+import printscript.error.ParseErrors
+import printscript.evaluator.RuleEvaluator
+import printscript.grammar.Grammar
+import printscript.syntax.SyntaxProgram
 import printscript.token.LexerTokenSource
 import printscript.token.TokenSource
-import printscript.util.Locations
 
-/**
- * Recursive-descent program parser. Delegates each statement to registered
- * [printscript.statement.StatementParser] strategies and expressions to [ExpressionParser].
- */
 class DefaultParser(
-    private val statementParsers: List<StatementParser>,
-    private val expressionParser: ExpressionParser
+    private val grammar: Grammar,
+    private val evaluator: RuleEvaluator
 ) : Parser {
-    override fun parseNextStatement(tokenStream: Lexer, program: Program): Program {
-        val source = LexerTokenSource(tokenStream)
+    private var boundLexer: Lexer? = null
+    private var source: TokenSource? = null
 
-        val statement: Statement = parseStatement(source)
-        val location = Locations.between(program.location, statement.location)
-
-        return program.withStatement(statement).copy(location = location)
+    override fun parseNextStatement(
+        tokenStream: Lexer,
+        program: SyntaxProgram
+    ): SyntaxProgram {
+        val tokens = bind(tokenStream)
+        val node = evaluator.evaluate(grammar.start, tokens)
+            ?: throw ParseErrors.unexpectedStart(tokens.peek())
+        return program.withStatement(node)
     }
 
-    private fun parseStatement(source: TokenSource): Statement {
-        for (parser in statementParsers) {
-            val statement = parser
-                .parse(source, expressionParser) ?: continue
-
-            return statement
-        }
-
-        val token = source.peek()
-        throw ParseException(
-            "Unexpected token ${token.type.name}; expected start of statement",
-            Locations.of(token)
-        )
+    private fun bind(lexer: Lexer): TokenSource {
+        if (boundLexer === lexer && source != null) return source!!
+        boundLexer = lexer
+        source = LexerTokenSource(lexer)
+        return source!!
     }
 }

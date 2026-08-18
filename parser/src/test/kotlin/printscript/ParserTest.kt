@@ -5,203 +5,258 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import printscript.ast.BinaryExpression
-import printscript.ast.CallExpression
-import printscript.ast.ExpressionStatement
-import printscript.ast.Identifier
-import printscript.ast.NumberLiteral
-import printscript.ast.Program
-import printscript.ast.StringLiteral
-import printscript.ast.VariableStatement
-import printscript.ast.VariableType
 import printscript.domain.Token
 import printscript.error.ParseException
 import printscript.support.MockLexer
-import printscript.support.TokenFactory
+import printscript.support.PrintScriptGrammar
+import printscript.support.Tokens
+import printscript.support.child
+import printscript.support.lhs
+import printscript.support.op
+import printscript.support.rhs
+import printscript.support.value
+import printscript.syntax.SyntaxNode
+import printscript.syntax.SyntaxProgram
 
 class ParserTest {
     private lateinit var parser: Parser
 
     @BeforeEach
     fun setUp() {
-        TokenFactory.reset()
-        parser = DefaultParserFactory.create()
+        Tokens.reset()
+        parser = DefaultParserFactory.create(PrintScriptGrammar)
     }
 
     @Test
     fun `empty program is returned when no statements are parsed`() {
-        val program = Program.empty()
-        assertTrue(program.statements.isEmpty())
+        assertTrue(SyntaxProgram.empty().statements.isEmpty())
     }
 
     @Test
     fun `rejects stream that only has EOF`() {
-        val lexer = MockLexer(TokenFactory.program())
         assertThrows<ParseException> {
-            parser.parseNextStatement(lexer, Program.empty())
+            parser.parseNextStatement(MockLexer(listOf(Tokens.eof())), SyntaxProgram.empty())
         }
     }
 
     @Test
     fun `parses simple variable declaration`() {
-        // let x: number = 5;
-        val lexer = mockLexer(
-            TokenFactory.let(),
-            TokenFactory.id("x"),
-            TokenFactory.colon(),
-            TokenFactory.type("number"),
-            TokenFactory.assign(),
-            TokenFactory.number("5"),
-            TokenFactory.semicolon()
+        val stmt = parseOne(
+            Tokens.let(),
+            Tokens.id("x"),
+            Tokens.colon(),
+            Tokens.type("number"),
+            Tokens.assign(),
+            Tokens.number("5"),
+            Tokens.semicolon()
         )
-        val program = parser.parseNextStatement(lexer, Program.empty())
-        assertEquals(1, program.statements.size)
-        val stmt = program.statements[0] as VariableStatement
-        assertEquals("x", stmt.declaration.id.name)
-        assertEquals(VariableType.NUMBER, stmt.declaration.typeAnnotation)
-        assertEquals(5.0, (stmt.declaration.initializer as NumberLiteral).value)
+        assertEquals("variable", stmt.name)
+        assertEquals("x", stmt.child("ID").value())
+        assertEquals("number", stmt.child("TYPE").value())
+        assertEquals("5", numberValue(stmt.child("expression")))
     }
 
     @Test
     fun `parses variable declaration with binary expression`() {
-        // let x: number = 1 + 2;
-        val lexer = mockLexer(
-            TokenFactory.let(),
-            TokenFactory.id("x"),
-            TokenFactory.colon(),
-            TokenFactory.type("number"),
-            TokenFactory.assign(),
-            TokenFactory.number("1"),
-            TokenFactory.op("+"),
-            TokenFactory.number("2"),
-            TokenFactory.semicolon()
+        val stmt = parseOne(
+            Tokens.let(),
+            Tokens.id("x"),
+            Tokens.colon(),
+            Tokens.type("number"),
+            Tokens.assign(),
+            Tokens.number("1"),
+            Tokens.op("+"),
+            Tokens.number("2"),
+            Tokens.semicolon()
         )
-        val program = parser.parseNextStatement(lexer, Program.empty())
-        val stmt = program.statements[0] as VariableStatement
-        val init = stmt.declaration.initializer as BinaryExpression
-        assertEquals("+", init.operation)
-        assertEquals(1.0, (init.left as NumberLiteral).value)
-        assertEquals(2.0, (init.right as NumberLiteral).value)
+        val expr = stmt.child("expression")
+        assertEquals("+", expr.op())
+        assertEquals("1", numberValue(expr.lhs()))
+        assertEquals("2", numberValue(expr.rhs()))
     }
 
     @Test
     fun `parses println with identifier`() {
-        // println(x);
-        val lexer = mockLexer(
-            TokenFactory.print(),
-            TokenFactory.lparen(),
-            TokenFactory.id("x"),
-            TokenFactory.rparen(),
-            TokenFactory.semicolon()
+        val stmt = parseOne(
+            Tokens.print(),
+            Tokens.lparen(),
+            Tokens.id("x"),
+            Tokens.rparen(),
+            Tokens.semicolon()
         )
-        val program = parser.parseNextStatement(lexer, Program.empty())
-        val stmt = program.statements[0] as ExpressionStatement
-        val call = stmt.expression as CallExpression
-        assertEquals("println", call.callee)
-        assertEquals(1, call.args.size)
-        assertEquals("x", (call.args[0] as Identifier).name)
+        val call = callOf(stmt)
+        assertEquals("println", call.child("CALL").value())
+        assertEquals("x", identifierValue(call.child("expression")))
     }
 
     @Test
     fun `parses println with expression`() {
-        // println(1 + 2);
-        val lexer = mockLexer(
-            TokenFactory.print(),
-            TokenFactory.lparen(),
-            TokenFactory.number("1"),
-            TokenFactory.op("+"),
-            TokenFactory.number("2"),
-            TokenFactory.rparen(),
-            TokenFactory.semicolon()
+        val stmt = parseOne(
+            Tokens.print(),
+            Tokens.lparen(),
+            Tokens.number("1"),
+            Tokens.op("+"),
+            Tokens.number("2"),
+            Tokens.rparen(),
+            Tokens.semicolon()
         )
-        val program = parser.parseNextStatement(lexer, Program.empty())
-        val call = (program.statements[0] as ExpressionStatement).expression as CallExpression
-        val arg = call.args[0] as BinaryExpression
-        assertEquals("+", arg.operation)
+        val arg = callOf(stmt).child("expression")
+        assertEquals("+", arg.op())
     }
 
     @Test
-    fun `parses program with let and println via successive parseNextStatement`() {
-        // let x: number = 10; println(x);
+    fun `parses successive let and println statements`() {
         val lexer = mockLexer(
-            TokenFactory.let(),
-            TokenFactory.id("x"),
-            TokenFactory.colon(),
-            TokenFactory.type("number"),
-            TokenFactory.assign(),
-            TokenFactory.number("10"),
-            TokenFactory.semicolon(),
-            TokenFactory.print(),
-            TokenFactory.lparen(),
-            TokenFactory.id("x"),
-            TokenFactory.rparen(),
-            TokenFactory.semicolon()
+            Tokens.let(),
+            Tokens.id("x"),
+            Tokens.colon(),
+            Tokens.type("number"),
+            Tokens.assign(),
+            Tokens.number("10"),
+            Tokens.semicolon(),
+            Tokens.print(),
+            Tokens.lparen(),
+            Tokens.id("x"),
+            Tokens.rparen(),
+            Tokens.semicolon()
         )
-        var program = Program.empty()
+        var program = SyntaxProgram.empty()
         program = parser.parseNextStatement(lexer, program)
         program = parser.parseNextStatement(lexer, program)
-        assertEquals(2, program.statements.size)
-        assertTrue(program.statements[0] is VariableStatement)
-        assertTrue(program.statements[1] is ExpressionStatement)
+        assertEquals(listOf("variable", "expression-stmt"), program.statements.map { it.name })
     }
 
     @Test
     fun `does not reject semantic type mismatch`() {
-        // let x: number = "hola";  — syntactically valid
-        val lexer = mockLexer(
-            TokenFactory.let(),
-            TokenFactory.id("x"),
-            TokenFactory.colon(),
-            TokenFactory.type("number"),
-            TokenFactory.assign(),
-            TokenFactory.string("hola"),
-            TokenFactory.semicolon()
+        val stmt = parseOne(
+            Tokens.let(),
+            Tokens.id("x"),
+            Tokens.colon(),
+            Tokens.type("number"),
+            Tokens.assign(),
+            Tokens.string("hola"),
+            Tokens.semicolon()
         )
-        val program = parser.parseNextStatement(lexer, Program.empty())
-        val stmt = program.statements[0] as VariableStatement
-        assertEquals(VariableType.NUMBER, stmt.declaration.typeAnnotation)
-        assertTrue(stmt.declaration.initializer is StringLiteral)
+        assertEquals("number", stmt.child("TYPE").value())
+        assertEquals("string", leafNamed(stmt.child("expression"), "string").name)
+    }
+
+    @Test
+    fun `parses a bare expression statement`() {
+        val stmt = parseOne(
+            Tokens.number("1"),
+            Tokens.op("+"),
+            Tokens.number("2"),
+            Tokens.semicolon()
+        )
+        assertEquals("expression-stmt", stmt.name)
+        assertEquals("+", stmt.child("expression").op())
     }
 
     @Test
     fun `rejects missing colon in declaration`() {
-        val lexer = mockLexer(
-            TokenFactory.let(),
-            TokenFactory.id("x"),
-            TokenFactory.type("number"),
-            TokenFactory.assign(),
-            TokenFactory.number("1"),
-            TokenFactory.semicolon()
-        )
         assertThrows<ParseException> {
-            parser.parseNextStatement(lexer, Program.empty())
+            parseOne(
+                Tokens.let(),
+                Tokens.id("x"),
+                Tokens.type("number"),
+                Tokens.assign(),
+                Tokens.number("1"),
+                Tokens.semicolon()
+            )
         }
     }
 
     @Test
     fun `rejects missing semicolon after println`() {
-        val lexer = mockLexer(
-            TokenFactory.print(),
-            TokenFactory.lparen(),
-            TokenFactory.id("x"),
-            TokenFactory.rparen()
-        )
         assertThrows<ParseException> {
-            parser.parseNextStatement(lexer, Program.empty())
+            parseOne(
+                Tokens.print(),
+                Tokens.lparen(),
+                Tokens.id("x"),
+                Tokens.rparen()
+            )
         }
     }
 
     @Test
-    fun `rejects unexpected token at statement start`() {
-        val lexer = mockLexer(
-            TokenFactory.number("1"),
-            TokenFactory.semicolon()
-        )
+    fun `rejects unexpected token at the start of a statement`() {
         assertThrows<ParseException> {
-            parser.parseNextStatement(lexer, Program.empty())
+            parseOne(Tokens.colon())
         }
     }
 
-    private fun mockLexer(vararg tokens: Token): MockLexer =
-        MockLexer(TokenFactory.program(*tokens))
+    @Test
+    fun `respects multiplication over addition precedence`() {
+        val expr = parseOne(
+            Tokens.number("1"),
+            Tokens.op("+"),
+            Tokens.number("2"),
+            Tokens.op("*"),
+            Tokens.number("3"),
+            Tokens.semicolon()
+        ).child("expression")
+        assertEquals("+", expr.op())
+        assertEquals("1", numberValue(expr.lhs()))
+        assertEquals("*", expr.rhs().op())
+        assertEquals("2", numberValue(expr.rhs().lhs()))
+        assertEquals("3", numberValue(expr.rhs().rhs()))
+    }
+
+    @Test
+    fun `parentheses override precedence`() {
+        val expr = parseOne(
+            Tokens.lparen(),
+            Tokens.number("1"),
+            Tokens.op("+"),
+            Tokens.number("2"),
+            Tokens.rparen(),
+            Tokens.op("*"),
+            Tokens.number("3"),
+            Tokens.semicolon()
+        ).child("expression")
+        val mul = expr.children.single()
+        assertEquals("*", mul.op())
+        assertEquals("group", mul.lhs().name)
+        assertEquals("+", mul.lhs().child("expression").op())
+        assertEquals("3", numberValue(mul.rhs()))
+    }
+
+    @Test
+    fun `left associativity for same precedence`() {
+        val expr = parseOne(
+            Tokens.number("1"),
+            Tokens.op("-"),
+            Tokens.number("2"),
+            Tokens.op("-"),
+            Tokens.number("3"),
+            Tokens.semicolon()
+        ).child("expression")
+        assertEquals("-", expr.op())
+        assertEquals("-", expr.lhs().op())
+        assertEquals("1", numberValue(expr.lhs().lhs()))
+        assertEquals("2", numberValue(expr.lhs().rhs()))
+        assertEquals("3", numberValue(expr.rhs()))
+    }
+
+    private fun parseOne(vararg tokens: Token) =
+        parser.parseNextStatement(mockLexer(*tokens), SyntaxProgram.empty()).statements.single()
+
+    private fun mockLexer(vararg tokens: Token) = MockLexer(tokens.toList())
+
+    private fun callOf(stmt: SyntaxNode): SyntaxNode =
+        leafNamed(stmt.child("expression"), "call")
+
+    private fun numberValue(node: SyntaxNode): String =
+        leafNamed(node, "number").value()
+
+    private fun identifierValue(node: SyntaxNode): String =
+        leafNamed(node, "identifier").value()
+
+    private fun leafNamed(node: SyntaxNode, name: String): SyntaxNode {
+        if (node.name == name) return node
+        return node.children.firstNotNullOf { child ->
+            runCatching { leafNamed(child, name) }.getOrNull()
+        }
+    }
 }

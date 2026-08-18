@@ -1,11 +1,9 @@
 package printscript.token
 
 import printscript.domain.Token
-import printscript.domain.TokenType
 
 /**
- * Cursor over a token stream. Keeps statement/expression parsers decoupled from
- * how tokens were produced (list, lexer, etc.).
+ * Cursor over a token stream with speculative checkpoints.
  */
 interface TokenSource {
     fun peek(): Token
@@ -14,11 +12,9 @@ interface TokenSource {
 
     fun advance(): Token
 
-    fun check(predicate: (TokenType) -> Boolean): Boolean
-
-    fun match(predicate: (TokenType) -> Boolean): Boolean
-
-    fun expect(predicate: (TokenType) -> Boolean, message: String): Token
-
     fun isAtEnd(): Boolean
+
+    fun checkpoint(): Int
+
+    fun restore(mark: Int)
 }
