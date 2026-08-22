@@ -14,16 +14,18 @@ private data class RegexRuleSurrogate(
     val matcher: List<String>,
     val token: String,
     val capture: Boolean,
-    val partial: String
+    val partial: String,
 )
 
 object RegexRuleSerializer : KSerializer<RegexRule> {
-
     private val surrogateSerializer = RegexRuleSurrogate.serializer()
 
     override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
 
-    override fun serialize(encoder: Encoder, value: RegexRule) {
+    override fun serialize(
+        encoder: Encoder,
+        value: RegexRule,
+    ) {
         val surrogate = RegexRuleSurrogate(value.matcher, value.token, value.capture, value.partial)
 
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)

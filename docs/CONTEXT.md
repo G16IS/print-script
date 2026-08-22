@@ -2,7 +2,7 @@
 
 Este archivo es el **punto de entrada**. Léelo entero antes de tocar código. Después abrí solo el `.md` del módulo que vas a cambiar.
 
-Monorepo Gradle (`print-script-g16`) de un intérprete/analizador de **PrintScript**: lenguaje de script de la materia (declaraciones `let`, `println`, expresiones aritméticas y concatenación). Stack: **Kotlin 2.3 / JVM 21**. No hay frontend ni servicios HTTP.
+Monorepo Gradle (`print-script-g16`) de un intérprete/analizador de **PrintScript**: lenguaje de script de la materia (declaraciones `let`, `println`, expresiones aritméticas y concatenación). Stack: **Kotlin 2.4 / JVM 21**. No hay frontend ni servicios HTTP.
 
 El diseño es **pipeline + configuración declarativa**. Lexer y parser no hardcodean el lenguaje: lo leen de JSON. El dominio (tokens, gramática, árbol genérico) vive en `common` y **no** depende de kotlinx.serialization.
 
@@ -34,6 +34,12 @@ El diseño es **pipeline + configuración declarativa**. Lexer y parser no hardc
 | `interpreter` | [modules/INTERPRETER.md](modules/INTERPRETER.md) | Ejecutar el programa. Vacío — a futuro |
 | `linter` | [modules/LINTER.md](modules/LINTER.md) | Reglas de estilo / análisis estático. Vacío — a futuro |
 | `formatter` | [modules/FORMATTER.md](modules/FORMATTER.md) | Reescribir el código con estilo canónico. Vacío — a futuro |
+
+### Build (no es pipeline)
+
+| Módulo | Archivo | Una línea |
+|---|---|---|
+| `build-logic` | [modules/BUILD_LOGIC.md](modules/BUILD_LOGIC.md) | Included build: convention plugin `printscript.quality` (ktlint + detekt) |
 
 ### Configuración del lenguaje (ya existían)
 
@@ -118,6 +124,7 @@ El parser es **streaming por statement**: no parsea el archivo de una. Cada llam
 ```
 settings.gradle.kts incluye:
   common, lexer, infrastructure, semantic, parser, application
+  pluginManagement { includeBuild("build-logic") }  — convention plugin, no es library
 ```
 
 Dependencias de **producción**:
@@ -141,7 +148,7 @@ Toolchain: `kotlin.jvmToolchain(21)`. Version catalog: `gradle/libs.versions.tom
 Paquetes:
 
 - Todo lo reutilizable: `printscript.*`
-- Application: `edu.austral.dissis` / `edu.austral.dissis.use_cases`
+- Application: `edu.austral.dissis` / `edu.austral.dissis.usecases`
 
 ---
 
@@ -243,6 +250,12 @@ Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 - Tests de integración con archivos `.ps` y un DSL `assertAst { node(...) }`
 
 Ver [modules/APPLICATION.md](modules/APPLICATION.md).
+
+### `build-logic` — calidad del repo (no del lenguaje)
+
+Included build. Convention plugin `printscript.quality`: ktlint (`ktlintCheck` / `ktlintFormat`) + detekt, y `installGitHooks` en el root. Se aplica al root y a los subproyectos desde el `build.gradle.kts` raíz. **No** es el linter/formatter de PrintScript.
+
+Ver [modules/BUILD_LOGIC.md](modules/BUILD_LOGIC.md).
 
 ---
 
@@ -376,7 +389,7 @@ Módulos nuevos. Docs vacíos: [modules/INTERPRETER.md](modules/INTERPRETER.md),
 | `infrastructure` | `JSONGrammarConfigReader` contra el resource real + JSON de `repeat` |
 | `application` | 3 archivos `.ps` end-to-end lex+parse, asertando forma del `SyntaxProgram` |
 
-Correr: `./gradlew test` (o `:lexer:test`, etc.).
+Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.yml` corre `test` de todos los módulos; `lint.yml` corre `detekt`; `format.yml` corre `ktlintCheck`.
 
 ---
 
@@ -403,5 +416,6 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.).
 | Ejecutar el programa | INTERPRETER | módulo a futuro |
 | Reglas de estilo | LINTER | módulo a futuro |
 | Pretty-print | FORMATTER | módulo a futuro |
+| Lint/format del Kotlin del repo | BUILD_LOGIC | `build-logic` / `printscript.quality` |
 | CLI / correr un archivo | application | `Main.kt`, `interpretCode` |
 | Leer un `.ps` de otro lado (stdin, string) | common `CodeReader` + infrastructure | nueva impl de `CodeReader` |

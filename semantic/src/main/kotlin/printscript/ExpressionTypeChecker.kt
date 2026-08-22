@@ -8,8 +8,9 @@ import printscript.ast.NumberLiteral
 import printscript.ast.StringLiteral
 import printscript.ast.VariableType
 
-class ExpressionTypeChecker(private val context: SemanticContext ) {
-
+class ExpressionTypeChecker(
+    private val context: SemanticContext,
+) {
     fun typeOf(expression: Expression): VariableType? =
         when (expression) {
             is NumberLiteral -> VariableType.NUMBER
@@ -26,15 +27,16 @@ class ExpressionTypeChecker(private val context: SemanticContext ) {
         if (left == null || right == null) return null
 
         return when (expression.operation) {
-            "+" -> when {
-                left == VariableType.NUMBER &&
+            "+" ->
+                when {
+                    left == VariableType.NUMBER &&
                         right == VariableType.NUMBER -> VariableType.NUMBER
 
-                left == VariableType.STRING &&
+                    left == VariableType.STRING &&
                         right == VariableType.STRING -> VariableType.STRING
 
-                else -> reportInvalidOperands(expression, left, right)
-            }
+                    else -> reportInvalidOperands(expression, left, right)
+                }
 
             "-", "/", "*" -> {
                 if (

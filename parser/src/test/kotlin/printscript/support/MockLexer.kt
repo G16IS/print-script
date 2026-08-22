@@ -1,11 +1,13 @@
 package printscript.support
 
+import java.util.Optional
 import printscript.Lexer
 import printscript.ast.Location
 import printscript.domain.Token
-import java.util.Optional
 
-class MockLexer(tokens: List<Token>) : Lexer {
+class MockLexer(
+    tokens: List<Token>,
+) : Lexer {
     private val tokens: List<Token> = ensureEof(tokens)
     private var index: Int = 0
 

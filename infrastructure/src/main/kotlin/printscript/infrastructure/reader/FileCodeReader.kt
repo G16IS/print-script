@@ -1,11 +1,13 @@
 package printscript.infrastructure.reader
 
-import printscript.reader.CharPosition
-import printscript.reader.CodeReader
 import java.io.File
 import java.util.Optional
+import printscript.reader.CharPosition
+import printscript.reader.CodeReader
 
-class FileCodeReader(path: String) : CodeReader {
+class FileCodeReader(
+    path: String,
+) : CodeReader {
     private val realReader = File(path).bufferedReader()
     private var currentPosition = CharPosition(1, 1)
     private var lookahead = realReader.read()
@@ -14,12 +16,12 @@ class FileCodeReader(path: String) : CodeReader {
         if (lookahead == -1) return Optional.empty()
 
         val char = lookahead.toChar()
-        currentPosition = if (char == '\n') {
-            CharPosition(currentPosition.line + 1, 1)
-        } else {
-            CharPosition(currentPosition().line, currentPosition.col + 1)
-        }
-
+        currentPosition =
+            if (char == '\n') {
+                CharPosition(currentPosition.line + 1, 1)
+            } else {
+                CharPosition(currentPosition().line, currentPosition.col + 1)
+            }
 
         lookahead = realReader.read()
         return Optional.of(char)
@@ -31,8 +33,5 @@ class FileCodeReader(path: String) : CodeReader {
         return Optional.of(lookahead.toChar())
     }
 
-    override fun currentPosition(): CharPosition {
-        return currentPosition
-    }
-
+    override fun currentPosition(): CharPosition = currentPosition
 }

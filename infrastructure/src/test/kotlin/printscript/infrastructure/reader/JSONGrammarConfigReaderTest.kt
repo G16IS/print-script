@@ -69,28 +69,31 @@ class JSONGrammarConfigReaderTest {
 
     @Test
     fun `rejects an unknown rule shape`() {
-        val error = assertThrows<IllegalStateException> {
-            JSONGrammarConfigReader.read("""{"start":"s","rules":{"s":{"maybe":[]}}}""")
-        }
+        val error =
+            assertThrows<IllegalStateException> {
+                JSONGrammarConfigReader.read("""{"start":"s","rules":{"s":{"maybe":[]}}}""")
+            }
         assertTrue(error.message!!.contains("Unknown grammar rule keys"))
     }
 
-    private fun expectedVariableSteps() = listOf(
-        TokenStep("LET", false),
-        TokenStep("ID", true),
-        TokenStep("COLON", false),
-        TokenStep("TYPE", true),
-        TokenStep("ASSIGN", false),
-        RuleRefStep("expression"),
-        TokenStep("SEMICOLON", false)
-    )
+    private fun expectedVariableSteps() =
+        listOf(
+            TokenStep("LET", false),
+            TokenStep("ID", true),
+            TokenStep("COLON", false),
+            TokenStep("TYPE", true),
+            TokenStep("ASSIGN", false),
+            RuleRefStep("expression"),
+            TokenStep("SEMICOLON", false),
+        )
 
     private fun resource() =
         checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
             "Missing grammar.config.json"
         }
 
-    private fun repeatJson() = """
+    private fun repeatJson() =
+        """
         {
           "start": "block",
           "rules": {
@@ -98,5 +101,5 @@ class JSONGrammarConfigReaderTest {
             "item": { "atom": "ID" }
           }
         }
-    """.trimIndent()
+        """.trimIndent()
 }

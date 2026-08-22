@@ -11,13 +11,13 @@ import printscript.domain.OperatorSpec
 @Serializable
 private data class OperatorSpecSurrogate(
     val token: String,
-    val values: List<String>
+    val values: List<String>,
 )
 
 @Serializable
 private data class LeftRuleSurrogate(
     val left: String,
-    val op: OperatorSpecSurrogate
+    val op: OperatorSpecSurrogate,
 )
 
 object LeftRuleSerializer : KSerializer<LeftRule> {
@@ -25,7 +25,10 @@ object LeftRuleSerializer : KSerializer<LeftRule> {
 
     override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
 
-    override fun serialize(encoder: Encoder, value: LeftRule) {
+    override fun serialize(
+        encoder: Encoder,
+        value: LeftRule,
+    ) {
         val surrogate = toSurrogate(value)
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)
     }
@@ -38,7 +41,7 @@ object LeftRuleSerializer : KSerializer<LeftRule> {
     private fun toSurrogate(value: LeftRule): LeftRuleSurrogate =
         LeftRuleSurrogate(
             left = value.left,
-            op = OperatorSpecSurrogate(value.op.token, value.op.values)
+            op = OperatorSpecSurrogate(value.op.token, value.op.values),
         )
 
     private fun fromSurrogate(surrogate: LeftRuleSurrogate): LeftRule =

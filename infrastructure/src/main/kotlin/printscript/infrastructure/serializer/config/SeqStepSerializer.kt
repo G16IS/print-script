@@ -17,36 +17,43 @@ import printscript.domain.TokenStep
 object SeqStepSerializer : KSerializer<SeqStep> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("SeqStep")
 
-    override fun deserialize(decoder: Decoder): SeqStep =
-        parse(decoder.asJsonDecoder().decodeJsonElement())
+    override fun deserialize(decoder: Decoder): SeqStep = parse(decoder.asJsonDecoder().decodeJsonElement())
 
-    override fun serialize(encoder: Encoder, value: SeqStep) {
+    override fun serialize(
+        encoder: Encoder,
+        value: SeqStep,
+    ) {
         encoder.asJsonEncoder().encodeJsonElement(toJson(value))
     }
 
-    private fun parse(element: JsonElement): SeqStep = when (element) {
-        is JsonPrimitive -> TokenStep(element.content, capture = false)
-        is JsonObject -> parseObject(element)
-        else -> error("Invalid seq step: $element")
-    }
+    private fun parse(element: JsonElement): SeqStep =
+        when (element) {
+            is JsonPrimitive -> TokenStep(element.content, capture = false)
+            is JsonObject -> parseObject(element)
+            else -> error("Invalid seq step: $element")
+        }
 
-    private fun parseObject(obj: JsonObject): SeqStep = when {
-        "capture" in obj -> TokenStep(string(obj, "capture"), capture = true)
-        "rule" in obj -> RuleRefStep(string(obj, "rule"))
-        else -> error("Invalid seq step object: $obj")
-    }
+    private fun parseObject(obj: JsonObject): SeqStep =
+        when {
+            "capture" in obj -> TokenStep(string(obj, "capture"), capture = true)
+            "rule" in obj -> RuleRefStep(string(obj, "rule"))
+            else -> error("Invalid seq step object: $obj")
+        }
 
-    private fun toJson(step: SeqStep): JsonElement = when (step) {
-        is TokenStep -> tokenJson(step)
-        is RuleRefStep -> JsonObject(mapOf("rule" to JsonPrimitive(step.name)))
-        else -> error("Unknown seq step: $step")
-    }
+    private fun toJson(step: SeqStep): JsonElement =
+        when (step) {
+            is TokenStep -> tokenJson(step)
+            is RuleRefStep -> JsonObject(mapOf("rule" to JsonPrimitive(step.name)))
+            else -> error("Unknown seq step: $step")
+        }
 
     private fun tokenJson(step: TokenStep): JsonElement {
         if (!step.capture) return JsonPrimitive(step.type)
         return JsonObject(mapOf("capture" to JsonPrimitive(step.type)))
     }
 
-    private fun string(obj: JsonObject, key: String): String =
-        obj[key]?.jsonPrimitive?.contentOrNull ?: error("Missing '$key' in seq step")
+    private fun string(
+        obj: JsonObject,
+        key: String,
+    ): String = obj[key]?.jsonPrimitive?.contentOrNull ?: error("Missing '$key' in seq step")
 }

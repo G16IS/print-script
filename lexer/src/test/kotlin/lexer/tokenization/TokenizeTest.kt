@@ -1,12 +1,12 @@
 package lexer.tokenization
 
+import java.util.Optional
+import kotlin.test.assertEquals
 import org.junit.Test
-import printscript.reader.CharPosition
 import printscript.Lexer
 import printscript.ast.Location
 import printscript.domain.Token
-import java.util.Optional
-import kotlin.test.assertEquals
+import printscript.reader.CharPosition
 
 class TokenizeTest {
     @Test
@@ -18,18 +18,17 @@ class TokenizeTest {
         assertEquals(expectedTokens, tokenLister.listTokens(lexer))
     }
 
-    private fun expectedTokens(): List<Token> {
-        return listOf(
+    private fun expectedTokens(): List<Token> =
+        listOf(
             Token("LET", Optional.empty(), Location(CharPosition(0, 1), CharPosition(0, 3))),
-            Token("ID", Optional.of("x"), Location( CharPosition(0, 5), CharPosition(0, 5))),
+            Token("ID", Optional.of("x"), Location(CharPosition(0, 5), CharPosition(0, 5))),
             Token("COLON", Optional.empty(), Location(CharPosition(0, 6), CharPosition(0, 6))),
             Token("TYPE", Optional.of("string"), Location(CharPosition(0, 8), CharPosition(0, 13))),
             Token("ASSIGN", Optional.empty(), Location(CharPosition(0, 15), CharPosition(0, 15))),
             Token("STRING_LITERAL", Optional.of("\"hello\""), Location(CharPosition(0, 17), CharPosition(0, 23))),
             Token("SEMICOLON", Optional.empty(), Location(CharPosition(0, 24), CharPosition(0, 24))),
-            Token("EOF", Optional.empty(), Location(CharPosition(0, 24), CharPosition(0, 24)))
+            Token("EOF", Optional.empty(), Location(CharPosition(0, 24), CharPosition(0, 24))),
         )
-    }
 
     @Test
     fun tokenizePrintStatementTest() {
@@ -48,8 +47,8 @@ class TokenizeTest {
         tokenLister.listTokens(lexer)
     }
 
-    private fun expectedTokens1(): List<Token> {
-        return listOf(
+    private fun expectedTokens1(): List<Token> =
+        listOf(
             Token("CALL", Optional.of("println"), Location(CharPosition(0, 1), CharPosition(0, 7))),
             Token("LEFT_PAREN", Optional.empty(), Location(CharPosition(0, 8), CharPosition(0, 8))),
             Token("ID", Optional.of("name"), Location(CharPosition(0, 9), CharPosition(0, 12))),
@@ -61,6 +60,4 @@ class TokenizeTest {
             Token("SEMICOLON", Optional.empty(), Location(CharPosition(0, 31), CharPosition(0, 31))),
             Token("EOF", Optional.empty(), Location(CharPosition(0, 31), CharPosition(0, 31))),
         )
-    }
-
 }

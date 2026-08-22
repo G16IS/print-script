@@ -11,12 +11,13 @@ import printscript.support.parse
 import printscript.support.parseOrNull
 
 class OrRuleHandlerTest {
-    private val grammar = grammar(
-        "value",
-        "value" to or("number", "id"),
-        "number" to atom("NUMBER_LITERAL"),
-        "id" to atom("ID")
-    )
+    private val grammar =
+        grammar(
+            "value",
+            "value" to or("number", "id"),
+            "number" to atom("NUMBER_LITERAL"),
+            "id" to atom("ID"),
+        )
 
     @Test
     fun `or returns the first alternative that matches`() {

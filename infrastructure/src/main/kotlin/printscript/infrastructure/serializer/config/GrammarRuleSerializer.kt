@@ -23,7 +23,10 @@ object GrammarRuleSerializer : KSerializer<GrammarRule> {
         return json.json.decodeFromJsonElement(select(element), element)
     }
 
-    override fun serialize(encoder: Encoder, value: GrammarRule) {
+    override fun serialize(
+        encoder: Encoder,
+        value: GrammarRule,
+    ) {
         val json = encoder.asJsonEncoder()
         json.encodeJsonElement(json.json.encodeToJsonElement(select(value), value))
     }
@@ -41,15 +44,15 @@ object GrammarRuleSerializer : KSerializer<GrammarRule> {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun select(rule: GrammarRule): KSerializer<GrammarRule> =
-        serializerFor(rule) as KSerializer<GrammarRule>
+    private fun select(rule: GrammarRule): KSerializer<GrammarRule> = serializerFor(rule) as KSerializer<GrammarRule>
 
-    private fun serializerFor(rule: GrammarRule): KSerializer<out GrammarRule> = when (rule) {
-        is OrRule -> OrRuleSerializer
-        is SeqRule -> SeqRuleSerializer
-        is LeftRule -> LeftRuleSerializer
-        is AtomRule -> AtomRuleSerializer
-        is RepeatRule -> RepeatRuleSerializer
-        else -> error("Unknown grammar rule: ${rule::class.simpleName}")
-    }
+    private fun serializerFor(rule: GrammarRule): KSerializer<out GrammarRule> =
+        when (rule) {
+            is OrRule -> OrRuleSerializer
+            is SeqRule -> SeqRuleSerializer
+            is LeftRule -> LeftRuleSerializer
+            is AtomRule -> AtomRuleSerializer
+            is RepeatRule -> RepeatRuleSerializer
+            else -> error("Unknown grammar rule: ${rule::class.simpleName}")
+        }
 }

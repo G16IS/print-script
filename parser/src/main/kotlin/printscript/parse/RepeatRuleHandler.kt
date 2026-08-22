@@ -12,13 +12,16 @@ class RepeatRuleHandler : RuleHandler {
     override fun evaluate(
         name: String,
         rule: GrammarRule,
-        ctx: ParseContext
+        ctx: ParseContext,
     ): SyntaxNode {
         val items = collect((rule as RepeatRule).item, ctx)
         return SyntaxNode(name, children = items, location = spanOf(items, ctx))
     }
 
-    private fun collect(item: String, ctx: ParseContext): List<SyntaxNode> {
+    private fun collect(
+        item: String,
+        ctx: ParseContext,
+    ): List<SyntaxNode> {
         val items = mutableListOf<SyntaxNode>()
         while (true) {
             val before = ctx.tokens.checkpoint()
@@ -30,6 +33,8 @@ class RepeatRuleHandler : RuleHandler {
         return items
     }
 
-    private fun spanOf(items: List<SyntaxNode>, ctx: ParseContext): Location =
-        Locations.span(items, ctx.tokens.peek().location)
+    private fun spanOf(
+        items: List<SyntaxNode>,
+        ctx: ParseContext,
+    ): Location = Locations.span(items, ctx.tokens.peek().location)
 }

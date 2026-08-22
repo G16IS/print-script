@@ -9,13 +9,12 @@ sealed interface TokenRule {
 data class ExactRule(
     override val matcher: List<String>,
     override val token: String,
-    override val capture: Boolean
+    override val capture: Boolean,
 ) : TokenRule
 
 data class RegexRule(
     override val matcher: List<String>,
     override val token: String,
     override val capture: Boolean,
-    val partial: String
+    val partial: String,
 ) : TokenRule
-

@@ -1,5 +1,8 @@
 package printscript.infrastructure.reader
 
+import java.io.InputStream
+import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -10,9 +13,6 @@ import printscript.domain.TokenRule
 import printscript.infrastructure.serializer.config.ExactRuleSerializer
 import printscript.infrastructure.serializer.config.RegexRuleSerializer
 import printscript.reader.LanguageConfigReader
-import java.io.InputStream
-import java.nio.file.Path
-import kotlin.io.path.readText
 
 /**
  * Carga y deserializa archivos `language.config.json`.
@@ -23,22 +23,21 @@ import kotlin.io.path.readText
  * ```
  */
 object JSONLanguageConfigReader : LanguageConfigReader {
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        serializersModule = SerializersModule {
-            polymorphic(TokenRule::class) {
-                subclass(ExactRule::class, ExactRuleSerializer)
-                subclass(RegexRule::class, RegexRuleSerializer)
-            }
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+            serializersModule =
+                SerializersModule {
+                    polymorphic(TokenRule::class) {
+                        subclass(ExactRule::class, ExactRuleSerializer)
+                        subclass(RegexRule::class, RegexRuleSerializer)
+                    }
+                }
         }
-    }
 
-    override fun read(path: Path): LanguageConfig =
-        read(path.readText())
+    override fun read(path: Path): LanguageConfig = read(path.readText())
 
-    override fun read(input: InputStream): LanguageConfig =
-        read(input.bufferedReader().use { it.readText() })
+    override fun read(input: InputStream): LanguageConfig = read(input.bufferedReader().use { it.readText() })
 
     override fun read(jsonString: String): LanguageConfig {
         val config = json.decodeFromString<LanguageConfig>(jsonString)
@@ -75,7 +74,7 @@ object JSONLanguageConfigReader : LanguageConfigReader {
                         }
                     }
 
-                    is ExactRule -> { /* ok */
+                    is ExactRule -> { // ok
                     }
                 }
             }

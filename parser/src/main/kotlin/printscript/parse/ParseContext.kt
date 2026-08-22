@@ -7,7 +7,7 @@ import printscript.token.TokenSource
 class ParseContext(
     val grammar: Grammar,
     val tokens: TokenSource,
-    private val evaluateRule: (String) -> SyntaxNode?
+    private val evaluateRule: (String) -> SyntaxNode?,
 ) {
     fun evaluate(ruleName: String): SyntaxNode? = evaluateRule(ruleName)
 

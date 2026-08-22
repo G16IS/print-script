@@ -2,7 +2,8 @@ package printscript.ast
 
 enum class VariableType {
     NUMBER,
-    STRING;
+    STRING,
+    ;
 
     companion object {
         fun from(value: String): VariableType =

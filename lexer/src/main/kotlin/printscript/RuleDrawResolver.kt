@@ -3,8 +3,9 @@ package printscript
 import printscript.domain.LanguageConfig
 import printscript.domain.TokenRule
 
-data class RuleDrawResolver(val langConfig: LanguageConfig) {
-
+data class RuleDrawResolver(
+    val langConfig: LanguageConfig,
+) {
     /**
      * Resolve multiple rule matchings
      *
@@ -28,17 +29,16 @@ data class RuleDrawResolver(val langConfig: LanguageConfig) {
         return candidates.single()
     }
 
-
-    private fun findHighestPriorityCategory(rules: List<TokenRule>): String {
-        return rules
+    private fun findHighestPriorityCategory(rules: List<TokenRule>): String =
+        rules
             .map { findCategory(it) }
             .maxByOrNull { findPriority(it) }
             ?: error("No categories found")
-    }
 
-    private fun filterByCategory(rules: List<TokenRule>, category: String): List<TokenRule> {
-        return rules.filter { findCategory(it) == category }
-    }
+    private fun filterByCategory(
+        rules: List<TokenRule>,
+        category: String,
+    ): List<TokenRule> = rules.filter { findCategory(it) == category }
 
     private fun validateUniqueRule(rules: List<TokenRule>) {
         require(rules.size == 1) {
@@ -46,13 +46,13 @@ data class RuleDrawResolver(val langConfig: LanguageConfig) {
         }
     }
 
-    private fun findPriority(category: String): Int =
-        langConfig.order.indexOf(category)
+    private fun findPriority(category: String): Int = langConfig.order.indexOf(category)
 
     private fun findCategory(rule: TokenRule): String {
-        val entry = langConfig.config.entries
-            .find { it.value.contains(rule) }
-            ?: error("Rule $rule not found in config")
+        val entry =
+            langConfig.config.entries
+                .find { it.value.contains(rule) }
+                ?: error("Rule $rule not found in config")
 
         return entry.key
     }

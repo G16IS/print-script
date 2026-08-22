@@ -1,4 +1,4 @@
-package edu.austral.dissis.use_cases
+package usecases
 
 import printscript.DefaultLexerFactory
 import printscript.DefaultParserFactory
@@ -14,20 +14,21 @@ import printscript.syntax.SyntaxProgram
  * Lex + parse + semantic analysis of a PrintScript source file.
  * Returns the validated [Program] or throws if semantic analysis fails.
  */
-fun interpretCode(
-    langConfig: LanguageConfig,
-    grammar: Grammar,
-    path: String
-): SyntaxProgram {
-    val codeReader = FileCodeReader(path)
+object InterpretCode {
+    fun interpretCode(
+        langConfig: LanguageConfig,
+        grammar: Grammar,
+        path: String,
+    ): SyntaxProgram {
+        val codeReader = FileCodeReader(path)
 
-    val lexer: Lexer = DefaultLexerFactory.create(codeReader, langConfig)
-    val parser: Parser = DefaultParserFactory.create(grammar)
+        val lexer: Lexer = DefaultLexerFactory.create(codeReader, langConfig)
+        val parser: Parser = DefaultParserFactory.create(grammar)
 
-    var program: SyntaxProgram = SyntaxProgram.empty()
-    while (lexer.peek(null).type != "EOF") {
-        program = parser.parseNextStatement(lexer, program)
-    }
+        var program: SyntaxProgram = SyntaxProgram.empty()
+        while (lexer.peek(null).type != "EOF") {
+            program = parser.parseNextStatement(lexer, program)
+        }
 
 //    return when (val result = DefaultSemanticAnalyzer().analyze(program)) {
 //        is SemanticResult.Success -> result.program
@@ -39,5 +40,6 @@ fun interpretCode(
 //        }
 //    }
 
-    return program
+        return program
+    }
 }

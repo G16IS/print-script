@@ -12,8 +12,10 @@ import printscript.domain.SeqRule
 import printscript.domain.SeqStep
 import printscript.domain.TokenStep
 
-fun grammar(start: String, vararg rules: Pair<String, GrammarRule>): Grammar =
-    Grammar(start, rules.toMap())
+fun grammar(
+    start: String,
+    vararg rules: Pair<String, GrammarRule>,
+): Grammar = Grammar(start, rules.toMap())
 
 fun atom(token: String) = AtomRule(token)
 
@@ -29,5 +31,8 @@ fun ref(name: String) = RuleRefStep(name)
 
 fun repeat(item: String) = RepeatRule(item)
 
-fun left(operand: String, token: String, vararg values: String) =
-    LeftRule(operand, OperatorSpec(token, values.toList()))
+fun left(
+    operand: String,
+    token: String,
+    vararg values: String,
+) = LeftRule(operand, OperatorSpec(token, values.toList()))

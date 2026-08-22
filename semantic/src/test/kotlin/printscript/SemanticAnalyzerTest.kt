@@ -1,5 +1,10 @@
 package printscript
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 import printscript.ast.BinaryExpression
 import printscript.ast.CallExpression
 import printscript.ast.Expression
@@ -14,23 +19,18 @@ import printscript.ast.VariableDeclaration
 import printscript.ast.VariableStatement
 import printscript.ast.VariableType
 import printscript.reader.CharPosition
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
 
 class SemanticAnalyzerTest {
-
     @Test
     fun `returns the program when a number declaration is valid`() {
-        val program = programOf(
-            variable(
-                name = "age",
-                type = VariableType.NUMBER,
-                initializer = number(20.0),
-            ),
-        )
+        val program =
+            programOf(
+                variable(
+                    name = "age",
+                    type = VariableType.NUMBER,
+                    initializer = number(20.0),
+                ),
+            )
 
         val result = DefaultSemanticAnalyzer().analyze(program)
 
@@ -40,13 +40,14 @@ class SemanticAnalyzerTest {
 
     @Test
     fun `returns the program when a string declaration is valid`() {
-        val program = programOf(
-            variable(
-                name = "name",
-                type = VariableType.STRING,
-                initializer = string("Ada"),
-            ),
-        )
+        val program =
+            programOf(
+                variable(
+                    name = "name",
+                    type = VariableType.STRING,
+                    initializer = string("Ada"),
+                ),
+            )
 
         val result = DefaultSemanticAnalyzer().analyze(program)
 
@@ -55,40 +56,58 @@ class SemanticAnalyzerTest {
 
     @Test
     fun `reports an incompatible initializer type`() {
-        val program = programOf(
-            variable(
-                name = "age",
-                type = VariableType.NUMBER,
-                initializer = string("twenty"),
-            ),
-        )
+        val program =
+            programOf(
+                variable(
+                    name = "age",
+                    type = VariableType.NUMBER,
+                    initializer = string("twenty"),
+                ),
+            )
 
         val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
-        assertTrue(failure.errors.single().messageError.contains("NUMBER"))
-        assertTrue(failure.errors.single().messageError.contains("STRING"))
+        assertTrue(
+            failure.errors
+                .single()
+                .messageError
+                .contains("NUMBER"),
+        )
+        assertTrue(
+            failure.errors
+                .single()
+                .messageError
+                .contains("STRING"),
+        )
     }
 
     @Test
     fun `reports a duplicated variable declaration`() {
-        val program = programOf(
-            variable("age", VariableType.NUMBER, number(20.0)),
-            variable("age", VariableType.NUMBER, number(21.0)),
-        )
+        val program =
+            programOf(
+                variable("age", VariableType.NUMBER, number(20.0)),
+                variable("age", VariableType.NUMBER, number(21.0)),
+            )
 
         val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
-        assertTrue(failure.errors.single().messageError.contains("ya fue declarada"))
+        assertTrue(
+            failure.errors
+                .single()
+                .messageError
+                .contains("ya fue declarada"),
+        )
     }
 
     @Test
     fun `accepts a reference to a previously declared variable`() {
-        val program = programOf(
-            variable("age", VariableType.NUMBER, number(20.0)),
-            variable("nextAge", VariableType.NUMBER, identifier("age")),
-        )
+        val program =
+            programOf(
+                variable("age", VariableType.NUMBER, number(20.0)),
+                variable("nextAge", VariableType.NUMBER, identifier("age")),
+            )
 
         val result = DefaultSemanticAnalyzer().analyze(program)
 
@@ -97,23 +116,30 @@ class SemanticAnalyzerTest {
 
     @Test
     fun `reports a reference to an undeclared variable`() {
-        val program = programOf(
-            expressionStatement(identifier("missing")),
-        )
+        val program =
+            programOf(
+                expressionStatement(identifier("missing")),
+            )
 
         val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
-        assertTrue(failure.errors.single().messageError.contains("missing"))
+        assertTrue(
+            failure.errors
+                .single()
+                .messageError
+                .contains("missing"),
+        )
     }
 
     @Test
     fun `accepts numeric binary expressions`() {
         val sum = binary(number(2.0), "+", number(3.0))
         val multiplication = binary(sum, "*", number(4.0))
-        val program = programOf(
-            variable("result", VariableType.NUMBER, multiplication),
-        )
+        val program =
+            programOf(
+                variable("result", VariableType.NUMBER, multiplication),
+            )
 
         val result = DefaultSemanticAnalyzer().analyze(program)
 
@@ -123,9 +149,10 @@ class SemanticAnalyzerTest {
     @Test
     fun `accepts string concatenation`() {
         val concatenation = binary(string("hello"), "+", string(" world"))
-        val program = programOf(
-            variable("message", VariableType.STRING, concatenation),
-        )
+        val program =
+            programOf(
+                variable("message", VariableType.STRING, concatenation),
+            )
 
         val result = DefaultSemanticAnalyzer().analyze(program)
 
@@ -135,53 +162,73 @@ class SemanticAnalyzerTest {
     @Test
     fun `reports incompatible binary operands`() {
         val invalidAddition = binary(number(2.0), "+", string("two"))
-        val program = programOf(
-            variable("result", VariableType.NUMBER, invalidAddition),
-        )
+        val program =
+            programOf(
+                variable("result", VariableType.NUMBER, invalidAddition),
+            )
 
         val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
-        assertTrue(failure.errors.single().messageError.contains("no acepta"))
+        assertTrue(
+            failure.errors
+                .single()
+                .messageError
+                .contains("no acepta"),
+        )
     }
 
     @Test
     fun `reports an unknown binary operator`() {
         val unknownOperation = binary(number(2.0), "%", number(2.0))
-        val program = programOf(
-            variable("result", VariableType.NUMBER, unknownOperation),
-        )
+        val program =
+            programOf(
+                variable("result", VariableType.NUMBER, unknownOperation),
+            )
 
         val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
-        assertTrue(failure.errors.single().messageError.contains("Operador desconocido"))
+        assertTrue(
+            failure.errors
+                .single()
+                .messageError
+                .contains("Operador desconocido"),
+        )
     }
 
     @Test
     fun `checks expressions used as call arguments`() {
-        val call = CallExpression(
-            callee = "println",
-            args = listOf(identifier("missing")),
-            location = location,
-        )
+        val call =
+            CallExpression(
+                callee = "println",
+                args = listOf(identifier("missing")),
+                location = location,
+            )
         val program = programOf(expressionStatement(call))
 
         val failure = assertFailure(DefaultSemanticAnalyzer().analyze(program))
 
         assertEquals(1, failure.errors.size)
-        assertTrue(failure.errors.single().messageError.contains("missing"))
+        assertTrue(
+            failure.errors
+                .single()
+                .messageError
+                .contains("missing"),
+        )
     }
 
     @Test
     fun `does not share symbols between analyses`() {
         val analyzer = DefaultSemanticAnalyzer()
-        val firstProgram = programOf(
-            variable("age", VariableType.NUMBER, number(20.0)),
-        )
-        val secondProgram = programOf(
-            variable("age", VariableType.NUMBER, number(30.0)),
-        )
+        val firstProgram =
+            programOf(
+                variable("age", VariableType.NUMBER, number(20.0)),
+            )
+        val secondProgram =
+            programOf(
+                variable("age", VariableType.NUMBER, number(30.0)),
+            )
 
         val firstResult = analyzer.analyze(firstProgram)
         val secondResult = analyzer.analyze(secondProgram)
@@ -190,8 +237,7 @@ class SemanticAnalyzerTest {
         assertIs<SemanticResult.Success>(secondResult)
     }
 
-    private fun assertFailure(result: SemanticResult): SemanticResult.Failure =
-        assertIs<SemanticResult.Failure>(result)
+    private fun assertFailure(result: SemanticResult): SemanticResult.Failure = assertIs<SemanticResult.Failure>(result)
 
     private fun programOf(vararg statements: Statement): Program =
         Program(
@@ -204,12 +250,13 @@ class SemanticAnalyzerTest {
         type: VariableType,
         initializer: Expression,
     ): VariableStatement {
-        val declaration = VariableDeclaration(
-            id = identifier(name),
-            typeAnnotation = type,
-            initializer = initializer,
-            location = location,
-        )
+        val declaration =
+            VariableDeclaration(
+                id = identifier(name),
+                typeAnnotation = type,
+                initializer = initializer,
+                location = location,
+            )
 
         return VariableStatement(
             declaration = declaration,
@@ -254,9 +301,10 @@ class SemanticAnalyzerTest {
         )
 
     private companion object {
-        val location = Location(
-            start = CharPosition(1, 1),
-            end = CharPosition(1, 1),
-        )
+        val location =
+            Location(
+                start = CharPosition(1, 1),
+                end = CharPosition(1, 1),
+            )
     }
 }
