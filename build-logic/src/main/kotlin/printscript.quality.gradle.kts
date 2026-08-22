@@ -10,6 +10,10 @@ kotlin {
 
 ktlint {
     android.set(false)
+    outputToConsole.set(true)
+    verbose.set(true)
+    coloredOutput.set(true)
+    relative.set(true)
 }
 
 detekt {
@@ -20,8 +24,9 @@ detekt {
 tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
     jvmTarget.set("21")
     reports {
-        html.required.set(true)
-        checkstyle.required.set(true)
-        sarif.required.set(true)
+        html.required.set(false)
+        checkstyle.required.set(false)
+        sarif.required.set(false)
+        markdown.required.set(false)
     }
 }

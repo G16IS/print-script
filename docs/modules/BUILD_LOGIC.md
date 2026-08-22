@@ -31,7 +31,7 @@ Tareas que quedan en cada proyecto Kotlin:
 |---|---|
 | `ktlintCheck` | Reporta estilo; no reescribe |
 | `ktlintFormat` | Reescribe fuentes al estilo ktlint |
-| `detekt` | Análisis estático (reportes html / checkstyle / sarif) |
+| `detekt` | Análisis estático; findings en consola (sin reportes archivo) |
 | `test` | La que ya tenía el módulo |
 
 ```
@@ -76,7 +76,7 @@ build.gradle.kts                   aplica printscript.quality a cada subproyecto
 
 Sin el KGP en `implementation`, `generatePrecompiledScriptPluginAccessors` explota (`NoClassDefFoundError: KotlinBasePlugin`) y, si compilara, ktlint no vería las clases de Kotlin del módulo.
 
-detekt 2.x: `jvmTarget` es `Property<String>` (`.set("21")`). El reporte XML ahora es `checkstyle`, no `xml`.
+detekt 2.x: `jvmTarget` es `Property<String>` (`.set("21")`). Los reportes archivo (html / checkstyle / sarif / markdown) van **apagados**: los findings salen por consola. ktlint: `outputToConsole` + `verbose`.
 
 ---
 
