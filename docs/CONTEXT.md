@@ -253,7 +253,7 @@ Ver [modules/APPLICATION.md](modules/APPLICATION.md).
 
 ### `build-logic` — calidad del repo (no del lenguaje)
 
-Included build. Convention plugin `printscript.quality`: ktlint (`ktlintCheck` / `ktlintFormat`) + detekt. Se aplica a los subproyectos desde el `build.gradle.kts` raíz. **No** es el linter/formatter de PrintScript.
+Included build. Convention plugin `printscript.quality`: ktlint (`ktlintCheck` / `ktlintFormat`) + detekt, y `installGitHooks` en el root. Se aplica al root y a los subproyectos desde el `build.gradle.kts` raíz. **No** es el linter/formatter de PrintScript.
 
 Ver [modules/BUILD_LOGIC.md](modules/BUILD_LOGIC.md).
 

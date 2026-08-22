@@ -34,11 +34,18 @@ Tareas que quedan en cada proyecto Kotlin:
 | `detekt` | Análisis estático; findings en consola (sin reportes archivo) |
 | `test` | La que ya tenía el módulo |
 
+En el **root** (el plugin también se aplica ahí, sin ktlint/detekt):
+
+| Tarea | Qué hace |
+|---|---|
+| `installGitHooks` | Si `core.hooksPath` no apunta a `hooks/`, lo configura y deja los scripts ejecutables |
+
 ```
 ./gradlew ktlintCheck          # format check, todos los módulos
 ./gradlew ktlintFormat         # reescribe fuentes — no en CI
 ./gradlew detekt               # lint estático, todos los módulos
 ./gradlew test                 # tests de todos los módulos
+./gradlew installGitHooks      # git hooks del repo, no-op si ya están
 ```
 
 CI (`.github/workflows/`, aparte de testing):
@@ -49,7 +56,7 @@ CI (`.github/workflows/`, aparte de testing):
 | Lint | `lint.yml` | `./gradlew detekt --continue` |
 | Format | `format.yml` | `./gradlew ktlintCheck --continue` |
 
-Hoy el plugin se aplica a **todos** los subproyectos desde el `build.gradle.kts` raíz (`gradle.beforeProject`), sin editar cada `*/build.gradle.kts`. ktlint y detekt **fallan** si hay findings: el código existente de `parser` (y el resto) todavía no está limpio.
+Hoy el plugin se aplica al **root** (solo `installGitHooks`) y a **todos** los subproyectos desde el `build.gradle.kts` raíz (`gradle.beforeProject`), sin editar cada `*/build.gradle.kts`. ktlint y detekt **fallan** si hay findings: el código existente de `parser` (y el resto) todavía no está limpio.
 
 ---
 
@@ -61,6 +68,7 @@ build-logic/
   build.gradle.kts                 kotlin-dsl + classpath del plugin
   src/main/kotlin/
     printscript.quality.gradle.kts convention plugin
+    printscript/InstallGitHooks.kt tarea installGitHooks
 ```
 
 En la raíz del repo (cableado, no es este módulo):
@@ -107,7 +115,7 @@ pluginManagement {
 
 ```kotlin
 plugins {
-    id("printscript.quality") apply false
+    id("printscript.quality")
 }
 
 gradle.beforeProject {
