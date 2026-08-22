@@ -3,7 +3,9 @@ package printscript.token
 import printscript.Lexer
 import printscript.domain.Token
 
-class LexerTokenSource(private val lexer: Lexer) : TokenSource {
+class LexerTokenSource(
+    private val lexer: Lexer,
+) : TokenSource {
     private val buffer = mutableListOf<Token>()
     private var index = 0
 

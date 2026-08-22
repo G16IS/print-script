@@ -19,11 +19,12 @@ import printscript.support.source
 class SeqRuleHandlerTest {
     @Test
     fun `seq keeps captured tokens and nested rules`() {
-        val g = grammar(
-            "s",
-            "s" to seq(expect("LET"), capture("ID"), ref("n")),
-            "n" to atom("NUMBER_LITERAL")
-        )
+        val g =
+            grammar(
+                "s",
+                "s" to seq(expect("LET"), capture("ID"), ref("n")),
+                "n" to atom("NUMBER_LITERAL"),
+            )
         val node = parse(g, Tokens.let(), Tokens.id("x"), Tokens.number("1"))
         assertEquals("s", node.name)
         assertEquals("x", node.children[0].value())

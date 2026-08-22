@@ -148,7 +148,7 @@ Toolchain: `kotlin.jvmToolchain(21)`. Version catalog: `gradle/libs.versions.tom
 Paquetes:
 
 - Todo lo reutilizable: `printscript.*`
-- Application: `edu.austral.dissis` / `edu.austral.dissis.use_cases`
+- Application: `edu.austral.dissis` / `edu.austral.dissis.usecases`
 
 ---
 

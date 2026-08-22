@@ -10,10 +10,14 @@ class AtomRuleHandler : RuleHandler {
     override fun evaluate(
         name: String,
         rule: GrammarRule,
-        ctx: ParseContext
+        ctx: ParseContext,
     ): SyntaxNode? = match(name, rule as AtomRule, ctx)
 
-    private fun match(name: String, atom: AtomRule, ctx: ParseContext): SyntaxNode? {
+    private fun match(
+        name: String,
+        atom: AtomRule,
+        ctx: ParseContext,
+    ): SyntaxNode? {
         val token = ctx.tokens.peek()
         if (token.type != atom.token) return null
         ctx.tokens.advance()

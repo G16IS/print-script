@@ -7,9 +7,12 @@ import printscript.token.TokenSource
 
 class RuleEvaluator(
     private val grammar: Grammar,
-    private val handlers: List<RuleHandler>
+    private val handlers: List<RuleHandler>,
 ) {
-    fun evaluate(ruleName: String, tokens: TokenSource): SyntaxNode? {
+    fun evaluate(
+        ruleName: String,
+        tokens: TokenSource,
+    ): SyntaxNode? {
         val rule = grammar.rule(ruleName)
         return handlerFor(rule).evaluate(ruleName, rule, context(tokens))
     }

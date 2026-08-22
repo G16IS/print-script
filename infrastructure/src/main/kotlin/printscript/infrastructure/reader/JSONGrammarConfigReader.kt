@@ -1,5 +1,8 @@
 package printscript.infrastructure.reader
 
+import java.io.InputStream
+import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -17,36 +20,31 @@ import printscript.infrastructure.serializer.config.OrRuleSerializer
 import printscript.infrastructure.serializer.config.RepeatRuleSerializer
 import printscript.infrastructure.serializer.config.SeqRuleSerializer
 import printscript.reader.GrammarConfigReader
-import java.io.InputStream
-import java.nio.file.Path
-import kotlin.io.path.readText
 
 /**
  * Carga y deserializa archivos `grammar.config.json`.
  */
 object JSONGrammarConfigReader : GrammarConfigReader {
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        serializersModule = grammarModule()
-    }
-
-    private fun grammarModule() = SerializersModule {
-        polymorphic(GrammarRule::class) {
-            subclass(OrRule::class, OrRuleSerializer)
-            subclass(AtomRule::class, AtomRuleSerializer)
-            subclass(SeqRule::class, SeqRuleSerializer)
-            subclass(LeftRule::class, LeftRuleSerializer)
-            subclass(RepeatRule::class, RepeatRuleSerializer)
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+            serializersModule = grammarModule()
         }
-    }
 
-    override fun read(path: Path): Grammar =
-        read(path.readText())
+    private fun grammarModule() =
+        SerializersModule {
+            polymorphic(GrammarRule::class) {
+                subclass(OrRule::class, OrRuleSerializer)
+                subclass(AtomRule::class, AtomRuleSerializer)
+                subclass(SeqRule::class, SeqRuleSerializer)
+                subclass(LeftRule::class, LeftRuleSerializer)
+                subclass(RepeatRule::class, RepeatRuleSerializer)
+            }
+        }
 
-    override fun read(input: InputStream): Grammar =
-        read(input.bufferedReader().use { it.readText() })
+    override fun read(path: Path): Grammar = read(path.readText())
 
-    override fun read(jsonString: String): Grammar =
-        json.decodeFromString(GrammarSerializer, jsonString)
+    override fun read(input: InputStream): Grammar = read(input.bufferedReader().use { it.readText() })
+
+    override fun read(jsonString: String): Grammar = json.decodeFromString(GrammarSerializer, jsonString)
 }

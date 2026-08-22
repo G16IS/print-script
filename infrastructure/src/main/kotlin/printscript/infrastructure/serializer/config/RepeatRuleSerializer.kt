@@ -8,14 +8,19 @@ import kotlinx.serialization.encoding.Encoder
 import printscript.domain.RepeatRule
 
 @Serializable
-private data class RepeatRuleSurrogate(val repeat: String)
+private data class RepeatRuleSurrogate(
+    val repeat: String,
+)
 
 object RepeatRuleSerializer : KSerializer<RepeatRule> {
     private val surrogateSerializer = RepeatRuleSurrogate.serializer()
 
     override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
 
-    override fun serialize(encoder: Encoder, value: RepeatRule) {
+    override fun serialize(
+        encoder: Encoder,
+        value: RepeatRule,
+    ) {
         val surrogate = RepeatRuleSurrogate(value.item)
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)
     }

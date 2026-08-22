@@ -21,11 +21,11 @@ Paquete: `edu.austral.dissis` (el resto del repo es `printscript`).
 ```
 application/src/main/kotlin/
   Main.kt                          fun main() {}  — vacío
-  use_cases/InterpretCode.kt       interpretCode(...)
+  usecases/InterpretCode.kt       interpretCode(...)
 
 application/src/test/
   kotlin/edu/austral/dissis/
-    use_cases/InterpretCodeTest.kt
+    usecases/InterpretCodeTest.kt
     testing/
       ParseExample.kt              carga grammar JSON + LanguageConfig de test
       PrintScriptLanguage.kt       LanguageConfig con order invertido
@@ -145,7 +145,7 @@ Ver [TYPE_CHECKER.md](TYPE_CHECKER.md) e [INTERPRETER.md](INTERPRETER.md). No de
 
 ### Nuevo caso de uso
 
-Otro archivo en `use_cases/` (ej. solo lexear, o ejecutar). Dejá `interpretCode` como orquestación del pipeline. Execution va al interpreter; estilo al linter. No lo metas en el parser.
+Otro archivo en `usecases/` (ej. solo lexear, o ejecutar). Dejá `interpretCode` como orquestación del pipeline. Execution va al interpreter; estilo al linter. No lo metas en el parser.
 
 ### Nuevo ejemplo
 

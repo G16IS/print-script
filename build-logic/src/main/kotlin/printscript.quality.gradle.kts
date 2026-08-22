@@ -17,8 +17,9 @@ ktlint {
 }
 
 detekt {
-    buildUponDefaultConfig.set(true)
-    parallel.set(true)
+    buildUponDefaultConfig = true
+    allRules = false
+    parallel = true
 }
 
 tasks.withType<dev.detekt.gradle.Detekt>().configureEach {

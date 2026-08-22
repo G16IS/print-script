@@ -8,14 +8,19 @@ import kotlinx.serialization.encoding.Encoder
 import printscript.domain.AtomRule
 
 @Serializable
-private data class AtomRuleSurrogate(val atom: String)
+private data class AtomRuleSurrogate(
+    val atom: String,
+)
 
 object AtomRuleSerializer : KSerializer<AtomRule> {
     private val surrogateSerializer = AtomRuleSurrogate.serializer()
 
     override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
 
-    override fun serialize(encoder: Encoder, value: AtomRule) {
+    override fun serialize(
+        encoder: Encoder,
+        value: AtomRule,
+    ) {
         val surrogate = AtomRuleSurrogate(value.token)
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)
     }

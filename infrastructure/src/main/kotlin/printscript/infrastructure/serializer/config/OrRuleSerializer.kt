@@ -8,14 +8,19 @@ import kotlinx.serialization.encoding.Encoder
 import printscript.domain.OrRule
 
 @Serializable
-private data class OrRuleSurrogate(val or: List<String>)
+private data class OrRuleSurrogate(
+    val or: List<String>,
+)
 
 object OrRuleSerializer : KSerializer<OrRule> {
     private val surrogateSerializer = OrRuleSurrogate.serializer()
 
     override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
 
-    override fun serialize(encoder: Encoder, value: OrRule) {
+    override fun serialize(
+        encoder: Encoder,
+        value: OrRule,
+    ) {
         val surrogate = OrRuleSurrogate(value.alternatives)
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)
     }

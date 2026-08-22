@@ -10,10 +10,13 @@ class OrRuleHandler : RuleHandler {
     override fun evaluate(
         name: String,
         rule: GrammarRule,
-        ctx: ParseContext
+        ctx: ParseContext,
     ): SyntaxNode? = firstMatch((rule as OrRule).alternatives, ctx)
 
-    private fun firstMatch(alternatives: List<String>, ctx: ParseContext): SyntaxNode? {
+    private fun firstMatch(
+        alternatives: List<String>,
+        ctx: ParseContext,
+    ): SyntaxNode? {
         for (alternative in alternatives) {
             val node = ctx.tryEvaluate(alternative)
             if (node != null) return node

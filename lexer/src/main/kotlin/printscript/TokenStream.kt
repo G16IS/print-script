@@ -1,22 +1,23 @@
 package printscript
 
+import java.util.Optional
 import printscript.ast.Location
 import printscript.domain.Token
-import printscript.reader.CharPosition
-import printscript.reader.CodeReader
-import java.util.Optional
 import printscript.evaluator.MatchResult
 import printscript.evaluator.MatchType
 import printscript.evaluator.RuleEvaluator
+import printscript.reader.CharPosition
+import printscript.reader.CodeReader
 
 class TokenStream(
     private val reader: CodeReader,
     val ruleEvaluator: RuleEvaluator,
-    val ruleDrawResolver: RuleDrawResolver
+    val ruleDrawResolver: RuleDrawResolver,
 ) : Lexer {
     private val buffer = ArrayDeque<Token>()
 
     override fun nextToken(): Token = buffer.removeFirstOrNull() ?: readNextToken()
+
     override fun peek(offset: Int?): Token {
         val realOffset: Int = offset ?: 0
 
@@ -24,53 +25,63 @@ class TokenStream(
         return buffer[realOffset]
     }
 
-
     private fun readNextToken(): Token {
         val first = skipWhitespace()
         if (first.isEmpty) {
             val pos = reader.currentPosition()
-            return Token("EOF", Optional.empty(), Location(pos, pos)) //cambiar por TerminalToken
+            return Token("EOF", Optional.empty(), Location(pos, pos)) // TODO-future: cambiar por TerminalToken
         }
 
         val initialPos = reader.currentPosition()
         var text = first.get().toString()
         var lastMatchResults = ruleEvaluator.evaluate(text)
+
         if (areAllMatchResultsInvalid(lastMatchResults)) {
-            throw Error("Unexpected token at line ${initialPos.line} col ${initialPos.col}")
+            throw IllegalArgumentException("Unexpected token at line ${initialPos.line} col ${initialPos.col}")
         }
 
-        while (true) {
+        var done = false
+        while (!done) {
             val nextChar = reader.peek()
+
             if (nextChar.isEmpty) {
                 if (lastMatchResults.any { it.matchType == MatchType.VALID }) {
-                    return buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
+                    done = true
+                } else {
+                    throw IllegalStateException(
+                        "Unexpected end of file at line " +
+                            "${reader.currentPosition().line} col " +
+                            "${reader.currentPosition().col} while " +
+                            "reading token '$text'",
+                    )
                 }
-                throw IllegalStateException(
-                    "Unexpected end of file at line ${reader.currentPosition().line} col ${reader.currentPosition().col} while reading token '$text'"
-                )
+            } else {
+                val matchResults = ruleEvaluator.evaluate(text + nextChar.get())
+                if (areAllMatchResultsInvalid(matchResults)) {
+                    done = true
+                } else {
+                    reader.read()
+                    text += nextChar.get()
+                    lastMatchResults = matchResults
+                }
             }
-
-            val matchResults = ruleEvaluator.evaluate(text + nextChar.get())
-            if (areAllMatchResultsInvalid(matchResults)) {
-                
-                return buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
-            }
-
-            reader.read()
-            text += nextChar.get()
-            lastMatchResults = matchResults
         }
+
+        return buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
     }
 
     private fun buildToken(
         text: String,
         matchResults: List<MatchResult>,
         initialPos: CharPosition,
-        finalPos: CharPosition
+        finalPos: CharPosition,
     ): Token {
-        val rule = ruleDrawResolver.resolve(matchResults
-            .filter { it.matchType != MatchType.INVALID }
-            .map { it.tokenRule })
+        val rule =
+            ruleDrawResolver.resolve(
+                matchResults
+                    .filter { it.matchType != MatchType.INVALID }
+                    .map { it.tokenRule },
+            )
         return TokenFactory.create(rule, Location(initialPos, finalPos), text)
     }
 

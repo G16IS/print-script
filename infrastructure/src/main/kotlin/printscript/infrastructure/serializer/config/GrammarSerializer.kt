@@ -11,7 +11,11 @@ import printscript.domain.GrammarRule
 @Serializable
 private data class GrammarSurrogate(
     val start: String,
-    val rules: Map<String, @Serializable(with = GrammarRuleSerializer::class) GrammarRule>
+    val rules: Map<
+        String,
+        @Serializable(with = GrammarRuleSerializer::class)
+        GrammarRule,
+    >,
 )
 
 object GrammarSerializer : KSerializer<Grammar> {
@@ -19,7 +23,10 @@ object GrammarSerializer : KSerializer<Grammar> {
 
     override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
 
-    override fun serialize(encoder: Encoder, value: Grammar) {
+    override fun serialize(
+        encoder: Encoder,
+        value: Grammar,
+    ) {
         val surrogate = GrammarSurrogate(value.start, value.rules)
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)
     }

@@ -1,7 +1,9 @@
-package printscript.domain
+package printscript.grammar
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import printscript.domain.AtomRule
+import printscript.domain.Grammar
 import printscript.support.grammar
 import printscript.support.or
 import printscript.support.repeat

@@ -1,10 +1,10 @@
 package printscript.parse
 
-import printscript.domain.Token
-import printscript.error.ParseErrors
 import printscript.domain.GrammarRule
 import printscript.domain.LeftRule
 import printscript.domain.OperatorSpec
+import printscript.domain.Token
+import printscript.error.ParseErrors
 import printscript.syntax.SyntaxNode
 import printscript.util.binary
 import printscript.util.wrap
@@ -15,7 +15,7 @@ class LeftRuleHandler : RuleHandler {
     override fun evaluate(
         name: String,
         rule: GrammarRule,
-        ctx: ParseContext
+        ctx: ParseContext,
     ): SyntaxNode? {
         val left = rule as LeftRule
         val first = ctx.evaluate(left.left) ?: return null
@@ -26,7 +26,7 @@ class LeftRuleHandler : RuleHandler {
         name: String,
         left: LeftRule,
         first: SyntaxNode,
-        ctx: ParseContext
+        ctx: ParseContext,
     ): SyntaxNode {
         var acc = first
         var combined = false
@@ -41,17 +41,21 @@ class LeftRuleHandler : RuleHandler {
         name: String,
         acc: SyntaxNode,
         left: LeftRule,
-        ctx: ParseContext
+        ctx: ParseContext,
     ): SyntaxNode {
         val op = ctx.tokens.advance()
-        val right = ctx.evaluate(left.left)
-            ?: throw ParseErrors.unexpectedToken(ctx.tokens.peek(), left.left)
+        val right =
+            ctx.evaluate(left.left)
+                ?: throw ParseErrors.unexpectedToken(ctx.tokens.peek(), left.left)
         return binary(name, acc, op, right)
     }
 
-    private fun matchesOp(token: Token, op: OperatorSpec): Boolean {
-        if (token.type != op.token) return false
-        val value = token.value.orElse(null) ?: return false
-        return value in op.values
+    private fun matchesOp(
+        token: Token,
+        op: OperatorSpec,
+    ): Boolean {
+        val result = token.type == op.token
+
+        return result && ((token.value.orElse(null) ?: false) in (op.values))
     }
 }

@@ -16,11 +16,12 @@ import printscript.support.rhs
 import printscript.support.source
 
 class LeftRuleHandlerTest {
-    private val grammar = grammar(
-        "expr",
-        "expr" to left("num", "OPERATOR", "+", "-"),
-        "num" to atom("NUMBER_LITERAL")
-    )
+    private val grammar =
+        grammar(
+            "expr",
+            "expr" to left("num", "OPERATOR", "+", "-"),
+            "num" to atom("NUMBER_LITERAL"),
+        )
 
     @Test
     fun `left without an operator returns the child node as a wrapper`() {
@@ -31,14 +32,15 @@ class LeftRuleHandlerTest {
 
     @Test
     fun `left associates to the left`() {
-        val node = parse(
-            grammar,
-            Tokens.number("1"),
-            Tokens.op("-"),
-            Tokens.number("2"),
-            Tokens.op("-"),
-            Tokens.number("3")
-        )
+        val node =
+            parse(
+                grammar,
+                Tokens.number("1"),
+                Tokens.op("-"),
+                Tokens.number("2"),
+                Tokens.op("-"),
+                Tokens.number("3"),
+            )
         assertEquals("-", node.op())
         assertEquals("3", node.rhs().value())
         assertEquals("-", node.lhs().op())

@@ -7,7 +7,6 @@ import printscript.ast.VariableDeclaration
 import printscript.ast.VariableStatement
 
 class DefaultSemanticAnalyzer : SemanticAnalyzer {
-
     override fun analyze(program: Program): SemanticResult {
         val context = SemanticContext()
         val typeChecker = ExpressionTypeChecker(context)
@@ -67,10 +66,11 @@ class DefaultSemanticAnalyzer : SemanticAnalyzer {
             )
         }
 
-        val wasDeclared = context.symbolTable.declare(
-            name = declaration.id.name,
-            type = declaration.typeAnnotation,
-        )
+        val wasDeclared =
+            context.symbolTable.declare(
+                name = declaration.id.name,
+                type = declaration.typeAnnotation,
+            )
 
         if (!wasDeclared) {
             context.errors.add(

@@ -2,14 +2,13 @@ package printscript.domain
 
 data class Grammar(
     val start: String,
-    val rules: Map<String, GrammarRule>
+    val rules: Map<String, GrammarRule>,
 ) {
     init {
         validate()
     }
 
-    fun rule(name: String): GrammarRule =
-        rules[name] ?: error("Unknown grammar rule: $name")
+    fun rule(name: String): GrammarRule = rules[name] ?: error("Unknown grammar rule: $name")
 
     private fun validate() {
         checkStart()

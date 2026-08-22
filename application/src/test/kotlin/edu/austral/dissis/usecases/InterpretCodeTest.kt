@@ -1,4 +1,4 @@
-package edu.austral.dissis.use_cases
+package edu.austral.dissis.usecases
 
 import edu.austral.dissis.testing.ParseExample
 import edu.austral.dissis.testing.ast.AstBuilder
@@ -6,7 +6,6 @@ import edu.austral.dissis.testing.ast.assertAst
 import org.junit.jupiter.api.Test
 
 class InterpretCodeTest {
-
     @Test
     fun `declarations and prints produce the expected tree`() {
         val program = ParseExample.parse("declarations_and_prints.ps")

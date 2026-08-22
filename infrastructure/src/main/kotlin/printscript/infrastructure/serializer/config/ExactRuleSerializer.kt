@@ -13,16 +13,18 @@ import printscript.domain.ExactRule
 private data class ExactRuleSurrogate(
     val matcher: List<String>,
     val token: String,
-    val capture: Boolean
+    val capture: Boolean,
 )
 
 object ExactRuleSerializer : KSerializer<ExactRule> {
-
     private val surrogateSerializer = ExactRuleSurrogate.serializer()
 
     override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
 
-    override fun serialize(encoder: Encoder, value: ExactRule) {
+    override fun serialize(
+        encoder: Encoder,
+        value: ExactRule,
+    ) {
         val surrogate = ExactRuleSurrogate(value.matcher, value.token, value.capture)
 
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)

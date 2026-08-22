@@ -8,10 +8,12 @@ import printscript.ast.Location
  */
 class ParseException(
     message: String,
-    val location: Location
+    val location: Location,
 ) : RuntimeException(formatMessage(message, location)) {
     companion object {
-        private fun formatMessage(message: String, location: Location): String =
-            "$message at line ${location.start.line}, column ${location.start.col}"
+        private fun formatMessage(
+            message: String,
+            location: Location,
+        ): String = "$message at line ${location.start.line}, column ${location.start.col}"
     }
 }

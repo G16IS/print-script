@@ -7,5 +7,8 @@ import printscript.syntax.SyntaxProgram
  * Syntactic analysis only — no semantic validation.
  */
 interface Parser {
-    fun parseNextStatement(tokenStream: Lexer, program: SyntaxProgram): SyntaxProgram
+    fun parseNextStatement(
+        tokenStream: Lexer,
+        program: SyntaxProgram,
+    ): SyntaxProgram
 }

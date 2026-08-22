@@ -6,4 +6,3 @@ data class SemanticError(
     val messageError: String,
     val location: Location,
 )
-

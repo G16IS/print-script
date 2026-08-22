@@ -10,7 +10,10 @@ import printscript.domain.SeqStep
 
 @Serializable
 private data class SeqRuleSurrogate(
-    val seq: List<@Serializable(with = SeqStepSerializer::class) SeqStep>
+    val seq: List<
+        @Serializable(with = SeqStepSerializer::class)
+        SeqStep,
+    >,
 )
 
 object SeqRuleSerializer : KSerializer<SeqRule> {
@@ -18,7 +21,10 @@ object SeqRuleSerializer : KSerializer<SeqRule> {
 
     override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
 
-    override fun serialize(encoder: Encoder, value: SeqRule) {
+    override fun serialize(
+        encoder: Encoder,
+        value: SeqRule,
+    ) {
         val surrogate = SeqRuleSurrogate(value.steps)
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)
     }
