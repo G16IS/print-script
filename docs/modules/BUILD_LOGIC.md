@@ -35,11 +35,19 @@ Tareas que quedan en cada proyecto Kotlin:
 | `test` | La que ya tenía el módulo |
 
 ```
-./gradlew :parser:ktlintCheck
-./gradlew :parser:ktlintFormat
-./gradlew :parser:detekt
-./gradlew :parser:test
+./gradlew ktlintCheck          # format check, todos los módulos
+./gradlew ktlintFormat         # reescribe fuentes — no en CI
+./gradlew detekt               # lint estático, todos los módulos
+./gradlew test                 # tests de todos los módulos
 ```
+
+CI (`.github/workflows/`, aparte de testing):
+
+| Workflow | Archivo | Comando |
+|---|---|---|
+| Tests | `tests.yml` | `./gradlew test --continue` |
+| Lint | `lint.yml` | `./gradlew detekt --continue` |
+| Format | `format.yml` | `./gradlew ktlintCheck --continue` |
 
 Hoy el plugin se aplica a **todos** los subproyectos desde el `build.gradle.kts` raíz (`gradle.beforeProject`), sin editar cada `*/build.gradle.kts`. ktlint y detekt **fallan** si hay findings: el código existente de `parser` (y el resto) todavía no está limpio.
 

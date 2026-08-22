@@ -389,7 +389,7 @@ Módulos nuevos. Docs vacíos: [modules/INTERPRETER.md](modules/INTERPRETER.md),
 | `infrastructure` | `JSONGrammarConfigReader` contra el resource real + JSON de `repeat` |
 | `application` | 3 archivos `.ps` end-to-end lex+parse, asertando forma del `SyntaxProgram` |
 
-Correr: `./gradlew test` (o `:lexer:test`, etc.).
+Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.yml` corre `test` de todos los módulos; `lint.yml` corre `detekt`; `format.yml` corre `ktlintCheck`.
 
 ---
 
