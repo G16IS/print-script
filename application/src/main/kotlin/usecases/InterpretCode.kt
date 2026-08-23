@@ -4,20 +4,19 @@ import printscript.DefaultLexerFactory
 import printscript.DefaultParserFactory
 import printscript.Lexer
 import printscript.Parser
-import printscript.ast.Program
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
+import printscript.domain.TypeSystemConfig
 import printscript.infrastructure.reader.FileCodeReader
 import printscript.syntax.SyntaxProgram
+import printscript.typechecker.DefaultTypeCheckerFactory
+import printscript.typechecker.TypeError
 
-/**
- * Lex + parse + semantic analysis of a PrintScript source file.
- * Returns the validated [Program] or throws if semantic analysis fails.
- */
 object InterpretCode {
     fun interpretCode(
         langConfig: LanguageConfig,
         grammar: Grammar,
+        typeSystem: TypeSystemConfig,
         path: String,
     ): SyntaxProgram {
         val codeReader = FileCodeReader(path)
@@ -30,16 +29,19 @@ object InterpretCode {
             program = parser.parseNextStatement(lexer, program)
         }
 
-//    return when (val result = DefaultSemanticAnalyzer().analyze(program)) {
-//        is SemanticResult.Success -> result.program
-//        is SemanticResult.Failure -> {
-//            val messages = result.errors.joinToString("\n") {
-//                "  - ${it.messageError} @ ${it.location}"
-//            }
-//            error("Semantic analysis failed:\n$messages")
-//        }
-//    }
-
+        val report = DefaultTypeCheckerFactory.create(typeSystem).check(program)
+        if (!report.isOk) {
+            failTypeCheck(report.errors)
+        }
         return program
+    }
+
+    private fun failTypeCheck(errors: List<TypeError>): Nothing {
+        val messages =
+            errors.joinToString("\n") { typeError ->
+                val position = typeError.location.start
+                "  - ${typeError.message} @ ${position.line}:${position.col}"
+            }
+        error("El chequeo de tipos falló:\n$messages")
     }
 }

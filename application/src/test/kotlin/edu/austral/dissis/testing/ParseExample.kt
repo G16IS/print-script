@@ -4,7 +4,9 @@ import java.io.File
 import java.io.InputStream
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
+import printscript.domain.TypeSystemConfig
 import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.infrastructure.reader.JSONTypeSystemConfigReader
 import printscript.syntax.SyntaxProgram
 import usecases.InterpretCode.interpretCode
 
@@ -14,7 +16,10 @@ object ParseExample {
     private val grammar: Grammar =
         JSONGrammarConfigReader.read(stream("grammar.config.json"))
 
-    fun parse(example: String): SyntaxProgram = interpretCode(language, grammar, file("examples/$example"))
+    private val typeSystem: TypeSystemConfig =
+        JSONTypeSystemConfigReader.read(stream("type-system.config.json"))
+
+    fun parse(example: String): SyntaxProgram = interpretCode(language, grammar, typeSystem, file("examples/$example"))
 
     private fun stream(name: String): InputStream =
         requireNotNull(loader().getResourceAsStream(name)) { "Missing resource $name" }
