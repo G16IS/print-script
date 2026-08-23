@@ -1,4 +1,4 @@
-package printscript.typechecker
+package printscript.domain
 
 data class TypeSystemConfig(
     val types: List<String>,

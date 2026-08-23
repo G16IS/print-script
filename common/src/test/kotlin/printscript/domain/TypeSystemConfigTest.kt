@@ -1,4 +1,4 @@
-package printscript.typechecker
+package printscript.domain
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
