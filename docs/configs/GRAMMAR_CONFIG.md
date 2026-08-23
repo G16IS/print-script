@@ -89,9 +89,8 @@ Para agregar un tipo de regla: data class en `common` + serializer + registrarlo
 
 ## Árbol de salida
 
-El parser no construye el AST tipado de `ASTDefinition.kt`. Produce `SyntaxNode` / `SyntaxProgram` (en `common`). El semántico puede caminar ese árbol con `child`, `find` y `value`. Cuando el semántico deje de usar el AST, se puede borrar `ASTDefinition.kt`; `Location` queda en su propio archivo.
+El parser produce `SyntaxNode` / `SyntaxProgram` (en `common`). El type-checker camina ese árbol con `child`, `find` y `value`.
 
 ## Qué no hace
 
-- Semántica (tipos, variables no declaradas).
-- Mapear a `VariableStatement` / `CallExpression`.
+- Chequeo de tipos (eso es el type-checker sobre `SyntaxNode`; ver [TYPE_SYSTEM_CONFIG.md](TYPE_SYSTEM_CONFIG.md)).

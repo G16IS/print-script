@@ -25,14 +25,17 @@ object InterpretCode {
         val parser: Parser = DefaultParserFactory.create(grammar)
 
         var program: SyntaxProgram = SyntaxProgram.empty()
+
         while (lexer.peek(null).type != "EOF") {
             program = parser.parseNextStatement(lexer, program)
         }
 
         val report = DefaultTypeCheckerFactory.create(typeSystem).check(program)
+
         if (!report.isOk) {
             failTypeCheck(report.errors)
         }
+
         return program
     }
 

@@ -109,7 +109,7 @@ findHighestPriorityCategory = maxBy { order.indexOf(category) }
 - Si la categoría ganadora tiene **más de una** regla matching → `IllegalArgumentException`.
 - Si la regla no está en `config` → `IllegalStateException`.
 
-`docs/LANGUAGE_CONFIG.md` dice lo contrario (“el `order` se prueba de primero a último, gana la primera”). El JSON de resources está escrito con esa convención:
+[LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md) documenta que gana el **último**. El JSON de resources está escrito al revés (keywords primero):
 
 ```json
 "order": ["keywords", "types", "operators", "literals", "identifiers"]

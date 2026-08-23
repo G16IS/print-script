@@ -11,7 +11,7 @@ I/O concreto: leer configs JSON y leer código desde archivo. El dominio en `com
 - Forma del JSON / un serializer nuevo
 - Validación post-load de `LanguageConfig`
 - Otra fuente de caracteres (`CodeReader` para stdin, string, etc.)
-- **No** para la semántica de una regla: eso es `common` + `parser`/`lexer`
+- **No** para la semántica de una regla: eso es `common` + `parser`/`lexer`/`type-checker`
 
 ---
 
@@ -23,6 +23,7 @@ infrastructure/src/main/
     reader/
       JSONLanguageConfigReader.kt
       JSONGrammarConfigReader.kt
+      JSONTypeSystemConfigReader.kt
       FileCodeReader.kt
     serializer/config/
       JsonCodecs.kt              asJsonDecoder / asJsonEncoder
@@ -36,12 +37,16 @@ infrastructure/src/main/
       SeqStepSerializer.kt
       LeftRuleSerializer.kt
       RepeatRuleSerializer.kt
+      TypeSystemConfigSerializer.kt
+      OperationSerializer.kt
+      NodeConfigSerializer.kt
   resources/
     language.config.json
     grammar.config.json
+    type-system.config.json
 ```
 
-Specs de esos JSON: [LANGUAGE_CONFIG.md](../LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](../GRAMMAR_CONFIG.md).
+Specs: [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](../configs/GRAMMAR_CONFIG.md), [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md).
 
 ---
 
@@ -111,6 +116,18 @@ Los serializers de gramática son bidireccionales (serialize + deserialize). Los
 
 ---
 
+## Config del type-system — `JSONTypeSystemConfigReader`
+
+```kotlin
+JSONTypeSystemConfigReader.read(path | inputStream | jsonString): TypeSystemConfig
+```
+
+Implementa `TypeSystemConfigReader` (`common`). Surrogates: `TypeSystemConfigSerializer`, `OperationSerializer` (`commutative` default `true`), `NodeConfigSerializer` (campos opcionales). Al construir `TypeSystemConfig` corre la validación de tipos referenciados.
+
+El type-checker **no** llama a este reader: recibe el `TypeSystemConfig` ya armado.
+
+---
+
 ## `FileCodeReader`
 
 `CodeReader` sobre `java.io.File(path).bufferedReader()`.
@@ -143,6 +160,10 @@ Partial de string en este JSON: `"^\"`. En tests: `"^\"[^\"]*$"`.
 
 `start: statement`. Producciones: `statement`, `variable`, `expression-stmt`, `expression`, `term`, `factor`, `number`, `string`, `identifier`, `call`, `group`. Sin `repeat`. `call` tiene un solo argumento.
 
+### `type-system.config.json`
+
+`types`: `number`, `string`. Literales `NUMBER_LITERAL` / `STRING_LITERAL`. Operaciones `+ - * /` (el `+` también string+string y string+number). `nodes` con kinds `declaration`, `expression`, `binary-or-primary`, `primary`, `call`, `group`, `literal`, `identifier`.
+
 ---
 
 ## Trampa del `order`
@@ -152,7 +173,7 @@ Tres fuentes, dos convenciones:
 | Fuente | Order | Quién gana según el código |
 |---|---|---|
 | `language.config.json` | keywords primero | identifiers (mal para `let`) |
-| `docs/LANGUAGE_CONFIG.md` | “primero gana” | docs ≠ código |
+| [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md) | último gana (igual que el código) | — |
 | Tests (`MockLexerFactory`, `PrintScriptLanguage`) | keywords último | keywords (correcto para el lenguaje) |
 
 Antes de usar `JSONLanguageConfigReader.read` en el pipeline, unificá: o invertís el JSON, o cambiás el resolver a `min` índice, o invertís en el reader. No “fixes” silenciosos a medias.
@@ -166,6 +187,8 @@ Antes de usar `JSONLanguageConfigReader.read` en el pipeline, unificá: o invert
 - Lee el resource real: `start`, `or`, `seq` (capturas + rule refs), `left`+valores, `atom`
 - JSON chico con `repeat`
 - Rechaza start desconocido, ref colgante, shape desconocido
+
+`JSONTypeSystemConfigReaderTest`: resource canónico, `commutative: false`, rechaza tipos inexistentes.
 
 No hay test de `JSONLanguageConfigReader` ni de `FileCodeReader`.
 

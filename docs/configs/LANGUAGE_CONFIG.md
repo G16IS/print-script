@@ -17,9 +17,12 @@ Configuración declarativa del lexer. Define **categorías de tokens**, su **pri
 ```
 
 ### `order`
-Array de strings. Define el **orden de prioridad** de las categorías.
 
-El lexer prueba las categorías en el orden indicado. La **primera regla que matchea** gana.
+Array de strings. Define la **prioridad de las categorías** cuando varias reglas matchean el mismo lexema.
+
+En el código (`RuleDrawResolver`) gana la categoría con **mayor índice**: la **última** de `order`. `order[0]` es la menos prioritaria.
+
+Los tests (`MockLexerFactory`, `PrintScriptLanguage`) ponen `keywords` al final para que `let` no salga `ID`. El `language.config.json` de resources está al revés (keywords primero): si lo cargás tal cual, identifiers ganan. Ver [LEXER.md](../modules/LEXER.md).
 
 ### `config`
 Mapa de categoría → lista de reglas.
@@ -107,4 +110,4 @@ Matching por expresión regular.
 - `exact` es preferible para keywords y operadores (más rápido y predecible).
 - `regex` se reserva para literales e identificadores.
 - `capture: true` solo cuando el valor del token importa (identificadores, literales, números).
-- El orden dentro de `order` es crítico: reglas más específicas primero.
+- El orden dentro de `order` es crítico: la categoría que tiene que ganar va **al final**.
