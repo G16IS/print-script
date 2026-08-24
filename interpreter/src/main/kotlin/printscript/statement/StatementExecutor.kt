@@ -1,10 +1,18 @@
 package printscript.statement
 
 import printscript.InterpreterContext
-import printscript.SideEffect
+import printscript.error.TypeError
+import printscript.expression.ExpressionSolver
+import printscript.node.NodeKind
 import printscript.syntax.SyntaxNode
+import printscript.util.Result
 
 interface StatementExecutor {
-    fun canHandle(node: SyntaxNode): Boolean
-    fun execute(node: SyntaxNode ,context: InterpreterContext): List<SideEffect>
+    val kind: NodeKind
+
+    fun execute(
+        node: SyntaxNode,
+        context: InterpreterContext,
+        solver: ExpressionSolver,
+    ): Result<StatementResult, TypeError>
 }

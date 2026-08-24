@@ -5,10 +5,20 @@ plugins {
 repositories {
     mavenCentral()
 }
+
 dependencies {
     implementation(project(":common"))
-    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.8")
-    testImplementation(kotlin("test"))
+
+    testImplementation(project(":lexer"))
+    testImplementation(project(":parser"))
+    testImplementation(project(":infrastructure"))
+    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 kotlin {

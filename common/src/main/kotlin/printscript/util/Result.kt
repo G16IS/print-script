@@ -25,6 +25,12 @@ inline fun <T, E, R> Result<T, E>.map(transform: (T) -> R): Result<R, E> =
         is Result.Err -> this
     }
 
+inline fun <T, E, R> Result<T, E>.flatMap(transform: (T) -> Result<R, E>): Result<R, E> =
+    when (this) {
+        is Result.Ok -> transform(value)
+        is Result.Err -> this
+    }
+
 inline fun <T, E, R> Result<T, E>.fold(
     onOk: (T) -> R,
     onErr: (E) -> R,

@@ -25,13 +25,13 @@ El diseño es **pipeline + configuración declarativa**. Lexer y parser no hardc
 | `parser` | [modules/PARSER.md](modules/PARSER.md) | Tokens → `SyntaxProgram` evaluando `Grammar` |
 | `infrastructure` | [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md) | JSON + filesystem: configs y `FileCodeReader` |
 | `application` | [modules/APPLICATION.md](modules/APPLICATION.md) | Caso de uso `interpretCode` que arma el pipeline |
+| `interpreter` | [modules/INTERPRETER.md](modules/INTERPRETER.md) | Ejecutar el programa: `SyntaxProgram` → `List<SideEffect>` |
 
 ### Módulos a futuro (pipeline)
 
 | Módulo | Archivo | Una línea |
 |---|---|---|
 | `type-checker` | [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md) | Tipos y símbolos sobre el parse tree. Código hoy en Gradle `:semantic` |
-| `interpreter` | [modules/INTERPRETER.md](modules/INTERPRETER.md) | Ejecutar el programa. Vacío — a futuro |
 | `linter` | [modules/LINTER.md](modules/LINTER.md) | Reglas de estilo / análisis estático. Vacío — a futuro |
 | `formatter` | [modules/FORMATTER.md](modules/FORMATTER.md) | Reescribir el código con estilo canónico. Vacío — a futuro |
 
@@ -75,7 +75,7 @@ No está en la gramática v1 (pero el parser ya sabe evaluar `repeat`, pensado p
 
 - `if`, braces, asignaciones sueltas, múltiples argumentos en `println`
 
-Hoy el pipeline **corta en el parser**: lexea + parsea y devuelve el árbol. El type-checker vive como Gradle `:semantic` y **no está cableado**. Interpreter, linter y formatter no existen.
+Hoy el pipeline **corta en el parser**: lexea + parsea y devuelve el árbol. El type-checker vive como Gradle `:semantic` y **no está cableado**. El interpreter existe como módulo Gradle (ver [modules/INTERPRETER.md](modules/INTERPRETER.md)) pero tampoco está cableado. Linter y formatter no existen.
 
 ---
 
@@ -97,7 +97,7 @@ DefaultParser           parser             SyntaxNode / SyntaxProgram
 type-checker            a futuro           validar tipos / símbolos
     │                                      (código actual: Gradle :semantic, desconectado)
     ▼
-interpreter             a futuro           ejecutar (println, asignaciones, …)
+interpreter             módulo listo        ejecutar (println, declaraciones, expresiones)
 ```
 
 Linter y formatter no están en esa cadena: corren sobre el árbol (post-parser, en paralelo o después del type-checker). Ver [modules/LINTER.md](modules/LINTER.md) y [modules/FORMATTER.md](modules/FORMATTER.md).
@@ -123,7 +123,7 @@ El parser es **streaming por statement**: no parsea el archivo de una. Cada llam
 
 ```
 settings.gradle.kts incluye:
-  common, lexer, infrastructure, semantic, parser, application
+  common, lexer, infrastructure, semantic, parser, application, interpreter
   pluginManagement { includeBuild("build-logic") }  — convention plugin, no es library
 ```
 
@@ -135,6 +135,7 @@ lexer           ← common
 parser          ← common, lexer
 semantic        ← common
 infrastructure  ← common   (+ kotlinx.serialization)
+interpreter     ← common
 application     ← common, lexer, parser, semantic, infrastructure
 ```
 
@@ -212,9 +213,11 @@ Chequea (reglas a conservar):
 
 Ver [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md).
 
-### `interpreter` — ejecutar (a futuro)
+### `interpreter` — ejecutar
 
-Evalúa el programa validado (`println`, expresiones, eventualmente control de flujo). No existe módulo Gradle todavía.
+Recorre el `SyntaxProgram` y devuelve `Result<List<SideEffect>, TypeError>` (fail-fast, Result end-to-end). Dispatch por `NodeKind` con executors de statement y evaluators de expresión; `println` es una expresión acá, así que los efectos viajan dentro del resultado de evaluar expresiones. Contexto inmutable copy-on-write.
+
+Existe como módulo Gradle pero **no está cableado** en `application`: el pipeline sigue cortando en el parse tree hasta conectar `InterpretCode`.
 
 Ver [modules/INTERPRETER.md](modules/INTERPRETER.md).
 
@@ -331,7 +334,7 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 |---|---|---|
 | Type-checker no está cableado | `InterpretCode.kt` (bloque comentado) | El pipeline termina en el parse tree |
 | `:semantic` espera AST tipado | `DefaultSemanticAnalyzer.analyze(Program)` | Migrar a type-checker sobre `SyntaxNode`; no hacer lowering al AST viejo |
-| Interpreter no existe | — | No hay ejecución de `println` |
+| Interpreter no cableado en application | `interpreter` existe; falta conectar en `InterpretCode.kt` | No hay ejecución de `println` desde el caso de uso |
 | Linter no existe | — | No hay reglas de estilo |
 | Formatter no existe | — | No hay pretty-print |
 | `order` del lexer invertido vs docs/JSON | `RuleDrawResolver` vs `language.config.json` | Cargar el JSON sin invertir keywords pierde contra identifiers |
@@ -388,6 +391,7 @@ Módulos nuevos. Docs vacíos: [modules/INTERPRETER.md](modules/INTERPRETER.md),
 | `semantic` (a migrar a type-checker) | AST tipado fabricado a mano (no pasa por lexer/parser) |
 | `infrastructure` | `JSONGrammarConfigReader` contra el resource real + JSON de `repeat` |
 | `application` | 3 archivos `.ps` end-to-end lex+parse, asertando forma del `SyntaxProgram` |
+| `interpreter` | contexto, evaluators (literales/binarios/calls), executors, integración lex+parse+interpret con asserts de `SideEffect` |
 
 Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.yml` corre `test` de todos los módulos; `lint.yml` corre `detekt`; `format.yml` corre `ktlintCheck`.
 
@@ -413,7 +417,7 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.y
 | Cambiar sintaxis | GRAMMAR_CONFIG + parser | `grammar.config.json`, `ParserTest`, ejemplos `.ps` |
 | Nuevo combinador de gramática | parser + infrastructure serializers + common domain | 3 módulos a la vez |
 | Tipos / variables no declaradas | TYPE_CHECKER + SyntaxNode | migrar `:semantic`; no usar `ASTDefinition.kt` |
-| Ejecutar el programa | INTERPRETER | módulo a futuro |
+| Ejecutar el programa | INTERPRETER | cablear en `application/InterpretCode.kt` |
 | Reglas de estilo | LINTER | módulo a futuro |
 | Pretty-print | FORMATTER | módulo a futuro |
 | Lint/format del Kotlin del repo | BUILD_LOGIC | `build-logic` / `printscript.quality` |

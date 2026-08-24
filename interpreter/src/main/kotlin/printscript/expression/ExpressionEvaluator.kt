@@ -1,11 +1,17 @@
 package printscript.expression
 
 import printscript.InterpreterContext
-import printscript.RuntimeValue
+import printscript.error.TypeError
+import printscript.node.NodeKind
 import printscript.syntax.SyntaxNode
+import printscript.util.Result
 
 interface ExpressionEvaluator {
+    val kind: NodeKind
 
-    fun canHandle(node: SyntaxNode): Boolean
-    fun evaluate(node: SyntaxNode, context: InterpreterContext, solver: ExpressionSolver): RuntimeValue
+    fun evaluate(
+        node: SyntaxNode,
+        context: InterpreterContext,
+        solver: ExpressionSolver,
+    ): Result<EvalResult, TypeError>
 }
