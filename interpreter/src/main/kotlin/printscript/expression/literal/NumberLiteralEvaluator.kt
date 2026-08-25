@@ -3,7 +3,7 @@ package printscript.expression.literal
 import printscript.InterpreterContext
 import printscript.NumberValue
 import printscript.error.InvalidLiteral
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
@@ -18,11 +18,12 @@ class NumberLiteralEvaluator : ExpressionEvaluator {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<EvalResult, TypeError> {
+    ): Result<EvalResult, RuntimeError> {
         val text = node.value()
         val number =
             text.toDoubleOrNull()
                 ?: return Result.Err(InvalidLiteral(text, node.location))
+
         return Result.Ok(EvalResult.pure(NumberValue(number)))
     }
 }

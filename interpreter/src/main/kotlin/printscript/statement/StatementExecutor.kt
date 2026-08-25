@@ -1,7 +1,7 @@
 package printscript.statement
 
 import printscript.InterpreterContext
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.expression.ExpressionSolver
 import printscript.node.NodeKind
 import printscript.syntax.SyntaxNode
@@ -14,5 +14,5 @@ interface StatementExecutor {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<StatementResult, TypeError>
+    ): Result<StatementResult, RuntimeError>
 }

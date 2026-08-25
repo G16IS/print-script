@@ -1,7 +1,7 @@
 package printscript.statement
 
 import printscript.InterpreterContext
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.error.UnrecognizedNode
 import printscript.expression.ExpressionSolver
 import printscript.node.NodeKind
@@ -23,7 +23,7 @@ class VariableDeclarationExecutor : StatementExecutor {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<StatementResult, TypeError> =
+    ): Result<StatementResult, RuntimeError> =
         childOrError(node, NAME_NODE).flatMap { nameNode ->
             childOrError(node, EXPRESSION_NODE).flatMap { expressionNode ->
                 solver.solve(expressionNode, context).map { result ->
@@ -38,7 +38,7 @@ class VariableDeclarationExecutor : StatementExecutor {
     private fun childOrError(
         node: SyntaxNode,
         childName: String,
-    ): Result<SyntaxNode, TypeError> =
+    ): Result<SyntaxNode, RuntimeError> =
         node
             .childOrNull(childName)
             ?.let { Result.Ok(it) }

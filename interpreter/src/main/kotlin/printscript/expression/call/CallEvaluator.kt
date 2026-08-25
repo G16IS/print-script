@@ -3,7 +3,7 @@ package printscript.expression.call
 import printscript.InterpreterContext
 import printscript.PrintEffect
 import printscript.UnitValue
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.error.UnrecognizedNode
 import printscript.error.UnresolvableCall
 import printscript.expression.EvalResult
@@ -26,7 +26,7 @@ class CallEvaluator : ExpressionEvaluator {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<EvalResult, TypeError> =
+    ): Result<EvalResult, RuntimeError> =
         if (node.children.size < CHILDREN_COUNT) {
             Result.Err(UnrecognizedNode(node.name, node.location))
         } else {
@@ -40,7 +40,7 @@ class CallEvaluator : ExpressionEvaluator {
         callee: String,
         result: EvalResult,
         node: SyntaxNode,
-    ): Result<EvalResult, TypeError> =
+    ): Result<EvalResult, RuntimeError> =
         when (callee) {
             PRINTLN ->
                 Result.Ok(

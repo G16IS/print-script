@@ -1,7 +1,7 @@
 package printscript.expression
 
 import printscript.InterpreterContext
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.error.UnresolvableExpression
 import printscript.node.NodeKind
 import printscript.node.NodeKindResolver
@@ -23,7 +23,7 @@ class ExpressionSolver(
     fun solve(
         node: SyntaxNode,
         context: InterpreterContext,
-    ): Result<EvalResult, TypeError> =
+    ): Result<EvalResult, RuntimeError> =
         nodeKindResolver.resolve(node).flatMap { kind ->
             evaluatorsByKind[kind]
                 ?.evaluate(node, context, this)

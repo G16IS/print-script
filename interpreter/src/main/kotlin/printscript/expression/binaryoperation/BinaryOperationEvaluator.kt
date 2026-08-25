@@ -7,7 +7,7 @@ import printscript.StringValue
 import printscript.UnitValue
 import printscript.error.DivisionByZero
 import printscript.error.InvalidOperands
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.error.UnrecognizedNode
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
@@ -32,7 +32,7 @@ class BinaryOperationEvaluator(
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<EvalResult, TypeError> =
+    ): Result<EvalResult, RuntimeError> =
         when (node.children.size) {
             UNARY_CHILDREN -> solver.solve(node.children[ONLY_CHILD_INDEX], context)
             CHILDREN_WITH_OPERATOR -> {
@@ -43,6 +43,7 @@ class BinaryOperationEvaluator(
                     }
                 }
             }
+
             else -> Result.Err(UnrecognizedNode(node.name, node.location))
         }
 
@@ -51,15 +52,31 @@ class BinaryOperationEvaluator(
         left: EvalResult,
         right: EvalResult,
         node: SyntaxNode,
-    ): Result<EvalResult, TypeError> =
+    ): Result<EvalResult, RuntimeError> =
         when {
-            dividesByZero(operator, right.value) -> Result.Err(DivisionByZero(node.location))
+            dividesByZero(operator, right.value) ->
+                Result
+                    .Err(DivisionByZero(node.location))
+
             else ->
                 typeConfiguration
                     .resolveBinaryOperation(operator, left.value::class, right.value::class)
-                    ?.let { rule -> Result.Ok(EvalResult.combine(left, right, rule.apply(left.value, right.value))) }
+                    ?.let { rule ->
+                        Result.Ok(
+                            EvalResult.combine(
+                                left,
+                                right,
+                                rule.apply(left.value, right.value),
+                            ),
+                        )
+                    }
                     ?: Result.Err(
-                        InvalidOperands(operator, displayName(left.value), displayName(right.value), node.location),
+                        InvalidOperands(
+                            operator,
+                            displayName(left.value),
+                            displayName(right.value),
+                            node.location,
+                        ),
                     )
         }
 

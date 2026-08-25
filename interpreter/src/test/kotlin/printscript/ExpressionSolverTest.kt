@@ -7,7 +7,7 @@ import printscript.error.DivisionByZero
 import printscript.error.InvalidLiteral
 import printscript.error.InvalidOperands
 import printscript.error.NoNodeKindForNode
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
 import printscript.error.UnresolvableExpression
 import printscript.expression.EvalResult
@@ -197,7 +197,7 @@ class ExpressionSolverTest {
 
     private fun leafNumber(text: String) = printscript.support.leaf("number", "NUMBER_LITERAL", text)
 
-    private fun ok(result: Result<EvalResult, TypeError>) = (result as Result.Ok).value
+    private fun ok(result: Result<EvalResult, RuntimeError>) = (result as Result.Ok).value
 
-    private fun err(result: Result<EvalResult, TypeError>) = (result as Result.Err).error
+    private fun err(result: Result<EvalResult, RuntimeError>) = (result as Result.Err).error
 }

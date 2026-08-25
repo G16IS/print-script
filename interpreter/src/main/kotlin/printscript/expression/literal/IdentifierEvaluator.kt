@@ -1,7 +1,7 @@
 package printscript.expression.literal
 
 import printscript.InterpreterContext
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
@@ -17,7 +17,7 @@ class IdentifierEvaluator : ExpressionEvaluator {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<EvalResult, TypeError> {
+    ): Result<EvalResult, RuntimeError> {
         val name = node.value()
         val value =
             context.getVariable(name)

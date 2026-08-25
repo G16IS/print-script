@@ -11,7 +11,7 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":lexer"))
     implementation(project(":parser"))
-    implementation(project(":semantic"))
+    implementation(project(":type-checker"))
 
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")

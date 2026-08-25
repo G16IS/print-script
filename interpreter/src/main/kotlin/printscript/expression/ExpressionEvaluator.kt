@@ -1,7 +1,7 @@
 package printscript.expression
 
 import printscript.InterpreterContext
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.node.NodeKind
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
@@ -13,5 +13,5 @@ interface ExpressionEvaluator {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<EvalResult, TypeError>
+    ): Result<EvalResult, RuntimeError>
 }

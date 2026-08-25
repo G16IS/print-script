@@ -1,8 +1,8 @@
 # Módulo `application`
 
-Dependencias: `common`, `lexer`, `parser`, `semantic`, `infrastructure`.
+Dependencias: `common`, `lexer`, `parser`, `type-checker`, `infrastructure`.
 
-Capa de orquestación: arma readers + lexer + parser y expone el caso de uso. No debería contener algoritmos de matching ni de gramática.
+Capa de orquestación: arma readers + lexer + parser + type-checker y expone el caso de uso. No debería contener algoritmos de matching, gramática ni de tipos.
 
 Paquete: `edu.austral.dissis` (el resto del repo es `printscript`).
 
@@ -10,7 +10,7 @@ Paquete: `edu.austral.dissis` (el resto del repo es `printscript`).
 
 ## Cuándo tocarlo
 
-- Cablear type-checker, CLI, interpreter o linter
+- Cablear CLI, interpreter o linter
 - Tests de integración contra archivos `.ps`
 - **No** para cambiar precedencia o keywords — JSON + lexer/parser
 
@@ -27,7 +27,7 @@ application/src/test/
   kotlin/edu/austral/dissis/
     usecases/InterpretCodeTest.kt
     testing/
-      ParseExample.kt              carga grammar JSON + LanguageConfig de test
+      ParseExample.kt              carga grammar + type-system JSON + LanguageConfig de test
       PrintScriptLanguage.kt       LanguageConfig con order invertido
       ast/
         AstBuilder.kt              DSL node("variable") { … }
@@ -38,9 +38,12 @@ application/src/test/
     declarations_and_prints.ps
     binary_expression.ps
     string_literal.ps
+    type_mismatch.ps
+    undeclared_variable.ps
+    redeclaration.ps
 ```
 
-El `grammar.config.json` de test se toma del **classpath de infrastructure** (`JSONGrammarConfigReader.read(stream("grammar.config.json"))`), no hay copia en `application/src/test/resources`. Los `.ps` sí son de application.
+`grammar.config.json` y `type-system.config.json` de test salen del **classpath de infrastructure**. Los `.ps` sí son de application.
 
 ---
 
@@ -50,6 +53,7 @@ El `grammar.config.json` de test se toma del **classpath de infrastructure** (`J
 fun interpretCode(
     langConfig: LanguageConfig,
     grammar: Grammar,
+    typeSystem: TypeSystemConfig,
     path: String
 ): SyntaxProgram
 ```
@@ -60,11 +64,13 @@ Pasos:
 2. `DefaultLexerFactory.create(codeReader, langConfig)`
 3. `DefaultParserFactory.create(grammar)`
 4. `while (lexer.peek(null).type != "EOF")` → `parser.parseNextStatement(lexer, program)`
-5. Devuelve el `SyntaxProgram`
+5. `DefaultTypeCheckerFactory.create(typeSystem).check(program)`
+6. Si el `Report` no es ok → `error("El chequeo de tipos falló:…")` con mensaje y `line:col`
+7. Si no, devuelve el `SyntaxProgram`
 
-KDoc dice “Returns the validated Program or throws if semantic analysis fails”. El cuerpo **no** valida: el bloque semántico está comentado y, además, no tiparía (`analyze` espera `Program`, acá hay `SyntaxProgram`).
+Las tres configs llegan **ya construidas**. Application no lee JSON en el caso de uso (sí `ParseExample` en tests).
 
-No hay ejecución de `println`. “Interpret” acá = lex + parse.
+No hay ejecución de `println`. “Interpret” acá = lex + parse + type-check.
 
 `Main.kt` no llama a esto. No hay CLI (`args[0]`, flags de versión, etc.).
 
@@ -76,6 +82,7 @@ No hay ejecución de `println`. “Interpret” acá = lex + parse.
 
 - Lenguaje: `PrintScriptLanguage.config()` (**no** el JSON del lexer)
 - Gramática: resource `grammar.config.json`
+- Type-system: resource `type-system.config.json`
 - Path: resource `examples/foo.ps` resuelto a `File` absoluto
 
 `PrintScriptLanguage` duplica las reglas de `language.config.json` con el `order` invertido. Comentario explícito: el resolver trata la **última** categoría como máxima prioridad. Si agregás un token, actualizá JSON **y** esta clase **y** `MockLexerFactory` del lexer.
@@ -85,6 +92,7 @@ No hay ejecución de `println`. “Interpret” acá = lex + parse.
 - `declarations_and_prints.ps` — dos `let` + dos `println`
 - `binary_expression.ps` — `1 + 2 * 3` (el `*` queda dentro del `term` derecho)
 - `string_literal.ps` — value `"\"hola\""` (comillas incluidas)
+- `type_mismatch.ps` / `undeclared_variable.ps` / `redeclaration.ps` — `interpretCode` tira `IllegalStateException` con el mensaje de tipo
 
 DSL:
 
@@ -139,9 +147,9 @@ Son el contrato de integración del lenguaje v1. Si cambiás la gramática de fo
 
 `Main.kt`: cargar configs (resources o paths), `interpretCode`, imprimir el árbol o errores. `FileCodeReader` no cierra el file; para un one-shot está bien.
 
-### Cablear type-checker / interpreter
+### Cablear interpreter
 
-Ver [TYPE_CHECKER.md](TYPE_CHECKER.md) e [INTERPRETER.md](INTERPRETER.md). No descomentes el bloque de `:semantic` a ciegas: espera `Program`, acá hay `SyntaxProgram`. El type-checker tiene que caminar el parse tree.
+Ver [INTERPRETER.md](INTERPRETER.md). El type-checker ya corre sobre `SyntaxProgram` después del parser.
 
 ### Nuevo caso de uso
 

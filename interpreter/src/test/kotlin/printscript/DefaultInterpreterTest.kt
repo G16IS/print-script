@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
 import printscript.expression.ExpressionSolver
 import printscript.expression.GroupEvaluator
@@ -155,5 +155,5 @@ class DefaultInterpreterTest {
             CallEvaluator(),
         )
 
-    private fun <T> ok(result: Result<T, TypeError>) = (result as Result.Ok).value
+    private fun <T> ok(result: Result<T, RuntimeError>) = (result as Result.Ok).value
 }

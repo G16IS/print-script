@@ -29,7 +29,7 @@
 
 PrintScript es el lenguaje de script de la materia. Este repo es el compilador/intérprete del **grupo 16**: leés un programa, lo desarmás en piezas, armás el árbol y (más adelante) lo validás y lo ejecutás.
 
-Hoy el camino llega hasta el **árbol de sintaxis**. El type-checker, el intérprete, el linter y el formatter del lenguaje están en el mapa, pero todavía no están cableados.
+Hoy el camino llega hasta el **type-checker**: árbol de sintaxis validado. El intérprete, el linter y el formatter del lenguaje están en el mapa, pero todavía no están cableados.
 
 ```printscript
 let pepe: string = "Hello, World!";
@@ -51,10 +51,9 @@ El diseño no es un monolito que “entiende PrintScript”. Es un **pipeline**:
 flowchart LR
     A["archivo .ps"] --> B["Lexer"]
     B --> C["Parser"]
-    C -.-> D["Type checker"]
+    C --> D["Type checker"]
     D -.-> E["Interpreter"]
 
-    style D stroke-dasharray: 5 5
     style E stroke-dasharray: 5 5
 ```
 
@@ -62,7 +61,7 @@ flowchart LR
 |---|---|---|
 | **Lexer** | Lee el archivo carácter a carácter y lo corta en tokens (`let`, un identificador, un `42`, un `+`…) | Listo |
 | **Parser** | Arma el árbol de sintaxis statement por statement, respetando precedencia (`*` / `/` ganan a `+` / `-`) | Listo |
-| **Type checker** | Chequea tipos, redeclaraciones y variables que no existen | En camino |
+| **Type checker** | Chequea tipos, redeclaraciones y variables que no existen | Listo |
 | **Interpreter** | Ejecuta el programa (`println`, expresiones, más adelante control de flujo) | A futuro |
 | **Linter / formatter** | Estilo y pretty-print sobre el árbol — no forman parte de la cadena de ejecución | A futuro |
 
@@ -72,8 +71,9 @@ Dos ideas que recorren todo el proyecto:
 2. **El lenguaje no está hardcodeado.** Qué es un token y qué es una producción válida vive en JSON. El Kotlin es el motor; PrintScript es la config.
 
 ```
-language.config.json     →  cómo se reconocen las palabras del lenguaje
-grammar.config.json      →  cómo se combinan esas palabras en un programa
+language.config.json        →  cómo se reconocen las palabras del lenguaje
+grammar.config.json         →  cómo se combinan esas palabras en un programa
+type-system.config.json     →  tipos, operaciones y nodos a chequear
 ```
 
 Agregar un keyword o una forma de statement, en el caso feliz, es editar esos archivos — no reescribir el parser.
@@ -101,16 +101,15 @@ El parser ya sabe evaluar repeticiones (`repeat`), pensado para cuando lleguen l
 Monorepo Gradle. Cada carpeta es una pieza con un rol chico:
 
 ```
-.ps  →  infrastructure  →  lexer  →  parser  →  application
-              ↑                 ↑         ↑
+.ps  →  infrastructure  →  lexer  →  parser  →  type-checker  →  application
+              ↑                 ↑         ↑            ↑
            configs JSON      common (contratos compartidos)
 ```
 
-- **`common`** — el vocabulario: tokens, gramática, árbol, posiciones. Nadie habla con nadie sin pasar por acá.
+- **`common`** — el vocabulario: tokens, gramática, árbol, type-system, posiciones. Nadie habla con nadie sin pasar por acá.
 - **`infrastructure`** — lee los JSON y el archivo fuente. Es la única pieza que sabe de disco y de serialización.
-- **`lexer` / `parser`** — motores genéricos. No conocen `let` ni `println`; conocen reglas.
-- **`application`** — arma el pipeline y lo corre contra un path. Hoy eso se llama `interpretCode`, aunque todavía no “interpreta”: lexea y parsea.
-- **`semantic`** — el chequeo de tipos vive acá, desconectado del pipeline. Se va a migrar a un type-checker sobre el árbol nuevo.
+- **`lexer` / `parser` / `type-checker`** — motores genéricos. No conocen `let` ni `println` a palo; conocen reglas y kinds de la config.
+- **`application`** — arma el pipeline y lo corre contra un path. `interpretCode` lexea, parsea y type-chequea. Todavía no ejecuta.
 - **`build-logic`** — calidad del *código Kotlin* (ktlint + detekt). No es el linter de PrintScript.
 
 El detalle de cada módulo, invariantes y recetas de extensión está en [`docs/CONTEXT.md`](docs/CONTEXT.md).
@@ -136,8 +135,9 @@ CI corre esas tres cosas en cada push / PR a `main`: [tests](.github/workflows/t
 | Para… | Empezá por |
 |---|---|
 | Entender el proyecto entero | [`docs/CONTEXT.md`](docs/CONTEXT.md) |
-| Cambiar tokens / keywords | [`docs/LANGUAGE_CONFIG.md`](docs/LANGUAGE_CONFIG.md) |
-| Cambiar la sintaxis | [`docs/GRAMMAR_CONFIG.md`](docs/GRAMMAR_CONFIG.md) |
+| Cambiar tokens / keywords | [`docs/configs/LANGUAGE_CONFIG.md`](docs/configs/LANGUAGE_CONFIG.md) |
+| Cambiar la sintaxis | [`docs/configs/GRAMMAR_CONFIG.md`](docs/configs/GRAMMAR_CONFIG.md) |
+| Cambiar tipos / operadores | [`docs/configs/TYPE_SYSTEM_CONFIG.md`](docs/configs/TYPE_SYSTEM_CONFIG.md) |
 | Un módulo en particular | [`docs/modules/`](docs/modules/) |
 
 ---

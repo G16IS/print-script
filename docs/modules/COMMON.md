@@ -13,7 +13,8 @@ Si un tipo lo necesitan dos módulos, vive acá. Si un tipo es detalle de matchi
 - Nueva forma de regla de gramática o de token (`GrammarRule`, `TokenRule`, `SeqStep`)
 - Cambiar la forma de `SyntaxNode` / `Token` / `Location`
 - Nuevo puerto (`CodeReader`, config readers)
-- **No** para serializers, matching de regex, ni lógica de tipos
+- Forma de `TypeSystemConfig` / `Result` / `Report`
+- **No** para serializers, matching de regex, ni el walk de tipos (eso es `:type-checker`)
 
 ---
 
@@ -30,20 +31,22 @@ common/src/main/kotlin/printscript/
     GrammarRule.kt        Or / Atom / Seq / Left / Repeat
     SeqStep.kt            TokenStep / RuleRefStep
     OperatorSpec.kt       token type + valores de operador (para LeftRule)
+    TypeSystemConfig.kt   types, literals, operations, nodes — valida refs de tipos
   syntax/
     SyntaxNode.kt         árbol genérico de salida del parser
     SyntaxProgram.kt      lista de statements + location
   ast/
-    ASTDefinition.kt      AST tipado leftover — lo usa Gradle :semantic (migrar a type-checker)
     Location.kt           start/end CharPosition
-    VariableType.kt       NUMBER / STRING
+  error/
+    TypeError.kt          sealed con variantes (el checker usa otro TypeError, ver TYPE_CHECKER.md)
   reader/
     CodeReader.kt         puerto: read / peek / currentPosition
     CharPosition.kt       (line, col)
     LanguageConfigReader.kt
     GrammarConfigReader.kt
+    TypeSystemConfigReader.kt
   util/
-    Utils.kt              readResource(classpath) — helper suelto
+    Result.kt             Result.Ok/Err + Report + map/fold/isOk
 ```
 
 ---
@@ -152,31 +155,29 @@ API de recorrido (la que debe usar el type-checker):
 
 `SyntaxProgram` es la lista de statements más el span. `withStatement` concatena y ajusta `location.start` al primer statement.
 
-No hay tipos `VariableStatement` acá. Un `let` es un nodo `name = "variable"` cuyos hijos salen de los steps capturados y las reglas anidadas.
-
----
-
-## AST tipado: `ast/ASTDefinition.kt`
-
-Modelo anterior, **todavía usado por Gradle `:semantic`**. El type-checker tiene que dejarlo atrás y caminar `SyntaxNode`. Jerarquía:
-
-```
-Node
-  Program
-  Statement
-    VariableStatement(declaration: VariableDeclaration)
-    ExpressionStmt
-      ExpressionStatement(expression)
-  Expression
-    Identifier, CallExpression, NumberLiteral, StringLiteral, BinaryExpression
-  VariableDeclaration
-```
-
-`VariableType.NUMBER` / `STRING`, parseados con `VariableType.from("number")` (case-insensitive).
+Un `let` es un nodo `name = "variable"` cuyos hijos salen de los steps capturados y las reglas anidadas.
 
 `Location.empty()` = `(0,0)-(0,0)`. El `FileCodeReader` real arranca en `(1,1)`: no mezclar mundos.
 
-El parser **no** construye estas clases. Se pueden borrar cuando el type-checker deje de usarlas; `Location` se queda (ya está en su archivo).
+---
+
+## Type-system (`domain/TypeSystemConfig.kt`)
+
+Modelo de `type-system.config.json`, sin JSON. Al construirse exige que los tipos de `literals` y `operations` existan en `types`.
+
+```kotlin
+TypeSystemConfig(types, literals, operations, nodes)
+Operation(op, operands, result, commutative = true)
+NodeConfig(kind, id?, declaredType?, expression?, callee?, args)
+```
+
+El type-checker recibe este objeto ya armado. Spec del JSON: [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md). Walk: [TYPE_CHECKER.md](TYPE_CHECKER.md).
+
+---
+
+## Result / Report (`util/Result.kt`)
+
+`Result.Ok` / `Result.Err` + `map` / `fold` / `isOk`. `Report(value, errors)` con `isOk` si no hay errores. Lo usan type-checker y tests.
 
 ---
 
@@ -193,6 +194,7 @@ interface CodeReader {
 
 interface LanguageConfigReader {  // Path / InputStream / String → LanguageConfig
 interface GrammarConfigReader {   // Path / InputStream / String → Grammar
+interface TypeSystemConfigReader {  // Path / InputStream / String → TypeSystemConfig
 ```
 
 Implementaciones: `infrastructure` (`FileCodeReader`, `JSON*ConfigReader`). Tests del lexer tienen `MockReader`.
@@ -225,8 +227,8 @@ Nueva categoría de token: no hace falta tocar `common` (es un string más en `L
 
 ## Tests
 
-`common` no tiene source set de test. Lo cubren:
+- `Result` / `Report` (`util/ResultTest`)
+- `TypeSystemConfig` (tipos referenciados)
+- sealed `printscript.error.TypeError` (`error/TypeErrorTest`)
 
-- `parser` → `GrammarTest`, `SyntaxNodeTest`
-- `infrastructure` → deserialización que construye estos tipos
-- `:semantic` → construye el AST tipado a mano (a migrar: ver [TYPE_CHECKER.md](TYPE_CHECKER.md))
+El resto lo cubren `parser` (`GrammarTest`, `SyntaxNodeTest`) e `infrastructure` (deserialización).

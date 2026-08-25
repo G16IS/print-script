@@ -2,7 +2,7 @@ package printscript.expression.literal
 
 import printscript.InterpreterContext
 import printscript.StringValue
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
@@ -17,9 +17,12 @@ class StringLiteralEvaluator : ExpressionEvaluator {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<EvalResult, TypeError> {
+    ): Result<EvalResult, RuntimeError> {
         val raw = node.value()
-        return Result.Ok(EvalResult.pure(StringValue(raw.removeSurrounding(QUOTE))))
+        return Result.Ok(
+            EvalResult
+                .pure(StringValue(raw.removeSurrounding(QUOTE))),
+        )
     }
 
     private companion object {

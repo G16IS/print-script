@@ -1,7 +1,7 @@
 package printscript.expression
 
 import printscript.InterpreterContext
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.error.UnresolvableExpression
 import printscript.node.NodeKind
 import printscript.syntax.SyntaxNode
@@ -15,7 +15,7 @@ class GroupEvaluator : ExpressionEvaluator {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<EvalResult, TypeError> {
+    ): Result<EvalResult, RuntimeError> {
         val inner =
             node.children.firstOrNull()
                 ?: return Result.Err(UnresolvableExpression(node.name, node.location))

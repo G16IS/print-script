@@ -2,7 +2,7 @@
 
 Dependencias: `common`, `lexer`. Tests también tiran de `infrastructure` para cargar `grammar.config.json`.
 
-Análisis **sintáctico** solamente. Tokens → `SyntaxProgram`. No chequea tipos ni declaraciones. No construye el AST de `ASTDefinition.kt`.
+Análisis **sintáctico** solamente. Tokens → `SyntaxProgram`. No chequea tipos ni declaraciones.
 
 Dirigido por datos: el Kotlin es un evaluador de `Grammar`; PrintScript vive en el JSON.
 

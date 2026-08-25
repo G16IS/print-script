@@ -1,7 +1,7 @@
 package printscript.statement
 
 import printscript.InterpreterContext
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.error.UnresolvableExpression
 import printscript.expression.ExpressionSolver
 import printscript.node.NodeKind
@@ -19,7 +19,7 @@ class ExpressionStatementExecutor : StatementExecutor {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<StatementResult, TypeError> {
+    ): Result<StatementResult, RuntimeError> {
         val expressionNode =
             node.children.firstOrNull()
                 ?: return Result.Err(UnresolvableExpression(node.name, node.location))

@@ -35,7 +35,8 @@ data class Redeclaration(
 data class UndeclaredIdentifier(
     val name: String,
     override val location: Location,
-) : TypeError {
+) : TypeError,
+    RuntimeError {
     override val message: String
         get() = "Variable '$name' no declarada"
 }
@@ -45,7 +46,8 @@ data class InvalidOperands(
     val left: String,
     val right: String,
     override val location: Location,
-) : TypeError {
+) : TypeError,
+    RuntimeError {
     override val message: String
         get() = "El operador '$operator' no acepta $left y $right"
 }
@@ -53,46 +55,8 @@ data class InvalidOperands(
 data class UnrecognizedNode(
     val nodeName: String,
     override val location: Location,
-) : TypeError {
+) : TypeError,
+    RuntimeError {
     override val message: String
         get() = "Nodo no reconocido '$nodeName'"
-}
-
-data class UnresolvableExpression(
-    val nodeName: String,
-    override val location: Location,
-) : TypeError {
-    override val message: String
-        get() = "No hay evaluator para nodo '$nodeName'"
-}
-
-data class NoNodeKindForNode(
-    val nodeName: String,
-    override val location: Location,
-) : TypeError {
-    override val message: String
-        get() = "El tipo de nodo '$nodeName' no está mapeado a ningún NodeKind. Revisá el config de mapping."
-}
-
-data class DivisionByZero(
-    override val location: Location,
-) : TypeError {
-    override val message: String
-        get() = "División por cero"
-}
-
-data class InvalidLiteral(
-    val literal: String,
-    override val location: Location,
-) : TypeError {
-    override val message: String
-        get() = "Literal inválido '$literal'"
-}
-
-data class UnresolvableCall(
-    val callee: String,
-    override val location: Location,
-) : TypeError {
-    override val message: String
-        get() = "Llamada desconocida '$callee'"
 }

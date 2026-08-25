@@ -1,6 +1,6 @@
 package printscript
 
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.expression.ExpressionSolver
 import printscript.node.NodeKind
 import printscript.node.NodeKindResolver
@@ -34,13 +34,16 @@ class DefaultInterpreter(
     override fun interpret(
         context: InterpreterContext,
         program: SyntaxProgram,
-    ): Result<List<SideEffect>, TypeError> = executeBlock(program.statements, context)
+    ): Result<List<SideEffect>, RuntimeError> = executeBlock(program.statements, context)
 
     fun executeBlock(
         statements: List<SyntaxNode>,
         context: InterpreterContext,
-    ): Result<List<SideEffect>, TypeError> {
-        val initialState: Result<BlockState, TypeError> = Result.Ok(BlockState(emptyList(), context))
+    ): Result<List<SideEffect>, RuntimeError> {
+        val initialState: Result<BlockState, RuntimeError> =
+            Result
+                .Ok(BlockState(emptyList(), context))
+
         return statements
             .fold(initialState) { acc, statement ->
                 acc.flatMap { state ->
@@ -54,7 +57,7 @@ class DefaultInterpreter(
     private fun executeSingle(
         statement: SyntaxNode,
         context: InterpreterContext,
-    ): Result<Pair<List<SideEffect>, InterpreterContext>, TypeError> =
+    ): Result<Pair<List<SideEffect>, InterpreterContext>, RuntimeError> =
         nodeKindResolver.resolve(statement).flatMap { kind ->
             executorsByKind.getValue(kind).execute(statement, context, expressionSolver).map { outcome ->
                 outcome.sideEffects to outcome.newContext
