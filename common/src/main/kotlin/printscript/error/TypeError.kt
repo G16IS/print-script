@@ -35,7 +35,8 @@ data class Redeclaration(
 data class UndeclaredIdentifier(
     val name: String,
     override val location: Location,
-) : TypeError {
+) : TypeError,
+    RuntimeError {
     override val message: String
         get() = "Variable '$name' no declarada"
 }
@@ -45,7 +46,8 @@ data class InvalidOperands(
     val left: String,
     val right: String,
     override val location: Location,
-) : TypeError {
+) : TypeError,
+    RuntimeError {
     override val message: String
         get() = "El operador '$operator' no acepta $left y $right"
 }
@@ -53,7 +55,8 @@ data class InvalidOperands(
 data class UnrecognizedNode(
     val nodeName: String,
     override val location: Location,
-) : TypeError {
+) : TypeError,
+    RuntimeError {
     override val message: String
         get() = "Nodo no reconocido '$nodeName'"
 }

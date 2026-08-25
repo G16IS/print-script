@@ -1,0 +1,47 @@
+package printscript.error
+
+import printscript.ast.Location
+
+sealed interface RuntimeError {
+    val message: String
+    val location: Location
+}
+
+data class UnresolvableExpression(
+    val nodeName: String,
+    override val location: Location,
+) : RuntimeError {
+    override val message: String
+        get() = "No hay evaluator para nodo '$nodeName'"
+}
+
+data class NoNodeKindForNode(
+    val nodeName: String,
+    override val location: Location,
+) : RuntimeError {
+    override val message: String
+        get() = "El tipo de nodo '$nodeName' no está mapeado a ningún NodeKind. Revisá el config de mapping."
+}
+
+data class DivisionByZero(
+    override val location: Location,
+) : RuntimeError {
+    override val message: String
+        get() = "División por cero"
+}
+
+data class InvalidLiteral(
+    val literal: String,
+    override val location: Location,
+) : RuntimeError {
+    override val message: String
+        get() = "Literal inválido '$literal'"
+}
+
+data class UnresolvableCall(
+    val callee: String,
+    override val location: Location,
+) : RuntimeError {
+    override val message: String
+        get() = "Llamada desconocida '$callee'"
+}

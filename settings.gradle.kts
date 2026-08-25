@@ -19,9 +19,11 @@ plugins {
 }
 
 rootProject.name = "print-script-g16"
+
 include("common")
 include("lexer")
 include("infrastructure")
 include("parser")
 include("type-checker")
 include("application")
+include("interpreter")
