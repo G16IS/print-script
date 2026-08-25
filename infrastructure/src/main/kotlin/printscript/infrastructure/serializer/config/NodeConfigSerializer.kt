@@ -1,0 +1,52 @@
+package printscript.infrastructure.serializer.config
+
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import printscript.domain.NodeConfig
+
+@Serializable
+private data class NodeConfigSurrogate(
+    val kind: String,
+    val id: String? = null,
+    val declaredType: String? = null,
+    val expression: String? = null,
+    val callee: String? = null,
+    val args: List<String> = emptyList(),
+)
+
+object NodeConfigSerializer : KSerializer<NodeConfig> {
+    private val surrogateSerializer = NodeConfigSurrogate.serializer()
+
+    override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: NodeConfig,
+    ) {
+        val surrogate =
+            NodeConfigSurrogate(
+                kind = value.kind,
+                id = value.id,
+                declaredType = value.declaredType,
+                expression = value.expression,
+                callee = value.callee,
+                args = value.args,
+            )
+        encoder.encodeSerializableValue(surrogateSerializer, surrogate)
+    }
+
+    override fun deserialize(decoder: Decoder): NodeConfig {
+        val surrogate = decoder.decodeSerializableValue(surrogateSerializer)
+        return NodeConfig(
+            kind = surrogate.kind,
+            id = surrogate.id,
+            declaredType = surrogate.declaredType,
+            expression = surrogate.expression,
+            callee = surrogate.callee,
+            args = surrogate.args,
+        )
+    }
+}
