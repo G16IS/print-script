@@ -20,23 +20,18 @@ El diseño es **pipeline + configuración declarativa**. Lexer y parser no hardc
 
 | Módulo | Archivo | Una línea |
 |---|---|---|
-| `common` | [modules/COMMON.md](modules/COMMON.md) | Tipos compartidos: Token, Grammar, SyntaxNode, TypeSystemConfig, readers |
+| `common` | [modules/COMMON.md](modules/COMMON.md) | Tipos compartidos: Token, Grammar, SyntaxNode, TypeSystemConfig, Result, errores, SideEffect |
 | `lexer` | [modules/LEXER.md](modules/LEXER.md) | Código → tokens, matching exact/regex, prioridad por categoría |
 | `parser` | [modules/PARSER.md](modules/PARSER.md) | Tokens → `SyntaxProgram` evaluando `Grammar` |
-| `type-checker` | [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md) | Tipos y símbolos sobre el parse tree |
+| `type-checker` | [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md) | Tipos y símbolos sobre el parse tree. Cableado en `interpretCode` |
+| `interpreter` | [modules/INTERPRETER.md](modules/INTERPRETER.md) | `SyntaxProgram` → `List<SideEffect>`. Módulo listo, **no cableado** en application |
 | `infrastructure` | [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md) | JSON + filesystem: configs y `FileCodeReader` |
-| `application` | [modules/APPLICATION.md](modules/APPLICATION.md) | Caso de uso `interpretCode` que arma el pipeline |
-| `interpreter` | [modules/INTERPRETER.md](modules/INTERPRETER.md) | Ejecutar el programa: `SyntaxProgram` → `List<SideEffect>` |
+| `application` | [modules/APPLICATION.md](modules/APPLICATION.md) | Caso de uso `interpretCode`: lex + parse + type-check |
 
 ### Módulos a futuro (pipeline)
 
 | Módulo | Archivo | Una línea |
 |---|---|---|
-<<<<<<< HEAD
-| `type-checker` | [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md) | Tipos y símbolos sobre el parse tree. Código hoy en Gradle `:semantic` |
-=======
-| `interpreter` | [modules/INTERPRETER.md](modules/INTERPRETER.md) | Ejecutar el programa. Vacío — a futuro |
->>>>>>> main
 | `linter` | [modules/LINTER.md](modules/LINTER.md) | Reglas de estilo / análisis estático. Vacío — a futuro |
 | `formatter` | [modules/FORMATTER.md](modules/FORMATTER.md) | Reescribir el código con estilo canónico. Vacío — a futuro |
 
@@ -81,11 +76,7 @@ No está en la gramática v1 (pero el parser ya sabe evaluar `repeat`, pensado p
 
 - `if`, braces, asignaciones sueltas, múltiples argumentos en `println`
 
-<<<<<<< HEAD
-Hoy el pipeline **corta en el parser**: lexea + parsea y devuelve el árbol. El type-checker vive como Gradle `:semantic` y **no está cableado**. El interpreter existe como módulo Gradle (ver [modules/INTERPRETER.md](modules/INTERPRETER.md)) pero tampoco está cableado. Linter y formatter no existen.
-=======
-Hoy el pipeline **corta en el type-checker**: lexea, parsea y valida tipos. Si hay errores de tipo, `interpretCode` falla. Interpreter, linter y formatter no existen.
->>>>>>> main
+Hoy el pipeline de `interpretCode` **corta en el type-checker**: lexea, parsea y valida tipos. Si hay errores de tipo, `interpretCode` falla. El interpreter existe como módulo Gradle con tests (ver [modules/INTERPRETER.md](modules/INTERPRETER.md)) pero **no está en las dependencias de application** ni se llama desde el caso de uso. Linter y formatter no existen.
 
 ---
 
@@ -107,12 +98,13 @@ DefaultParser           parser             SyntaxNode / SyntaxProgram
 DefaultTypeChecker      type-checker       validar tipos / símbolos
     │                                      type-system.config.json
     ▼
-interpreter             módulo listo        ejecutar (println, declaraciones, expresiones)
+DefaultInterpreter      interpreter        SyntaxProgram → List<SideEffect>
+                                           módulo listo; no lo llama interpretCode
 ```
 
 Linter y formatter no están en esa cadena: corren sobre el árbol (post-parser, en paralelo o después del type-checker). Ver [modules/LINTER.md](modules/LINTER.md) y [modules/FORMATTER.md](modules/FORMATTER.md).
 
-Armado típico (lo que hace `interpretCode`):
+Armado típico (lo que hace `interpretCode` **hoy**):
 
 ```kotlin
 val codeReader = FileCodeReader(path)
@@ -126,9 +118,17 @@ while (lexer.peek(null).type != "EOF") {
 
 val report = DefaultTypeCheckerFactory.create(typeSystem).check(program)
 if (!report.isOk) error("El chequeo de tipos falló:…")
+return program
 ```
 
 El parser es **streaming por statement**: no parsea el archivo de una. Cada llamada consume tokens hasta terminar un `statement` (regla `start` de la gramática).
+
+Para **ejecutar**, el caller tendría que hacer (hoy solo lo hacen los tests de `:interpreter`):
+
+```kotlin
+DefaultInterpreterFactory.create().interpret(InterpreterContext(), program)
+// Result<List<SideEffect>, RuntimeError>
+```
 
 ---
 
@@ -136,13 +136,11 @@ El parser es **streaming por statement**: no parsea el archivo de una. Cada llam
 
 ```
 settings.gradle.kts incluye:
-<<<<<<< HEAD
-  common, lexer, infrastructure, semantic, parser, application, interpreter
-=======
-  common, lexer, infrastructure, parser, type-checker, application
->>>>>>> main
+  common, lexer, infrastructure, parser, type-checker, application, interpreter
   pluginManagement { includeBuild("build-logic") }  — convention plugin, no es library
 ```
+
+No hay módulo `:semantic`.
 
 Dependencias de **producción**:
 
@@ -151,18 +149,16 @@ common          ← nadie (solo JDK)
 lexer           ← common
 parser          ← common, lexer
 type-checker    ← common
-infrastructure  ← common   (+ kotlinx.serialization)
-<<<<<<< HEAD
 interpreter     ← common
-application     ← common, lexer, parser, semantic, infrastructure
-=======
+infrastructure  ← common   (+ kotlinx.serialization)
 application     ← common, lexer, parser, type-checker, infrastructure
->>>>>>> main
+                  (no depende de interpreter)
 ```
 
 Dependencias extra de **test**:
 
 - `parser` testImplementation `infrastructure` (carga `grammar.config.json`)
+- `interpreter` testImplementation `lexer`, `parser`, `infrastructure` (lex+parse+interpret)
 - `application` tests usan `JSONGrammarConfigReader` + `JSONTypeSystemConfigReader` + un `LanguageConfig` armado en código (`PrintScriptLanguage`), no el JSON del lexer tal cual
 
 Toolchain: `kotlin.jvmToolchain(21)`. Version catalog: `gradle/libs.versions.toml`.
@@ -170,7 +166,8 @@ Toolchain: `kotlin.jvmToolchain(21)`. Version catalog: `gradle/libs.versions.tom
 Paquetes:
 
 - Todo lo reutilizable: `printscript.*`
-- Application: `edu.austral.dissis` / `edu.austral.dissis.usecases`
+- Application producción: `usecases` (`InterpretCode`)
+- Application tests: `edu.austral.dissis`
 
 ---
 
@@ -184,7 +181,9 @@ Paquetes:
 - **Gramática:** `Grammar` (valida start + referencias al construirse), `GrammarRule` (`Or`, `Atom`, `Seq`, `Left`, `Repeat`), `SeqStep` (`TokenStep`, `RuleRefStep`), `OperatorSpec`
 - **Árbol que produce el parser:** `SyntaxNode` / `SyntaxProgram` (nombres = reglas de la gramática)
 - **Type-system:** `TypeSystemConfig` / `Operation` / `NodeConfig` (valida tipos referenciados al construirse)
-- **Resultados:** `Result` / `Report` en `util/`
+- **Resultados:** `Result` / `Report` en `util/` (`map` / `flatMap` / `fold`)
+- **Errores:** `TypeError` sealed (`TypeMismatch`, `Redeclaration`, `UndeclaredIdentifier`, …) y `RuntimeError` sealed (`DivisionByZero`, `InvalidLiteral`, `UnresolvableCall`, …). Algunas variantes implementan **ambos** (`UndeclaredIdentifier`, `InvalidOperands`, `UnrecognizedNode`). El módulo `:type-checker` **no** usa este sealed: tiene su propio `printscript.typechecker.TypeError` (data class con `message` + `location`)
+- **Efectos:** `SideEffect` / `PrintEffect` (lo que emite el interpreter)
 - **Puertos:** `CodeReader`, `LanguageConfigReader`, `GrammarConfigReader`, `TypeSystemConfigReader`
 - **Ubicación:** `Location` + `CharPosition`
 
@@ -200,7 +199,7 @@ Ver [modules/COMMON.md](modules/COMMON.md).
 - `Token.type` es el string `token` de la regla (`"LET"`, `"ID"`, `"NUMBER_LITERAL"`, `"EOF"`, …)
 - `TokenRegistry` no se usa
 
-**Trampa:** el código gana con la **última** categoría de `order` ([LANGUAGE_CONFIG.md](configs/LANGUAGE_CONFIG.md)). `language.config.json` está escrito “keywords primero”. Los tests del lexer y de application **invierten** el `order` para que keywords ganen a identifiers. Si cargás el JSON tal cual, `let` se tokeniza como `ID`.
+**Trampa:** el código gana con la **última** categoría de `order` ([LANGUAGE_CONFIG.md](configs/LANGUAGE_CONFIG.md)). `language.config.json` está escrito “keywords primero”. Los tests del lexer, de application y de interpreter **invierten** el `order` para que keywords ganen a identifiers. Si cargás el JSON tal cual, `let` se tokeniza como `ID`.
 
 Ver [modules/LEXER.md](modules/LEXER.md).
 
@@ -221,7 +220,7 @@ Ver [modules/PARSER.md](modules/PARSER.md).
 
 ### `type-checker` — tipos y símbolos
 
-Va **después del parser**. Camina `SyntaxProgram` / `SyntaxNode`. Factory: `DefaultTypeCheckerFactory.create(config)`.
+Va **después del parser**. Camina `SyntaxProgram` / `SyntaxNode`. Factory: `DefaultTypeCheckerFactory.create(config)`. **Está cableado** en `interpretCode`.
 
 Chequea:
 
@@ -237,9 +236,20 @@ Ver [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md).
 
 ### `interpreter` — ejecutar
 
-Recorre el `SyntaxProgram` y devuelve `Result<List<SideEffect>, TypeError>` (fail-fast, Result end-to-end). Dispatch por `NodeKind` con executors de statement y evaluators de expresión; `println` es una expresión acá, así que los efectos viajan dentro del resultado de evaluar expresiones. Contexto inmutable copy-on-write.
+Módulo Gradle `:interpreter` (`implementation` solo `common`). Recorre el `SyntaxProgram` y devuelve `Result<List<SideEffect>, RuntimeError>` (fail-fast, Result end-to-end). **No** está en el classpath de `application`: `interpretCode` no lo llama.
 
-Existe como módulo Gradle pero **no está cableado** en `application`: el pipeline sigue cortando en el parse tree hasta conectar `InterpretCode`.
+Dos niveles de dispatch:
+
+1. `NodeKindResolver` traduce `node.name` (regla de la gramática) a `NodeKind` vía `PrintScriptMapping`.
+2. `DefaultInterpreter` despacha statements (`VariableDeclarationExecutor`, `ExpressionStatementExecutor`); `ExpressionSolver` despacha expresiones.
+
+`println` es una **expresión** (`factor → call`), no un statement. Los efectos viajan en `EvalResult(value, sideEffects)` y se combinan de hijos a padres. `CallEvaluator` hardcodea el callee `"println"` y emite `PrintEffect`.
+
+Valores: `NumberValue(Double)`, `StringValue` (sin comillas), `UnitValue` (resultado de un call). Números enteros se imprimen sin `.0` (`toPrintableString()`).
+
+Contexto: `InterpreterContext` inmutable copy-on-write, con `parent` y `childScope()`. `declareVariable` sombrea en el scope actual; `assignVariable` reconstruye la cadena dueña. V1 no tiene asignaciones sueltas ni bloques, así que `assignVariable` / `childScope` están listos y sin usar en el walk de statements.
+
+Tipos en runtime: `DefaultTypeConfiguration` es una tabla **hardcodeada** (no lee `type-system.config.json`). Tiene `number` con `+ - * /` y `string + string`. **No** tiene `string + number` (el type-checker sí). División por cero: guard explícito → `DivisionByZero`. El interpreter **no** chequea la anotación `TYPE` de un `let`: confía en el programa validado.
 
 Ver [modules/INTERPRETER.md](modules/INTERPRETER.md).
 
@@ -270,8 +280,8 @@ Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 
 ### `application` — orquestación
 
-- `interpretCode(langConfig, grammar, typeSystem, path): SyntaxProgram` — lex + parse + type-check
-- `Main.kt` vacío
+- `InterpretCode.interpretCode(langConfig, grammar, typeSystem, path): SyntaxProgram` — lex + parse + type-check
+- No hay `Main.kt` ni CLI
 - Tests de integración con archivos `.ps` y un DSL `assertAst { node(...) }`
 
 Ver [modules/APPLICATION.md](modules/APPLICATION.md).
@@ -290,8 +300,10 @@ Ver [modules/BUILD_LOGIC.md](modules/BUILD_LOGIC.md).
 2. **Tokens genéricos.** `Token.type: String`. El enum `TokenType` es leftover; no lo uses en código nuevo.
 3. **Parser genérico.** El parser no conoce `let` ni `println`. Esas palabras están en los JSON. Un handler nuevo = data class en `common` + serializer + `RuleHandler` + registro.
 4. **Árbol de sintaxis.** El pipeline camina `SyntaxNode` (`child` / `find` / `value`). No hay AST tipado aparte.
-5. **Errores por capa.** Lexer tira `Error` / `IllegalStateException`. Parser tira `ParseException`. Type-checker acumula en `Report` / `Result` (no lanza). `interpretCode` sí lanza si el report no es ok. Interpreter (cuando exista) reporta errores de runtime.
+5. **Errores por capa.** Lexer tira `Error` / `IllegalStateException`. Parser tira `ParseException`. Type-checker acumula en `Report` / `Result` (su `TypeError` data class, no lanza). `interpretCode` sí lanza si el report no es ok. Interpreter reporta `Result.Err(RuntimeError)` y no lanza.
 6. **Streaming.** Ni lexer ni parser cargan el programa entero de una: caracteres → tokens on demand → un statement por llamada.
+
+El interpreter **sí** conoce `"println"` (en `CallEvaluator`) y los nombres de regla v1 (en `PrintScriptMapping`). Extenderlo es registrar executor/evaluator, no tocar el motor de dispatch.
 
 ---
 
@@ -346,6 +358,12 @@ variable
 
 Helpers: `child(name)`, `find(name)` (DFS), `value()` (exige token con value).
 
+El interpreter se apoya en esa forma:
+
+- En un `variable`, el id es hijo `"ID"` (captura de seq), no `"identifier"`
+- El operador de un binario está en `children[1]` (hoja `OPERATOR`)
+- Un `expression`/`term` sin operador tiene **un solo hijo**; `BinaryOperationEvaluator` lo trata como passthrough
+
 ---
 
 ## Huecos y leftover (estado real del repo)
@@ -354,19 +372,17 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 
 | Qué | Dónde | Impacto |
 |---|---|---|
-<<<<<<< HEAD
-| Type-checker no está cableado | `InterpretCode.kt` (bloque comentado) | El pipeline termina en el parse tree |
-| `:semantic` espera AST tipado | `DefaultSemanticAnalyzer.analyze(Program)` | Migrar a type-checker sobre `SyntaxNode`; no hacer lowering al AST viejo |
-| Interpreter no cableado en application | `interpreter` existe; falta conectar en `InterpretCode.kt` | No hay ejecución de `println` desde el caso de uso |
-=======
-| Interpreter no existe | — | No hay ejecución de `println` |
->>>>>>> main
+| Interpreter no cableado en application | `application/build.gradle.kts`, `InterpretCode.kt` | `interpretCode` no ejecuta `println`; no hay `List<SideEffect>` desde el caso de uso |
 | Linter no existe | — | No hay reglas de estilo |
 | Formatter no existe | — | No hay pretty-print |
+| No hay CLI | no existe `Main.kt` | No hay entrada `args[0]` |
+| `string + number` diverge | type-system JSON vs `DefaultTypeConfiguration` | El type-checker acepta `"a" + 1`; el interpreter responde `InvalidOperands` |
+| Tabla de ops del interpreter hardcodeada | `interpreter/.../DefaultTypeConfiguration.kt` | No comparte `type-system.config.json` con el type-checker |
 | `order` del lexer invertido vs docs/JSON | `RuleDrawResolver` vs `language.config.json` | Cargar el JSON sin invertir keywords pierde contra identifiers |
+| `partial` de números en el JSON | `language.config.json` (`^[0-9]`) | `1.5` se parte en el lexer; los tests del interpreter usan un partial más amplio |
+| Dos `TypeError` | `common/.../error/TypeError.kt` vs `type-checker/.../TypeError.kt` | El pipeline de application usa el data class del módulo; el sealed de common lo usa el interpreter (variantes compartidas) |
 | `TokenType` enum | `common/.../TokenType.kt` | No lo usa nadie |
 | `TokenRegistry` | `lexer/.../TokenRegistry.kt` | No lo usa el `TokenStream` |
-| `Main.kt` vacío | `application` | No hay CLI |
 | `repeat` listo, no usado en v1 | grammar + `RepeatRuleHandler` | Sirve para `if` / bloques |
 | `COMMA` tokenizado, no parseado | language config | Pensado para args múltiples |
 | kotlinx-collections-immutable | lexer | Usado en tests del lexer (`TokenLister`) |
@@ -377,7 +393,7 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 
 ### Nuevo token (keyword, operador, literal)
 
-1. Agregar regla en `language.config.json` (y en los `LanguageConfig` de test: `PrintScriptLanguage`, `MockLexerFactory`).
+1. Agregar regla en `language.config.json` (y en los `LanguageConfig` de test: `PrintScriptLanguage`, `MockLexerFactory`, `PsSupport` del interpreter).
 2. Poner la categoría en `order` **al final si tiene que ganar** (el resolver usa índice máximo). Keywords tienen que estar **después** de identifiers.
 3. Si el parser lo consume: usarlo en `grammar.config.json` (`"LET"` o `{ "capture": "ID" }`).
 4. Ver [LANGUAGE_CONFIG.md](configs/LANGUAGE_CONFIG.md).
@@ -398,17 +414,22 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 
 ### Nuevo tipo u operador (sin kind nuevo)
 
-1. Editar `type-system.config.json` (`types`, `literals`, `operations`).
+1. Editar `type-system.config.json` (`types`, `literals`, `operations`) — eso alimenta al **type-checker**.
 2. Si el lenguaje lo escribe: token en `language.config.json` + producción en grammar.
-3. Ver [TYPE_SYSTEM_CONFIG.md](configs/TYPE_SYSTEM_CONFIG.md).
+3. Si el interpreter tiene que ejecutarlo: regla en `DefaultTypeConfiguration` (hoy no lee el JSON).
+4. Ver [TYPE_SYSTEM_CONFIG.md](configs/TYPE_SYSTEM_CONFIG.md).
 
 ### Type-checker (kind nuevo)
 
 Ya camina `SyntaxNode` y está cableado después del parser. Nuevo *kind* → handler en `:type-checker`. Detalle en [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md).
 
-### Interpreter / linter / formatter
+### Interpreter (construcción nueva)
 
-Módulos nuevos. Docs vacíos: [modules/INTERPRETER.md](modules/INTERPRETER.md), [modules/LINTER.md](modules/LINTER.md), [modules/FORMATTER.md](modules/FORMATTER.md).
+Módulo existente. Nuevo *kind* → entrada en `NodeKind` + `PrintScriptMapping` + executor o evaluator en `DefaultInterpreterFactory`. Detalle en [modules/INTERPRETER.md](modules/INTERPRETER.md). Cablearlo: dependencia en `application` + llamada después del type-check en `InterpretCode.kt`.
+
+### Linter / formatter
+
+Módulos nuevos. Docs vacíos: [modules/LINTER.md](modules/LINTER.md), [modules/FORMATTER.md](modules/FORMATTER.md).
 
 ---
 
@@ -418,17 +439,11 @@ Módulos nuevos. Docs vacíos: [modules/INTERPRETER.md](modules/INTERPRETER.md),
 |---|---|
 | `lexer` | Tokenización de `let`/`println` y strings no cerrados; prioridad del resolver |
 | `parser` | Cada handler, gramática PrintScript completa (precedencia, parens, errores), `Grammar` validation, `SyntaxNode` |
-<<<<<<< HEAD
-| `semantic` (a migrar a type-checker) | AST tipado fabricado a mano (no pasa por lexer/parser) |
-| `infrastructure` | `JSONGrammarConfigReader` contra el resource real + JSON de `repeat` |
-| `application` | 3 archivos `.ps` end-to-end lex+parse, asertando forma del `SyntaxProgram` |
-| `interpreter` | contexto, evaluators (literales/binarios/calls), executors, integración lex+parse+interpret con asserts de `SideEffect` |
-=======
 | `type-checker` | Scope, resolver (literales, binarios, permutación), `TypeChecker` (match/mismatch/redeclare), `check` vs `checkStrict` |
+| `interpreter` | contexto (scope/shadow/assign), evaluators (literales/binarios/calls/div-cero), executors, integración lex+parse+interpret con `SideEffect` |
 | `infrastructure` | `JSONGrammarConfigReader` y `JSONTypeSystemConfigReader` contra el resource real + JSON de `repeat` |
-| `common` | `Result`/`Report`, `TypeSystemConfig` (tipos referenciados) |
+| `common` | `Result`/`Report`, `TypeSystemConfig` (tipos referenciados), variantes de `TypeError` |
 | `application` | `.ps` end-to-end lex+parse+type-check (árbol + mismatch / no declarado / redeclaración) |
->>>>>>> main
 
 Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.yml` corre `test` de todos los módulos; `lint.yml` corre `detekt`; `format.yml` corre `ktlintCheck`.
 
@@ -443,6 +458,8 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.y
 - `Grammar(...)` explota si `start` o una referencia no existen; no construyas gramáticas a mano sin pasar por eso.
 - `DefaultParser` cachea el `TokenSource` por identidad del `Lexer`: no reutilices un parser con **otro** lexer sin un parser nuevo (o el bind se queda corto si es el mismo objeto).
 - Locations: `FileCodeReader` arranca en `(1,1)`; el `MockReader` de tests del lexer arranca línea `0`. No compares locations entre esos dos mundos.
+- No aplanes `expression`/`term` de un solo hijo: el interpreter y los tests de application dependen del wrap de `LeftRule`.
+- `DefaultInterpreter` exige en construcción que todo `NodeKind` del mapping tenga executor **o** evaluator; duplicados de kind explotan igual.
 
 ---
 
@@ -450,18 +467,14 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.y
 
 | Tarea | Leer primero | Tocar |
 |---|---|---|
-| Cambiar qué tokens existen | LANGUAGE_CONFIG + lexer + infrastructure JSON | `language.config.json`, tests de lexer/application |
+| Cambiar qué tokens existen | LANGUAGE_CONFIG + lexer + infrastructure JSON | `language.config.json`, tests de lexer/application/interpreter |
 | Cambiar sintaxis | GRAMMAR_CONFIG + parser | `grammar.config.json`, `ParserTest`, ejemplos `.ps` |
 | Nuevo combinador de gramática | parser + infrastructure serializers + common domain | 3 módulos a la vez |
-<<<<<<< HEAD
-| Tipos / variables no declaradas | TYPE_CHECKER + SyntaxNode | migrar `:semantic`; no usar `ASTDefinition.kt` |
-| Ejecutar el programa | INTERPRETER | cablear en `application/InterpretCode.kt` |
-=======
 | Tipos / variables no declaradas | TYPE_CHECKER + TYPE_SYSTEM_CONFIG | `:type-checker` + `type-system.config.json` |
-| Ejecutar el programa | INTERPRETER | módulo a futuro |
->>>>>>> main
+| Ejecutar el programa | INTERPRETER | ya existe `:interpreter`; cablear en `application/InterpretCode.kt` |
+| Nueva construcción a ejecutar | INTERPRETER | `NodeKind` + executor/evaluator + mapping |
 | Reglas de estilo | LINTER | módulo a futuro |
 | Pretty-print | FORMATTER | módulo a futuro |
 | Lint/format del Kotlin del repo | BUILD_LOGIC | `build-logic` / `printscript.quality` |
-| CLI / correr un archivo | application | `Main.kt`, `interpretCode` |
+| CLI / correr un archivo | application | crear `Main.kt`, llamar `interpretCode` (y el interpreter si querés output) |
 | Leer un `.ps` de otro lado (stdin, string) | common `CodeReader` + infrastructure | nueva impl de `CodeReader` |

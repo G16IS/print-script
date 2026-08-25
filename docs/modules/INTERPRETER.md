@@ -2,9 +2,11 @@
 
 Dependencias: `common`. Tests también tiran de `lexer`, `parser` e `infrastructure` (integración end-to-end).
 
-Ejecuta un `SyntaxProgram` ya parseado y produce efectos observables (`SideEffect`) mutando un `InterpreterContext` inmutable en el camino. No hace análisis sintáctico ni de tipos: asume que el programa viene del parser (y eventualmente validado por el type-checker).
+Ejecuta un `SyntaxProgram` ya parseado y produce efectos observables (`SideEffect`) tejiendo un `InterpreterContext` inmutable en el camino. No hace análisis sintáctico ni de tipos: asume que el programa viene del parser (y eventualmente validado por el type-checker).
 
-Mismo principio que lexer y parser: agregar una construcción nueva no toca el motor de dispatch, solo registra un `StatementExecutor`, `ExpressionEvaluator` o `BinaryOperationRule` nuevo.
+**No está cableado** en `application`: `interpretCode` corta en el type-checker y `application` no depende de este módulo. Los tests de integración del interpreter hacen lex+parse (sin type-check) y después `interpret`.
+
+Mismo principio que lexer y parser: agregar una construcción nueva no toca el motor de dispatch, solo registra un `StatementExecutor`, `ExpressionEvaluator` o `BinaryOperationRule` nuevo. La tabla de operadores **sí** está hardcodeada (`DefaultTypeConfiguration`); no lee `type-system.config.json`.
 
 ---
 
@@ -21,7 +23,7 @@ Mismo principio que lexer y parser: agregar una construcción nueva no toca el m
 
 ```kotlin
 interface Interpreter {
-    fun interpret(context: InterpreterContext, program: SyntaxProgram): Result<List<SideEffect>, TypeError>
+    fun interpret(context: InterpreterContext, program: SyntaxProgram): Result<List<SideEffect>, RuntimeError>
 }
 
 object DefaultInterpreterFactory {
@@ -32,7 +34,7 @@ object DefaultInterpreterFactory {
 }
 ```
 
-Errores: **Result end-to-end**. `interpret`, `solve`, `evaluate` y `execute` devuelven `Result<_, TypeError>` usando los helpers de `common/util/Result.kt` (`map` / `flatMap` / `fold`). Fail-fast: el primer error corta la ejecución y sube.
+Errores: **Result end-to-end**. `interpret`, `solve`, `evaluate` y `execute` devuelven `Result<_, RuntimeError>` usando los helpers de `common/util/Result.kt` (`map` / `flatMap` / `fold`). Fail-fast: el primer error corta la ejecución y sube. `RuntimeError` vive en `common`; algunas variantes también son `TypeError` (`UndeclaredIdentifier`, `InvalidOperands`, `UnrecognizedNode`).
 
 ---
 
@@ -66,7 +68,7 @@ interpreter/src/main/kotlin/printscript/
     binaryoperation/
       BinaryOperationRule.kt      operator + left/right/result types + apply
       TypeConfiguration.kt        interface
-      DefaultTypeConfiguration.kt reglas v1: number op number, string+string
+      DefaultTypeConfiguration.kt reglas v1: number + - * /, string+string (no string+number)
       BinaryOperationEvaluator.kt unario passthrough, div-by-zero, InvalidOperands
     call/
       CallEvaluator.kt            println(x) -> PrintEffect + UnitValue
@@ -103,6 +105,8 @@ Mapping default (`PrintScriptMapping`):
 **Efectos.** En esta gramática `println` es una expresión (`factor → call`), no un statement. Por eso cada evaluación de expresión devuelve `EvalResult(value, sideEffects)` y los evaluators combinan los efectos de sus hijos (literales e identificadores aportan lista vacía). `CallEvaluator` agrega el `PrintEffect`; `println(println(1))` acumula en orden de evaluación.
 
 **Valores.** `NumberValue(Double)`, `StringValue(String)` — sin comillas, las saca el evaluator. `UnitValue` es el resultado de un call: si termina como operando de una operación aritmética, `TypeConfiguration` no tiene regla y falla con `InvalidOperands`.
+
+**Ops en runtime vs type-checker.** `DefaultTypeConfiguration` tiene `+ - * /` entre numbers y `+` entre strings. **No** tiene `string + number`. El type-checker, leyendo `type-system.config.json`, sí acepta `"a" + 1` (y la permutación `1 + "a"` si `commutative`). Si cableás el interpreter después del checker, ese programa pasa tipos y pega `InvalidOperands` al ejecutar.
 
 **Formato de números al imprimir:** enteros sin decimales (`7`, no `7.0`); decimales tal cual (`1.5`). Lo hace `toPrintableString()`.
 

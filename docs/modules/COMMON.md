@@ -39,6 +39,8 @@ common/src/main/kotlin/printscript/
     Location.kt           start/end CharPosition
   error/
     TypeError.kt          sealed con variantes (el checker usa otro TypeError, ver TYPE_CHECKER.md)
+    RuntimeError.kt       sealed del interpreter (DivisionByZero, InvalidLiteral, …)
+  SideEffect.kt           PrintEffect — output observable del interpreter
   reader/
     CodeReader.kt         puerto: read / peek / currentPosition
     CharPosition.kt       (line, col)
@@ -46,7 +48,7 @@ common/src/main/kotlin/printscript/
     GrammarConfigReader.kt
     TypeSystemConfigReader.kt
   util/
-    Result.kt             Result.Ok/Err + Report + map/fold/isOk
+    Result.kt             Result.Ok/Err + Report + map/flatMap/fold/isOk
 ```
 
 ---

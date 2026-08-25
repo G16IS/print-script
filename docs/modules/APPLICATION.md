@@ -4,7 +4,7 @@ Dependencias: `common`, `lexer`, `parser`, `type-checker`, `infrastructure`.
 
 Capa de orquestación: arma readers + lexer + parser + type-checker y expone el caso de uso. No debería contener algoritmos de matching, gramática ni de tipos.
 
-Paquete: `edu.austral.dissis` (el resto del repo es `printscript`).
+Paquete de producción: `usecases` (`InterpretCode`). Tests: `edu.austral.dissis`. El resto del repo es `printscript`. No depende de `:interpreter`.
 
 ---
 
@@ -20,7 +20,6 @@ Paquete: `edu.austral.dissis` (el resto del repo es `printscript`).
 
 ```
 application/src/main/kotlin/
-  Main.kt                          fun main() {}  — vacío
   usecases/InterpretCode.kt       interpretCode(...)
 
 application/src/test/
@@ -70,9 +69,9 @@ Pasos:
 
 Las tres configs llegan **ya construidas**. Application no lee JSON en el caso de uso (sí `ParseExample` en tests).
 
-No hay ejecución de `println`. “Interpret” acá = lex + parse + type-check.
+No hay ejecución de `println`. “Interpret” acá = lex + parse + type-check. El módulo `:interpreter` existe y sabe emitir `PrintEffect`; no está en las deps de este módulo.
 
-`Main.kt` no llama a esto. No hay CLI (`args[0]`, flags de versión, etc.).
+No hay `Main.kt` ni CLI (`args[0]`, flags de versión, etc.).
 
 ---
 
@@ -145,11 +144,11 @@ Son el contrato de integración del lenguaje v1. Si cambiás la gramática de fo
 
 ### CLI
 
-`Main.kt`: cargar configs (resources o paths), `interpretCode`, imprimir el árbol o errores. `FileCodeReader` no cierra el file; para un one-shot está bien.
+Crear `Main.kt`: cargar configs (resources o paths), `interpretCode`, imprimir el árbol o errores. `FileCodeReader` no cierra el file; para un one-shot está bien.
 
 ### Cablear interpreter
 
-Ver [INTERPRETER.md](INTERPRETER.md). El type-checker ya corre sobre `SyntaxProgram` después del parser.
+Ver [INTERPRETER.md](INTERPRETER.md). El type-checker ya corre sobre `SyntaxProgram` después del parser. Falta: `implementation(project(":interpreter"))` y, si el report es ok, `DefaultInterpreterFactory.create().interpret(InterpreterContext(), program)`.
 
 ### Nuevo caso de uso
 
