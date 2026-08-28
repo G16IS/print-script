@@ -32,28 +32,32 @@ object FormatterRulesConfigSerializer : KSerializer<FormatterRulesConfig> {
         val surrogate =
             FormatterRulesConfigSurrogate(
                 rules =
-                    value.rules.map { spec ->
-                        FormatRuleSpecSurrogate(
-                            type = spec.type,
-                            enabled = spec.enabled,
-                            count = spec.count,
-                        )
-                    },
+                    value.rules
+                        .map { spec ->
+                            FormatRuleSpecSurrogate(
+                                type = spec.type,
+                                enabled = spec.enabled,
+                                count = spec.count,
+                            )
+                        },
             )
+
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)
     }
 
     override fun deserialize(decoder: Decoder): FormatterRulesConfig {
         val surrogate = decoder.decodeSerializableValue(surrogateSerializer)
+
         return FormatterRulesConfig(
             rules =
-                surrogate.rules.map { spec ->
-                    FormatRuleSpec(
-                        type = spec.type,
-                        enabled = spec.enabled,
-                        count = spec.count,
-                    )
-                },
+                surrogate.rules
+                    .map { spec ->
+                        FormatRuleSpec(
+                            type = spec.type,
+                            enabled = spec.enabled,
+                            count = spec.count,
+                        )
+                    },
         )
     }
 }

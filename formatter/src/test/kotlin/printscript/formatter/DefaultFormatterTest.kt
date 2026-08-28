@@ -1,5 +1,6 @@
 package printscript.formatter
 
+import java.util.Optional
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -12,6 +13,7 @@ import printscript.formatter.support.plus
 import printscript.formatter.support.program
 import printscript.formatter.support.star
 import printscript.formatter.support.term
+import printscript.formatter.support.token
 import printscript.formatter.support.wrap
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
@@ -23,12 +25,14 @@ class DefaultFormatterTest {
     @Test
     fun `formats addition with spaces around the operator`() {
         val program = program(addition(leftCol = 1, opCol = 2, rightCol = 3))
+
         assertEquals("1 + 2", ok(withRule.format(program)))
     }
 
     @Test
     fun `without rules concatenates lexemes`() {
         val program = program(addition(leftCol = 1, opCol = 2, rightCol = 3))
+
         assertEquals("1+2", ok(withoutRules.format(program)))
     }
 
@@ -40,20 +44,22 @@ class DefaultFormatterTest {
                 plus(2),
                 term(number("2", 3), star(4), number("3", 5)),
             )
+
         assertEquals("1 + 2 * 3", ok(withRule.format(program(tree))))
     }
 
     @Test
     fun `missing lexeme is a Result Err`() {
-        val token = printscript.formatter.support.token("OPERATOR", "+", 1)
-        val empty = java.util.Optional.empty<String>()
+        val token = token("OPERATOR", "+", 1)
         val node =
             SyntaxNode(
                 name = "OPERATOR",
-                token = token.copy(value = empty),
+                token = token.copy(value = Optional.empty()),
                 location = token.location,
             )
+
         val result = withRule.format(program(node))
+
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is MissingLexeme)
     }
@@ -61,7 +67,9 @@ class DefaultFormatterTest {
     @Test
     fun `empty node is unrecognized`() {
         val node = SyntaxNode(name = "mystery", location = Location.empty())
+
         val result = withRule.format(program(node))
+
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is UnrecognizedNode)
     }

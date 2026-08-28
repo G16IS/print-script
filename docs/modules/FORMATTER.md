@@ -73,6 +73,8 @@ interface FormatRuleFactory {
 
 El walker imprime lexemas. Las rules solo contestan whitespace en un `FormatPoint` (`BEFORE_TOKEN` / `AFTER_TOKEN`). Si nadie aplica → `""`.
 
+El core es **inmutable**: `WalkState` es un `data class` (`output`, `errors`, `last`). `emit` / `FormatRuleLoader.instantiate` son `fold` + `copy`; no hay `StringBuilder` ni listas mutables.
+
 El hueco entre dos tokens es `AFTER` del anterior + `BEFORE` del actual. `space-around-operator` aplica a `tokenType == "OPERATOR"` y devuelve `" "`.
 
 ---
@@ -103,7 +105,7 @@ Resource interno: `infrastructure/src/main/resources/formatter-language.json`.
 ```
 formatter/src/main/kotlin/printscript/formatter/
   Formatter.kt
-  DefaultFormatter.kt
+  DefaultFormatter.kt           walk puro: fold sobre WalkState inmutable
   DefaultFormatterFactory.kt
   FormatterConfig.kt
   FormatError.kt

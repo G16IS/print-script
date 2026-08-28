@@ -14,6 +14,7 @@ class FormatterCheckTest {
     fun `reports both sides of an operator without spaces`() {
         val program = program(addition(leftCol = 1, opCol = 2, rightCol = 3))
         val report = formatter.check(program, "1+2")
+
         assertEquals(2, report.errors.size)
         assertTrue(report.errors.all { it is WhitespaceMismatch })
     }
@@ -22,6 +23,7 @@ class FormatterCheckTest {
     fun `accepts spaces around the operator`() {
         val program = program(addition(leftCol = 1, opCol = 3, rightCol = 5))
         val report = formatter.check(program, "1 + 2")
+
         assertTrue(report.isOk)
         assertEquals(0, report.errors.size)
     }
@@ -30,8 +32,9 @@ class FormatterCheckTest {
     fun `accumulates only the mismatched side and keeps going`() {
         val program = program(addition(leftCol = 1, opCol = 2, rightCol = 4))
         val report = formatter.check(program, "1+ 2")
-        assertEquals(1, report.errors.size)
         val mismatch = report.errors.single() as WhitespaceMismatch
+
+        assertEquals(1, report.errors.size)
         assertEquals(" ", mismatch.expected)
         assertEquals("", mismatch.actual)
     }

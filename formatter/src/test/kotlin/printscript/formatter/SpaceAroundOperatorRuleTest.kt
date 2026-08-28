@@ -10,6 +10,7 @@ class SpaceAroundOperatorRuleTest {
     @Test
     fun `applies to operator tokens`() {
         val point = FormatPoint(PointKind.BEFORE_TOKEN, tokenType = "OPERATOR", tokenValue = "+")
+
         assertTrue(SpaceAroundOperatorRule.applies(point))
         assertEquals(" ", SpaceAroundOperatorRule.whitespace(point))
     }

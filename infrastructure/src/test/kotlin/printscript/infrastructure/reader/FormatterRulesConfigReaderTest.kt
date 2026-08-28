@@ -9,6 +9,7 @@ class FormatterRulesConfigReaderTest {
     @Test
     fun `reads language json resource`() {
         val config = JSONFormatterRulesConfigReader.read(languageResource())
+
         assertEquals(listOf(FormatRuleSpec(type = "space-around-operator")), config.rules)
     }
 
@@ -24,6 +25,7 @@ class FormatterRulesConfigReaderTest {
                     count: 2
                 """.trimIndent(),
             )
+
         assertEquals(
             listOf(
                 FormatRuleSpec(type = "space-before-colon", enabled = true),
@@ -36,6 +38,7 @@ class FormatterRulesConfigReaderTest {
     @Test
     fun `empty yaml rules is valid`() {
         val config = YAMLFormatterRulesConfigReader.read("rules: []")
+
         assertEquals(emptyList<FormatRuleSpec>(), config.rules)
     }
 
@@ -45,6 +48,7 @@ class FormatterRulesConfigReaderTest {
             JSONFormatterRulesConfigReader.read(
                 """{"rules":[{"type":"space-around-operator","extra":true}]}""",
             )
+
         assertEquals("space-around-operator", config.rules.single().type)
         assertNull(config.rules.single().enabled)
     }

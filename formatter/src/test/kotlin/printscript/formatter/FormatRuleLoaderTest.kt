@@ -18,8 +18,11 @@ class FormatRuleLoaderTest {
     fun `language json loads the built-in operator rule`() {
         val language = JSONFormatterRulesConfigReader.read(languageResource())
         val result = loader.load(language)
+
         assertTrue(result is Result.Ok)
+
         val rules = (result as Result.Ok).value
+
         assertEquals(1, rules.size)
         assertEquals(SpaceAroundOperatorRule, rules.single())
     }
@@ -28,6 +31,7 @@ class FormatRuleLoaderTest {
     fun `missing user config is not an error`() {
         val language = JSONFormatterRulesConfigReader.read(languageResource())
         val result = DefaultFormatterFactory.createFromConfig(language)
+
         assertTrue(result is Result.Ok)
     }
 
@@ -36,6 +40,7 @@ class FormatRuleLoaderTest {
         val language = FormatterRulesConfig()
         val user = FormatterRulesConfig(listOf(FormatRuleSpec(type = "not-a-real-rule")))
         val result = loader.load(language, user)
+
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is UnknownRuleType)
     }
@@ -45,6 +50,7 @@ class FormatRuleLoaderTest {
         val language = FormatterRulesConfig()
         val user = FormatterRulesConfig(listOf(FormatRuleSpec(type = "space-around-operator")))
         val result = loader.load(language, user)
+
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is UserDeclaredFixedRule)
     }

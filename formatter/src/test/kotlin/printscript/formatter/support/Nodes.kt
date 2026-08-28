@@ -15,6 +15,7 @@ fun token(
 ): Token {
     val start = CharPosition(line, startCol)
     val end = CharPosition(line, startCol + value.length - 1)
+
     return Token(type, Optional.of(value), Location(start, end))
 }
 
@@ -25,6 +26,7 @@ fun leaf(
     line: Int = 1,
 ): SyntaxNode {
     val token = token(type, value, startCol, line)
+
     return SyntaxNode(name = type, token = token, location = token.location)
 }
 
@@ -73,6 +75,9 @@ fun addition(
     )
 
 private fun span(nodes: List<SyntaxNode>): Location {
-    if (nodes.isEmpty()) return Location.empty()
+    if (nodes.isEmpty()) {
+        return Location.empty()
+    }
+
     return Location(nodes.first().location.start, nodes.last().location.end)
 }

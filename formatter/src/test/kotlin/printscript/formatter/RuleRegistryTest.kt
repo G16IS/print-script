@@ -10,6 +10,7 @@ class RuleRegistryTest {
     fun `no matching rule yields empty whitespace`() {
         val registry = DefaultRuleRegistry(emptyList())
         val point = FormatPoint(PointKind.BEFORE_TOKEN, tokenType = "OPERATOR")
+
         assertEquals("", registry.whitespaceFor(point))
     }
 
@@ -23,6 +24,7 @@ class RuleRegistryTest {
             }
         val registry = DefaultRuleRegistry(listOf(SpaceAroundOperatorRule, extra))
         val point = FormatPoint(PointKind.AFTER_TOKEN, tokenType = "OPERATOR", tokenValue = "+")
+
         assertEquals(" \n", registry.whitespaceFor(point))
     }
 }

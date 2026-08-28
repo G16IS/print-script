@@ -11,7 +11,11 @@ data class FormatRuleSpec(
 ) {
     fun params(): Map<String, Any?> =
         buildMap {
-            if (enabled != null) put("enabled", enabled)
-            if (count != null) put("count", count)
+            if (enabled != null) {
+                put("enabled", enabled)
+            }
+            if (count != null) {
+                put("count", count)
+            }
         }
 }
