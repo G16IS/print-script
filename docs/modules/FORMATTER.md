@@ -61,7 +61,7 @@ Siempre crear por la factory. La impl es `DefaultFormatter` + `DefaultRuleRegist
 ```kotlin
 interface FormatRule {
     fun applies(point: FormatPoint): Boolean
-    fun whitespace(point: FormatPoint): String
+    fun addChar(point: FormatPoint, whitespace: Char): Int
 }
 
 interface FormatRuleFactory {
@@ -71,11 +71,11 @@ interface FormatRuleFactory {
 }
 ```
 
-El walker imprime lexemas. Las rules solo contestan whitespace en un `FormatPoint` (`BEFORE_TOKEN` / `AFTER_TOKEN`). Si nadie aplica → `""`.
+El walker imprime lexemas. Las rules no devuelven un `String` libre: el registry pregunta `addChar(point, ' ')` y `addChar(point, '\n')` y **combina** (máximo de newlines, como mucho un espacio). Si nadie aplica → `""`.
 
 El core es **inmutable**: `WalkState` es un `data class` (`output`, `errors`, `last`). `emit` / `FormatRuleLoader.instantiate` son `fold` + `copy`; no hay `StringBuilder` ni listas mutables.
 
-El hueco entre dos tokens es `AFTER` del anterior + `BEFORE` del actual. `space-around-operator` aplica a `tokenType == "OPERATOR"` y devuelve `" "`.
+El hueco entre dos tokens es `AFTER` del anterior + `BEFORE` del actual. `space-around-operator` aplica a `tokenType == "OPERATOR"` y `addChar(' ') = 1`.
 
 ---
 
@@ -110,11 +110,12 @@ formatter/src/main/kotlin/printscript/formatter/
   FormatterConfig.kt
   FormatError.kt
   FormatPoint.kt
-  RuleRegistry.kt
+  WhitespaceChars.kt            SPACE / NEWLINE
+  RuleRegistry.kt               combina addChar: newlines + como mucho un espacio
   SourceGaps.kt                 offset CharPosition → source (para check)
   rules/
     FormatRule.kt
-    SpaceAroundOperatorRule.kt
+    SpaceAroundOperatorRule.kt   addChar(' ') = 1
   factories/
     FormatRuleFactory.kt
     SpaceAroundOperatorFactory.kt
@@ -139,7 +140,7 @@ El parser descarta tokens sin `capture`. Un `let` no trae `LET`/`: `/`=` en el �
 | `DefaultFormatterTest` | `1+2` → `1 + 2`; sin rules → `1+2`; anidado `1+2*3`; `Result.Err` estructural |
 | `FormatterCheckTest` | `Report` con **dos** mismatches en `1+2`; ok en `1 + 2`; acumula un lado en `1+ 2` |
 | `FormatRuleLoaderTest` | JSON real vía reader; type desconocido; type fijo en user |
-| `SpaceAroundOperatorRuleTest` / `RuleRegistryTest` | `applies` y concat de whitespace |
+| `SpaceAroundOperatorRuleTest` / `RuleRegistryTest` | `applies`, `addChar`, combinación newline+space |
 
 Infrastructure: `FormatterRulesConfigReaderTest` (JSON resource + YAML con `enabled`/`count`).
 

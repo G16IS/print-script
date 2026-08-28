@@ -15,16 +15,19 @@ class RuleRegistryTest {
     }
 
     @Test
-    fun `concatenates every rule that applies`() {
+    fun `combines newlines then at most one space`() {
         val extra =
             object : FormatRule {
                 override fun applies(point: FormatPoint) = point.tokenType == "OPERATOR"
 
-                override fun whitespace(point: FormatPoint) = "\n"
+                override fun addChar(
+                    point: FormatPoint,
+                    whitespace: Char,
+                ) = if (whitespace == WhitespaceChars.NEWLINE) 1 else 0
             }
         val registry = DefaultRuleRegistry(listOf(SpaceAroundOperatorRule, extra))
         val point = FormatPoint(PointKind.AFTER_TOKEN, tokenType = "OPERATOR", tokenValue = "+")
 
-        assertEquals(" \n", registry.whitespaceFor(point))
+        assertEquals("\n ", registry.whitespaceFor(point))
     }
 }
