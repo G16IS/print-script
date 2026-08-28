@@ -12,7 +12,7 @@ Si un tipo lo necesitan dos módulos, vive acá. Si un tipo es detalle de matchi
 
 - Nueva forma de regla de gramática o de token (`GrammarRule`, `TokenRule`, `SeqStep`)
 - Cambiar la forma de `SyntaxNode` / `Token` / `Location`
-- Nuevo puerto (`CodeReader`, config readers)
+- Nuevo puerto (`CodeReader`, config readers, `FormatterRulesConfigReader`)
 - Forma de `TypeSystemConfig` / `Result` / `Report`
 - **No** para serializers, matching de regex, ni el walk de tipos (eso es `:type-checker`)
 
@@ -32,6 +32,7 @@ common/src/main/kotlin/printscript/
     SeqStep.kt            TokenStep / RuleRefStep
     OperatorSpec.kt       token type + valores de operador (para LeftRule)
     TypeSystemConfig.kt   types, literals, operations, nodes — valida refs de tipos
+    FormatterRulesConfig.kt  rules de estilo (type + enabled/count opcionales)
   syntax/
     SyntaxNode.kt         árbol genérico de salida del parser
     SyntaxProgram.kt      lista de statements + location
@@ -47,6 +48,7 @@ common/src/main/kotlin/printscript/
     LanguageConfigReader.kt
     GrammarConfigReader.kt
     TypeSystemConfigReader.kt
+    FormatterRulesConfigReader.kt
   util/
     Result.kt             Result.Ok/Err + Report + map/flatMap/fold/isOk
 ```
@@ -94,6 +96,10 @@ data class LanguageConfig(
 ```
 
 `order` **no significa “primero gana”** en el código actual. `RuleDrawResolver` (lexer) usa `order.indexOf(category)` y se queda con el **máximo**. Ver [LEXER.md](LEXER.md).
+
+### `FormatterRulesConfig`
+
+Lista de `{ type, enabled?, count? }` para el formatter. El JSON de lenguaje y el YAML de usuario usan la misma forma. Serializers en `infrastructure`. Ver [FORMATTER.md](FORMATTER.md).
 
 ---
 

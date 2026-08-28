@@ -1,0 +1,56 @@
+package printscript.formatter
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import printscript.domain.FormatRuleSpec
+import printscript.domain.FormatterRulesConfig
+import printscript.formatter.config.FormatRuleLoader
+import printscript.formatter.factories.FormatRuleFactories
+import printscript.formatter.rules.SpaceAroundOperatorRule
+import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
+import printscript.util.Result
+
+class FormatRuleLoaderTest {
+    private val loader = FormatRuleLoader(FormatRuleFactories.defaults())
+
+    @Test
+    fun `language json loads the built-in operator rule`() {
+        val language = JSONFormatterRulesConfigReader.read(languageResource())
+        val result = loader.load(language)
+        assertTrue(result is Result.Ok)
+        val rules = (result as Result.Ok).value
+        assertEquals(1, rules.size)
+        assertEquals(SpaceAroundOperatorRule, rules.single())
+    }
+
+    @Test
+    fun `missing user config is not an error`() {
+        val language = JSONFormatterRulesConfigReader.read(languageResource())
+        val result = DefaultFormatterFactory.createFromConfig(language)
+        assertTrue(result is Result.Ok)
+    }
+
+    @Test
+    fun `unknown type in user config is a config error`() {
+        val language = FormatterRulesConfig()
+        val user = FormatterRulesConfig(listOf(FormatRuleSpec(type = "not-a-real-rule")))
+        val result = loader.load(language, user)
+        assertTrue(result is Result.Err)
+        assertTrue((result as Result.Err).error is UnknownRuleType)
+    }
+
+    @Test
+    fun `user config cannot declare a language-fixed rule`() {
+        val language = FormatterRulesConfig()
+        val user = FormatterRulesConfig(listOf(FormatRuleSpec(type = "space-around-operator")))
+        val result = loader.load(language, user)
+        assertTrue(result is Result.Err)
+        assertTrue((result as Result.Err).error is UserDeclaredFixedRule)
+    }
+
+    private fun languageResource() =
+        checkNotNull(javaClass.getResourceAsStream("/formatter-language.json")) {
+            "Missing formatter-language.json"
+        }
+}

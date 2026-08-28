@@ -1,17 +1,17 @@
 # Módulo `infrastructure`
 
-Dependencias: `common` + `kotlinx-serialization-json`. Es el único módulo con el plugin `kotlin-serialization`.
+Dependencias: `common` + `kotlinx-serialization-json` + `kaml` (YAML). Es el único módulo con el plugin `kotlin-serialization`.
 
-I/O concreto: leer configs JSON y leer código desde archivo. El dominio en `common` permanece ignoto de JSON.
+I/O concreto: leer configs JSON/YAML y leer código desde archivo. El dominio en `common` permanece ignoto de JSON.
 
 ---
 
 ## Cuándo tocarlo
 
-- Forma del JSON / un serializer nuevo
+- Forma del JSON o YAML / un serializer nuevo
 - Validación post-load de `LanguageConfig`
 - Otra fuente de caracteres (`CodeReader` para stdin, string, etc.)
-- **No** para la semántica de una regla: eso es `common` + `parser`/`lexer`/`type-checker`
+- **No** para la semántica de una regla: eso es `common` + `parser`/`lexer`/`type-checker`/`formatter`
 
 ---
 
@@ -24,6 +24,8 @@ infrastructure/src/main/
       JSONLanguageConfigReader.kt
       JSONGrammarConfigReader.kt
       JSONTypeSystemConfigReader.kt
+      JSONFormatterRulesConfigReader.kt
+      YAMLFormatterRulesConfigReader.kt
       FileCodeReader.kt
     serializer/config/
       JsonCodecs.kt              asJsonDecoder / asJsonEncoder
@@ -40,10 +42,12 @@ infrastructure/src/main/
       TypeSystemConfigSerializer.kt
       OperationSerializer.kt
       NodeConfigSerializer.kt
+      FormatterRulesConfigSerializer.kt
   resources/
     language.config.json
     grammar.config.json
     type-system.config.json
+    formatter-language.json
 ```
 
 Specs: [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](../configs/GRAMMAR_CONFIG.md), [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md).
@@ -189,6 +193,8 @@ Antes de usar `JSONLanguageConfigReader.read` en el pipeline, unificá: o invert
 - Rechaza start desconocido, ref colgante, shape desconocido
 
 `JSONTypeSystemConfigReaderTest`: resource canónico, `commutative: false`, rechaza tipos inexistentes.
+
+`FormatterRulesConfigReaderTest`: `formatter-language.json` + YAML de usuario (`enabled` / `count`). JSON y YAML comparten `FormatterRulesConfigSerializer`.
 
 No hay test de `JSONLanguageConfigReader` ni de `FileCodeReader`.
 

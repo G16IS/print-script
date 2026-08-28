@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 repositories {
@@ -9,9 +8,8 @@ repositories {
 
 dependencies {
     implementation(project(":common"))
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kaml)
 
+    testImplementation(project(":infrastructure"))
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
