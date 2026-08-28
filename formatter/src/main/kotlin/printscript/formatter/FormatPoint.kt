@@ -10,4 +10,5 @@ data class FormatPoint(
     val tokenType: String? = null,
     val tokenValue: String? = null,
     val parentNodeName: String? = null,
+    val previousTokenType: String? = null,
 )

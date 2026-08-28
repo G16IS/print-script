@@ -12,5 +12,15 @@ interface FormatRuleFactory {
 }
 
 object FormatRuleFactories {
-    fun defaults(): List<FormatRuleFactory> = listOf(SpaceAroundOperatorFactory)
+    fun defaults(): List<FormatRuleFactory> =
+        listOf(
+            SpaceAroundOperatorFactory,
+            NewlineAfterSemicolonFactory,
+            MaxOneSpaceFactory,
+            SpaceAfterLetFactory,
+            SpaceBeforeColonFactory,
+            SpaceAfterColonFactory,
+            SpaceAroundAssignFactory,
+            NewlinesBeforePrintlnFactory,
+        )
 }

@@ -4,7 +4,7 @@ Dependencias: `common`. Tests tiran de `infrastructure` para cargar `formatter-l
 
 Pretty-printer de PrintScript sobre `SyntaxProgram`. No es linter (el linter reporta; este reescribe o chequea whitespace). No ejecuta. Application lo llama desde `FormatCode` / `CheckFormat`.
 
-Hoy es el **core**: una sola rule implementada (`space-around-operator`), Strategy + registry, `format` / `check`, configs JSON (lenguaje) y YAML (usuario) leídas con los serializers de `infrastructure`. Reconstruye `;` al final de un `expression-stmt`. No reconstruye `LET`, `:`, `=`, parens.
+Pretty-printer dirigido por rules. JSON de lenguaje (fijas) + YAML de usuario (configurables, con defaults si falta el archivo). Reconstruye la puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens).
 
 ---
 
@@ -75,7 +75,29 @@ El walker imprime lexemas. Las rules no devuelven un `String` libre: el registry
 
 El core es **inmutable**: `WalkState` es un `data class` (`output`, `errors`, `last`). `emit` / `FormatRuleLoader.instantiate` son `fold` + `copy`; no hay `StringBuilder` ni listas mutables.
 
-El hueco entre dos tokens es `AFTER` del anterior + `BEFORE` del actual. `space-around-operator` aplica a `tokenType == "OPERATOR"` y `addChar(' ') = 1`.
+El hueco entre dos tokens es `AFTER` del anterior + `BEFORE` del actual. Al terminar el programa se emite el `AFTER` del último token (newline tras `;`).
+
+### Rules
+
+**Lenguaje** (`formatter-language.json`, el usuario no las overridea):
+
+| `type` | Qué hace |
+|---|---|
+| `space-around-operator` | un espacio antes y después de `OPERATOR` |
+| `newline-after-semicolon` | `\n` después de `;` |
+| `max-one-space` | no pide whitespace; el registry capea a un espacio |
+| `space-after-let` | un espacio después de `let` |
+
+**Usuario** (YAML; si el archivo no existe o falta la rule, defaults):
+
+| `type` | Default | Qué hace |
+|---|---|---|
+| `space-before-colon` | `enabled: true` | espacio antes de `:` |
+| `space-after-colon` | `enabled: true` | espacio después de `:` |
+| `space-around-assign` | `enabled: true` | espacio alrededor de `=` |
+| `newlines-before-println` | `count: 1` (0..2) | newlines extra antes de `println` si el token previo es `;` |
+
+Ejemplo con defaults: `let x : number = 1 + 2;\n` y `1 + 2;\n\nprintln(1);\n`.
 
 ---
 
@@ -87,11 +109,22 @@ Misma forma semántica en JSON y YAML. Dominio en `common` (`FormatterRulesConfi
 - `YAMLFormatterRulesConfigReader` — **el mismo serializer**, vía kaml
 
 ```json
-{ "rules": [ { "type": "space-around-operator" } ] }
+{
+  "rules": [
+    { "type": "space-around-operator" },
+    { "type": "newline-after-semicolon" },
+    { "type": "max-one-space" },
+    { "type": "space-after-let" }
+  ]
+}
 ```
 
 ```yaml
-rules: []
+rules:
+  - type: space-before-colon
+    enabled: true
+  - type: newlines-before-println
+    count: 1
 ```
 
 `FormatRuleLoader` (en `:formatter`) no lee archivos: instancia specs ya decodificadas. `type` desconocido o type fijo (`userConfigurable == false`) en el YAML de usuario → `Result.Err` al cargar.
@@ -113,21 +146,17 @@ formatter/src/main/kotlin/printscript/formatter/
   WhitespaceChars.kt            SPACE / NEWLINE
   RuleRegistry.kt               combina addChar: newlines + como mucho un espacio
   SourceGaps.kt                 offset CharPosition → source (para check)
-  rules/
-    FormatRule.kt
-    SpaceAroundOperatorRule.kt   addChar(' ') = 1
+  WalkState.kt
+  NodeWalk.kt
+  StatementLayouts.kt           variable / call / group / expression-stmt
+  rules/                        TokenSpaceRule + fijas + NewlinesBeforePrintlnRule
   factories/
-    FormatRuleFactory.kt
-    SpaceAroundOperatorFactory.kt
+    FormatRuleFactory.kt        lista de factories
+    FactoryParams.kt            enabled / count
+    *Factory.kt
   config/
-    FormatRuleLoader.kt         specs → FormatRule (sin I/O)
+    FormatRuleLoader.kt         specs → FormatRule + defaults de usuario
 ```
-
----
-
-## Limitación actual (árbol)
-
-El parser descarta tokens sin `capture`. Un `let` no trae `LET`/`: `/`=` en el árbol. El core formatea literales, ids, `OPERATOR` y agrega `;` en `expression-stmt`. Reconstruir el resto de la puntuación es el siguiente corte.
 
 ---
 
@@ -137,10 +166,11 @@ El parser descarta tokens sin `capture`. Un `let` no trae `LET`/`: `/`=` en el �
 
 | Clase | Qué cubre |
 |---|---|
-| `DefaultFormatterTest` | `1+2` → `1 + 2`; sin rules → `1+2`; anidado `1+2*3`; `Result.Err` estructural |
-| `FormatterCheckTest` | `Report` con **dos** mismatches en `1+2`; ok en `1 + 2`; acumula un lado en `1+ 2` |
-| `FormatRuleLoaderTest` | JSON real vía reader; type desconocido; type fijo en user |
-| `SpaceAroundOperatorRuleTest` / `RuleRegistryTest` | `applies`, `addChar`, combinación newline+space |
+| `DefaultFormatterTest` | `1+2` → `1 + 2`; sin rules → `1+2`; `expression-stmt` + `;`; errores estructurales |
+| `PrintScriptLayoutTest` | `let x : number = 1;\n`; colon sin espacios; `println` con newline extra |
+| `FormatterCheckTest` | mismatches alrededor de `+` |
+| `FormatRuleLoaderTest` | JSON de lenguaje; defaults de usuario; type fijo; `count` inválido |
+| `SpaceAroundOperatorRuleTest` / `RuleRegistryTest` | `addChar`, combinación newline+space |
 
 Infrastructure: `FormatterRulesConfigReaderTest` (JSON resource + YAML con `enabled`/`count`).
 
@@ -152,4 +182,4 @@ Infrastructure: `FormatterRulesConfigReaderTest` (JSON resource + YAML con `enab
 2. Agregar la factory a `FormatRuleFactories.defaults()`.
 3. Si es de lenguaje: entrada en `formatter-language.json`.
 4. Si es de usuario: documentar params (`enabled`, `count`, …) en el surrogate del serializer.
-5. Tests de `format` y `check` sobre un árbol chico. El walker no se toca.
+5. Tests de `format` / `check`. Si el parser no deja el token en el árbol, el layout en `StatementLayouts`.

@@ -37,6 +37,14 @@ data class UnknownRuleType(
     override val message: String = "Tipo de regla de formato desconocido: '$type'"
 }
 
+data class InvalidRuleParams(
+    val type: String,
+    val reason: String,
+    override val location: Location = Location.empty(),
+) : FormatError {
+    override val message: String = "Parámetros inválidos para '$type': $reason"
+}
+
 data class UserDeclaredFixedRule(
     val type: String,
     override val location: Location = Location.empty(),

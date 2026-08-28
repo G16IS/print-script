@@ -266,7 +266,7 @@ Ver [modules/LINTER.md](modules/LINTER.md).
 
 ### `formatter` — pretty-print (core)
 
-Módulo Gradle `:formatter`. Recibe `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). Strategy: cada `FormatRule` solo inyecta whitespace en un `FormatPoint`. Una rule implementada: `space-around-operator`. Reconstruye `;` en `expression-stmt`. Config: JSON de lenguaje + YAML de usuario, leídos en `infrastructure` con el mismo serializer. Application lo cablea en `FormatCode` / `CheckFormat`. Type-check previo: constante `FormatterConfig.REQUIRES_TYPE_CHECK`.
+Módulo Gradle `:formatter`. Recibe `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). Strategy: `addChar(point, char)` + registry (newlines + máx. un espacio). Rules de lenguaje (operadores, `;`+newline, `let`+espacio, cap de un espacio) y de usuario (`:` / `=` / newlines antes de `println`, con defaults). Reconstruye `let` / `:` / `=` / `;` / parens. Application: `FormatCode` / `CheckFormat`.
 
 Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 
@@ -381,7 +381,6 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 |---|---|---|
 | Interpreter no cableado en application | `application/build.gradle.kts`, `InterpretCode.kt` | `interpretCode` no ejecuta `println`; no hay `List<SideEffect>` desde el caso de uso |
 | Linter no existe | — | No hay reglas de estilo |
-| Formatter core chico | `:formatter` | Solo `space-around-operator` + `;` de `expression-stmt`; no reimprime `let`/`: ` |
 | No hay CLI | no existe `Main.kt` | No hay entrada `args[0]` |
 | `string + number` diverge | type-system JSON vs `DefaultTypeConfiguration` | El type-checker acepta `"a" + 1`; el interpreter responde `InvalidOperands` |
 | Tabla de ops del interpreter hardcodeada | `interpreter/.../DefaultTypeConfiguration.kt` | No comparte `type-system.config.json` con el type-checker |
@@ -489,7 +488,7 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.y
 | Ejecutar el programa | INTERPRETER | ya existe `:interpreter`; cablear en `application/InterpretCode.kt` |
 | Nueva construcción a ejecutar | INTERPRETER | `NodeKind` + executor/evaluator + mapping |
 | Reglas de estilo | LINTER | módulo a futuro |
-| Pretty-print | FORMATTER | más rules; `let`/`: ` todavía no se reimprimen |
+| Pretty-print | FORMATTER | indent de bloques cuando existan `if` / `{` |
 | Lint/format del Kotlin del repo | BUILD_LOGIC | `build-logic` / `printscript.quality` |
 | CLI / correr un archivo | application | crear `Main.kt`, llamar `interpretCode` (y el interpreter si querés output) |
 | Leer un `.ps` de otro lado (stdin, string) | common `CodeReader` + infrastructure | nueva impl de `CodeReader` |

@@ -23,8 +23,16 @@ class FormatRuleLoaderTest {
 
         val rules = (result as Result.Ok).value
 
-        assertEquals(1, rules.size)
-        assertEquals(SpaceAroundOperatorRule, rules.single())
+        assertTrue(rules.contains(SpaceAroundOperatorRule))
+        assertTrue(rules.size > 1)
+    }
+
+    @Test
+    fun `empty user config still loads colon assign and println defaults`() {
+        val result = loader.load(FormatterRulesConfig())
+
+        assertTrue(result is Result.Ok)
+        assertEquals(4, (result as Result.Ok).value.size)
     }
 
     @Test
@@ -53,6 +61,18 @@ class FormatRuleLoaderTest {
 
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is UserDeclaredFixedRule)
+    }
+
+    @Test
+    fun `println count outside allowed range is invalid`() {
+        val user =
+            FormatterRulesConfig(
+                listOf(FormatRuleSpec(type = "newlines-before-println", count = 5)),
+            )
+        val result = loader.load(FormatterRulesConfig(), user)
+
+        assertTrue(result is Result.Err)
+        assertTrue((result as Result.Err).error is InvalidRuleParams)
     }
 
     private fun languageResource() =

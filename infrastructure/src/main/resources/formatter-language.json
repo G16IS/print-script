@@ -1,5 +1,8 @@
 {
   "rules": [
-    { "type": "space-around-operator" }
+    { "type": "space-around-operator" },
+    { "type": "newline-after-semicolon" },
+    { "type": "max-one-space" },
+    { "type": "space-after-let" }
   ]
 }

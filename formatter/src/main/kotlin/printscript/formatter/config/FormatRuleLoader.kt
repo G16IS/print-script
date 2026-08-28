@@ -22,9 +22,23 @@ class FormatRuleLoader(
     ): Result<List<FormatRule>, FormatError> =
         instantiate(language.rules, fromUser = false)
             .flatMap { languageRules ->
-                instantiate(user.rules, fromUser = true)
+                instantiate(mergeUserRules(user.rules), fromUser = true)
                     .map { userRules -> languageRules + userRules }
             }
+
+    private fun mergeUserRules(userRules: List<FormatRuleSpec>): List<FormatRuleSpec> {
+        val byType = userRules.associateBy { it.type }
+        val withDefaults =
+            USER_DEFAULTS.map { default ->
+                byType[default.type] ?: default
+            }
+        val extra =
+            userRules.filter { spec ->
+                USER_DEFAULTS.none { it.type == spec.type }
+            }
+
+        return withDefaults + extra
+    }
 
     private fun instantiate(
         specs: List<FormatRuleSpec>,
@@ -54,5 +68,15 @@ class FormatRuleLoader(
         } else {
             factory.create(spec.params())
         }
+    }
+
+    companion object {
+        val USER_DEFAULTS =
+            listOf(
+                FormatRuleSpec(type = "space-before-colon", enabled = true),
+                FormatRuleSpec(type = "space-after-colon", enabled = true),
+                FormatRuleSpec(type = "space-around-assign", enabled = true),
+                FormatRuleSpec(type = "newlines-before-println", count = 1),
+            )
     }
 }

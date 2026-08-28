@@ -10,7 +10,15 @@ class FormatterRulesConfigReaderTest {
     fun `reads language json resource`() {
         val config = JSONFormatterRulesConfigReader.read(languageResource())
 
-        assertEquals(listOf(FormatRuleSpec(type = "space-around-operator")), config.rules)
+        assertEquals(
+            listOf(
+                "space-around-operator",
+                "newline-after-semicolon",
+                "max-one-space",
+                "space-after-let",
+            ),
+            config.rules.map { it.type },
+        )
     }
 
     @Test

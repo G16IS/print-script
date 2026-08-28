@@ -13,6 +13,8 @@ import printscript.util.map
 class DefaultFormatter(
     private val registry: RuleRegistry,
 ) : Formatter {
+    private val nodeWalk = LayoutWalk()
+
     override fun format(program: SyntaxProgram): Result<String, FormatError> =
         walk(program.statements, WalkState(), failFast = true)
             .map { it.output }
@@ -37,12 +39,12 @@ class DefaultFormatter(
         return statements
             .fold(start) { acc, statement ->
                 acc.flatMap { state ->
-                    emit(statement, parentName = null, state, failFast)
+                    emitNode(statement, parentName = null, state, failFast)
                 }
-            }
+            }.map { state -> state.withTrailingAfter(registry) }
     }
 
-    private fun emit(
+    private fun emitNode(
         node: SyntaxNode,
         parentName: String?,
         state: WalkState,
@@ -50,15 +52,12 @@ class DefaultFormatter(
     ): Result<WalkState, FormatError> {
         val token = node.token
 
-        return when {
-            token != null -> emitToken(token, parentName, state, failFast)
-            node.name == "expression-stmt" ->
-                emitChildren(node, state, failFast)
-                    .flatMap { afterExpression ->
-                        emitSynthetic("SEMICOLON", ";", node.name, afterExpression)
-                    }
-            else -> emitChildren(node, state, failFast)
+        if (token != null) {
+            return emitToken(token, parentName, state, failFast)
         }
+
+        return StatementLayouts.emit(node, state, failFast, nodeWalk)
+            ?: emitChildren(node, state, failFast)
     }
 
     private fun emitSynthetic(
@@ -126,7 +125,7 @@ class DefaultFormatter(
         return node.children
             .fold(start) { acc, child ->
                 acc.flatMap { current ->
-                    emit(child, node.name, current, failFast)
+                    emitNode(child, node.name, current, failFast)
                 }
             }
     }
@@ -232,6 +231,7 @@ class DefaultFormatter(
                     tokenType = tokenType,
                     tokenValue = lexeme,
                     parentNodeName = parentName,
+                    previousTokenType = previous?.tokenType,
                 ),
             )
 
@@ -249,17 +249,25 @@ class DefaultFormatter(
             Result.Ok(state.copy(errors = state.errors + error))
         }
 
-    private data class Emitted(
-        val tokenType: String,
-        val tokenValue: String,
-        val location: Location,
-        val parentNodeName: String?,
-    )
+    private inner class LayoutWalk : NodeWalk {
+        override fun emit(
+            node: SyntaxNode,
+            parentName: String?,
+            state: WalkState,
+            failFast: Boolean,
+        ): Result<WalkState, FormatError> = emitNode(node, parentName, state, failFast)
 
-    private data class WalkState(
-        val output: String = "",
-        val errors: List<FormatError> = emptyList(),
-        val last: Emitted? = null,
-        val source: String? = null,
-    )
+        override fun emitChildren(
+            node: SyntaxNode,
+            state: WalkState,
+            failFast: Boolean,
+        ): Result<WalkState, FormatError> = this@DefaultFormatter.emitChildren(node, state, failFast)
+
+        override fun emitSynthetic(
+            tokenType: String,
+            lexeme: String,
+            parentName: String?,
+            state: WalkState,
+        ): Result<WalkState, FormatError> = this@DefaultFormatter.emitSynthetic(tokenType, lexeme, parentName, state)
+    }
 }

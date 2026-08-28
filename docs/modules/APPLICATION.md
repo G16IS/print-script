@@ -94,13 +94,13 @@ fun formatCode(langConfig, grammar, path, userYamlPath = USER_YAML_PATH): String
 fun checkFormat(langConfig, grammar, path, userYamlPath = USER_YAML_PATH) // tira si falla
 ```
 
-`formatCode` formatea el árbol. Hoy, con `space-around-operator` y `;` reconstruido: `1+2;` → `1 + 2;`.
+`formatCode` formatea el árbol. Con las rules v1: `1+2;` → `1 + 2;\n`.
 
 `checkFormat` compara el source (newline normalizado, `trimEnd`) contra `format()`. Si no coinciden: `error("El chequeo de formato falló: el archivo no está formateado")`. No usa `Formatter.check` (locations de `FileCodeReader` ≠ las del `MockReader` de tests del lexer).
 
 Tests:
 
-- `FormatCodeTest` — `unformatted_expression.ps` (`1+2;`) → `"1 + 2;"`
+- `FormatCodeTest` — `unformatted_expression.ps` (`1+2;`) → `"1 + 2;\n"`
 - `CheckFormatTest` — el desformateado tira; `formatted_expression.ps` (`1 + 2;`) pasa
 
 ---

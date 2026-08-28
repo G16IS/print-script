@@ -9,6 +9,6 @@ class FormatCodeTest {
     fun `formats an unformatted expression file`() {
         val formatted = FormatExample.format("unformatted_expression.ps")
 
-        assertEquals("1 + 2;", formatted)
+        assertEquals("1 + 2;\n", formatted)
     }
 }
