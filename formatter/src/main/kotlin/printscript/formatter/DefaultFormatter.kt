@@ -50,11 +50,47 @@ class DefaultFormatter(
     ): Result<WalkState, FormatError> {
         val token = node.token
 
-        return if (token != null) {
-            emitToken(token, parentName, state, failFast)
-        } else {
-            emitChildren(node, state, failFast)
+        return when {
+            token != null -> emitToken(token, parentName, state, failFast)
+            node.name == "expression-stmt" ->
+                emitChildren(node, state, failFast)
+                    .flatMap { afterExpression ->
+                        emitSynthetic("SEMICOLON", ";", node.name, afterExpression)
+                    }
+            else -> emitChildren(node, state, failFast)
         }
+    }
+
+    private fun emitSynthetic(
+        tokenType: String,
+        lexeme: String,
+        parentName: String?,
+        state: WalkState,
+    ): Result<WalkState, FormatError> {
+        if (state.source != null) {
+            return Result.Ok(state)
+        }
+
+        val expected =
+            expectedWhitespace(
+                state.last,
+                tokenType,
+                lexeme,
+                parentName,
+            )
+
+        return Result.Ok(
+            state.copy(
+                output = state.output + expected + lexeme,
+                last =
+                    Emitted(
+                        tokenType = tokenType,
+                        tokenValue = lexeme,
+                        location = Location.empty(),
+                        parentNodeName = parentName,
+                    ),
+            ),
+        )
     }
 
     private fun emitToken(
@@ -102,7 +138,13 @@ class DefaultFormatter(
         state: WalkState,
         failFast: Boolean,
     ): Result<WalkState, FormatError> {
-        val expected = expectedWhitespace(state.last, token, lexeme, parentName)
+        val expected =
+            expectedWhitespace(
+                state.last,
+                token.type,
+                lexeme,
+                parentName,
+            )
         val mismatch = whitespaceMismatch(state, token, expected)
 
         if (mismatch != null && failFast) {
@@ -147,7 +189,7 @@ class DefaultFormatter(
         val previous = state.last
         val source = state.source
 
-        if (previous == null || source == null) {
+        if (previous == null || source == null || expected.isEmpty()) {
             return null
         }
 
@@ -167,7 +209,7 @@ class DefaultFormatter(
 
     private fun expectedWhitespace(
         previous: Emitted?,
-        token: Token,
+        tokenType: String,
         lexeme: String,
         parentName: String?,
     ): String {
@@ -187,7 +229,7 @@ class DefaultFormatter(
             registry.whitespaceFor(
                 FormatPoint(
                     kind = PointKind.BEFORE_TOKEN,
-                    tokenType = token.type,
+                    tokenType = tokenType,
                     tokenValue = lexeme,
                     parentNodeName = parentName,
                 ),

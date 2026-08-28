@@ -1,0 +1,26 @@
+package edu.austral.dissis.usecases
+
+import edu.austral.dissis.testing.FormatExample
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
+
+class CheckFormatTest {
+    @Test
+    fun `unformatted file fails the format check`() {
+        val error =
+            assertThrows<IllegalStateException> {
+                FormatExample.check("unformatted_expression.ps")
+            }
+
+        assertTrue(error.message!!.contains("El chequeo de formato falló"))
+    }
+
+    @Test
+    fun `formatted file passes the format check`() {
+        assertDoesNotThrow {
+            FormatExample.check("formatted_expression.ps")
+        }
+    }
+}

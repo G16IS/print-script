@@ -2,9 +2,9 @@
 
 Dependencias: `common`. Tests tiran de `infrastructure` para cargar `formatter-language.json`.
 
-Pretty-printer de PrintScript sobre `SyntaxProgram`. No es linter (el linter reporta; este reescribe o chequea whitespace). No ejecuta. **No está cableado** en `application`.
+Pretty-printer de PrintScript sobre `SyntaxProgram`. No es linter (el linter reporta; este reescribe o chequea whitespace). No ejecuta. Application lo llama desde `FormatCode` / `CheckFormat`.
 
-Hoy es el **core**: una sola rule implementada (`space-around-operator`), Strategy + registry, `format` / `check`, configs JSON (lenguaje) y YAML (usuario) leídas con los serializers de `infrastructure`. No reconstruye tokens que el parser no capturó (`LET`, `:`, `=`, `;`).
+Hoy es el **core**: una sola rule implementada (`space-around-operator`), Strategy + registry, `format` / `check`, configs JSON (lenguaje) y YAML (usuario) leídas con los serializers de `infrastructure`. Reconstruye `;` al final de un `expression-stmt`. No reconstruye `LET`, `:`, `=`, parens.
 
 ---
 
@@ -126,7 +126,7 @@ formatter/src/main/kotlin/printscript/formatter/
 
 ## Limitación actual (árbol)
 
-El parser descarta tokens sin `capture`. Un `let` no trae `LET`/`: `/`;` en el árbol. El core solo formatea lo que sí está (literales, ids, `OPERATOR`). Reconstruir keyword/puntuación es el siguiente corte.
+El parser descarta tokens sin `capture`. Un `let` no trae `LET`/`: `/`=` en el árbol. El core formatea literales, ids, `OPERATOR` y agrega `;` en `expression-stmt`. Reconstruir el resto de la puntuación es el siguiente corte.
 
 ---
 

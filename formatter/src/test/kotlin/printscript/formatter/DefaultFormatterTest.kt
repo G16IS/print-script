@@ -49,6 +49,18 @@ class DefaultFormatterTest {
     }
 
     @Test
+    fun `expression-stmt appends a semicolon`() {
+        val statement =
+            SyntaxNode(
+                name = "expression-stmt",
+                children = listOf(addition(leftCol = 1, opCol = 2, rightCol = 3)),
+                location = Location.empty(),
+            )
+
+        assertEquals("1 + 2;", ok(withRule.format(program(statement))))
+    }
+
+    @Test
     fun `missing lexeme is a Result Err`() {
         val token = token("OPERATOR", "+", 1)
         val node =

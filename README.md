@@ -29,7 +29,7 @@
 
 PrintScript es el lenguaje de script de la materia. Este repo es el compilador/intérprete del **grupo 16**: leés un programa, lo desarmás en piezas, armás el árbol y (más adelante) lo validás y lo ejecutás.
 
-Hoy el camino de `interpretCode` llega hasta el **type-checker**. El intérprete y el formatter existen como módulos, pero todavía no están cableados. El linter no existe.
+Hoy el camino de `interpretCode` llega hasta el **type-checker**. El formatter está cableado en `FormatCode` / `CheckFormat` (core: espacios alrededor de operadores). El intérprete existe como módulo y no está cableado. El linter no existe.
 
 ```printscript
 let pepe: string = "Hello, World!";
@@ -63,7 +63,7 @@ flowchart LR
 | **Parser** | Arma el árbol de sintaxis statement por statement, respetando precedencia (`*` / `/` ganan a `+` / `-`) | Listo |
 | **Type checker** | Chequea tipos, redeclaraciones y variables que no existen | Listo |
 | **Interpreter** | Ejecuta el programa (`println`, expresiones, más adelante control de flujo) | Módulo listo, no cableado |
-| **Formatter** | Pretty-print / check de whitespace sobre el árbol | Core (una rule), no cableado |
+| **Formatter** | Pretty-print / check de whitespace sobre el árbol | Core (una rule), cableado en application |
 | **Linter** | Estilo / análisis estático | A futuro |
 
 Dos ideas que recorren todo el proyecto:

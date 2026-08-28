@@ -27,7 +27,7 @@ El diseño es **pipeline + configuración declarativa**. Lexer y parser no hardc
 | `interpreter` | [modules/INTERPRETER.md](modules/INTERPRETER.md) | `SyntaxProgram` → `List<SideEffect>`. Módulo listo, **no cableado** en application |
 | `infrastructure` | [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md) | JSON + filesystem: configs y `FileCodeReader` |
 | `application` | [modules/APPLICATION.md](modules/APPLICATION.md) | Caso de uso `interpretCode`: lex + parse + type-check |
-| `formatter` | [modules/FORMATTER.md](modules/FORMATTER.md) | Pretty-print / check de whitespace sobre el árbol. Core: una rule. No cableado |
+| `formatter` | [modules/FORMATTER.md](modules/FORMATTER.md) | Pretty-print / check de whitespace. Core: una rule. Cableado en `FormatCode` / `CheckFormat` |
 
 ### Módulos a futuro (pipeline)
 
@@ -155,8 +155,8 @@ type-checker    ← common
 interpreter     ← common
 formatter       ← common
 infrastructure  ← common   (+ kotlinx.serialization-json + kaml)
-application     ← common, lexer, parser, type-checker, infrastructure
-                  (no depende de interpreter ni formatter)
+application     ← common, lexer, parser, type-checker, formatter, infrastructure
+                  (no depende de interpreter)
 ```
 
 Dependencias extra de **test**:
@@ -266,7 +266,7 @@ Ver [modules/LINTER.md](modules/LINTER.md).
 
 ### `formatter` — pretty-print (core)
 
-Módulo Gradle `:formatter`. Recibe `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). Strategy: cada `FormatRule` solo inyecta whitespace en un `FormatPoint`. Una rule implementada: `space-around-operator`. Config: JSON de lenguaje + YAML de usuario, leídos en `infrastructure` con el mismo serializer. No reconstruye `let`/`: `/`;`. No cableado en application. Type-check previo: constante `FormatterConfig.REQUIRES_TYPE_CHECK`.
+Módulo Gradle `:formatter`. Recibe `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). Strategy: cada `FormatRule` solo inyecta whitespace en un `FormatPoint`. Una rule implementada: `space-around-operator`. Reconstruye `;` en `expression-stmt`. Config: JSON de lenguaje + YAML de usuario, leídos en `infrastructure` con el mismo serializer. Application lo cablea en `FormatCode` / `CheckFormat`. Type-check previo: constante `FormatterConfig.REQUIRES_TYPE_CHECK`.
 
 Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 
@@ -286,7 +286,8 @@ Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 
 ### `application` — orquestación
 
-- `InterpretCode.interpretCode(langConfig, grammar, typeSystem, path): SyntaxProgram` — lex + parse + type-check
+- `InterpretCode.interpretCode(...)` — lex + parse + type-check
+- `FormatCode.formatCode(...)` / `CheckFormat.checkFormat(...)` — lex + parse + format; check compara source vs `format()`
 - No hay `Main.kt` ni CLI
 - Tests de integración con archivos `.ps` y un DSL `assertAst { node(...) }`
 
@@ -380,7 +381,7 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 |---|---|---|
 | Interpreter no cableado en application | `application/build.gradle.kts`, `InterpretCode.kt` | `interpretCode` no ejecuta `println`; no hay `List<SideEffect>` desde el caso de uso |
 | Linter no existe | — | No hay reglas de estilo |
-| Formatter no cableado / core chico | `:formatter`, no está en application | Solo `space-around-operator`; no reimprime `let`/`: `/`;` (el parser no los captura) |
+| Formatter core chico | `:formatter` | Solo `space-around-operator` + `;` de `expression-stmt`; no reimprime `let`/`: ` |
 | No hay CLI | no existe `Main.kt` | No hay entrada `args[0]` |
 | `string + number` diverge | type-system JSON vs `DefaultTypeConfiguration` | El type-checker acepta `"a" + 1`; el interpreter responde `InvalidOperands` |
 | Tabla de ops del interpreter hardcodeada | `interpreter/.../DefaultTypeConfiguration.kt` | No comparte `type-system.config.json` con el type-checker |
@@ -457,7 +458,7 @@ Módulo a futuro. Docs vacíos: [modules/LINTER.md](modules/LINTER.md).
 | `formatter` | `format`/`check` de `1+2`, registry, loader (type desconocido / type fijo en user), JSON real |
 | `infrastructure` | `JSONGrammarConfigReader` y `JSONTypeSystemConfigReader` contra el resource real + JSON de `repeat`; readers JSON/YAML del formatter |
 | `common` | `Result`/`Report`, `TypeSystemConfig` (tipos referenciados), variantes de `TypeError` |
-| `application` | `.ps` end-to-end lex+parse+type-check (árbol + mismatch / no declarado / redeclaración) |
+| `application` | `.ps` end-to-end lex+parse+type-check; format/check de `1+2;` vs `1 + 2;` |
 
 Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.yml` corre `test` de todos los módulos; `lint.yml` corre `detekt`; `format.yml` corre `ktlintCheck`.
 
@@ -488,7 +489,7 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.y
 | Ejecutar el programa | INTERPRETER | ya existe `:interpreter`; cablear en `application/InterpretCode.kt` |
 | Nueva construcción a ejecutar | INTERPRETER | `NodeKind` + executor/evaluator + mapping |
 | Reglas de estilo | LINTER | módulo a futuro |
-| Pretty-print | FORMATTER | `:formatter`; cablear use-case en application; más rules |
+| Pretty-print | FORMATTER | más rules; `let`/`: ` todavía no se reimprimen |
 | Lint/format del Kotlin del repo | BUILD_LOGIC | `build-logic` / `printscript.quality` |
 | CLI / correr un archivo | application | crear `Main.kt`, llamar `interpretCode` (y el interpreter si querés output) |
 | Leer un `.ps` de otro lado (stdin, string) | common `CodeReader` + infrastructure | nueva impl de `CodeReader` |
