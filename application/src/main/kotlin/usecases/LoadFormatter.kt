@@ -3,6 +3,9 @@ package usecases
 import java.nio.file.Files
 import java.nio.file.Path
 import printscript.domain.FormatterRulesConfig
+import printscript.domain.Grammar
+import printscript.domain.LanguageConfig
+import printscript.domain.TokenLexemes
 import printscript.formatter.DefaultFormatterFactory
 import printscript.formatter.Formatter
 import printscript.formatter.FormatterConfig
@@ -11,7 +14,11 @@ import printscript.infrastructure.reader.YAMLFormatterRulesConfigReader
 import printscript.util.fold
 
 internal object LoadFormatter {
-    fun load(userYamlPath: Path = Path.of(FormatterConfig.USER_YAML_PATH)): Formatter {
+    fun load(
+        grammar: Grammar,
+        langConfig: LanguageConfig,
+        userYamlPath: Path = Path.of(FormatterConfig.USER_YAML_PATH),
+    ): Formatter {
         val language =
             JSONFormatterRulesConfigReader.read(
                 requireNotNull(
@@ -28,8 +35,10 @@ internal object LoadFormatter {
                 FormatterRulesConfig()
             }
 
+        val lexemes = TokenLexemes.from(langConfig)
+
         return DefaultFormatterFactory
-            .createFromConfig(language, user)
+            .createFromConfig(language, user, grammar, lexemes)
             .fold(
                 onOk = { it },
                 onErr = { error(it.message) },

@@ -3,12 +3,37 @@ package printscript.formatter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import printscript.domain.TokenLexemes
 import printscript.formatter.rules.SpaceAroundOperatorRule
 import printscript.formatter.support.addition
 import printscript.formatter.support.program
+import printscript.infrastructure.reader.JSONGrammarConfigReader
 
 class FormatterCheckTest {
-    private val formatter = DefaultFormatterFactory.create(listOf(SpaceAroundOperatorRule))
+    private val grammar =
+        JSONGrammarConfigReader.read(
+            checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
+                "Missing grammar.config.json"
+            },
+        )
+    private val lexemes =
+        TokenLexemes(
+            mapOf(
+                "LET" to "let",
+                "COLON" to ":",
+                "ASSIGN" to "=",
+                "SEMICOLON" to ";",
+                "LEFT_PAREN" to "(",
+                "RIGHT_PAREN" to ")",
+            ),
+        )
+
+    private val formatter =
+        DefaultFormatterFactory.create(
+            listOf(SpaceAroundOperatorRule),
+            grammar,
+            lexemes,
+        )
 
     @Test
     fun `reports both sides of an operator without spaces`() {

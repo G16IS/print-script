@@ -22,7 +22,7 @@ object CheckFormat {
                 .trimEnd()
 
         val program = ParseProgram.parse(langConfig, grammar, path)
-        val formatter = LoadFormatter.load(userYamlPath)
+        val formatter = LoadFormatter.load(grammar, langConfig, userYamlPath)
 
         val formatted =
             formatter

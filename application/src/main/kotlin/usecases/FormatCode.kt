@@ -15,7 +15,7 @@ object FormatCode {
         userYamlPath: Path = Path.of(FormatterConfig.USER_YAML_PATH),
     ): String {
         val program = ParseProgram.parse(langConfig, grammar, path)
-        val formatter = LoadFormatter.load(userYamlPath)
+        val formatter = LoadFormatter.load(grammar, langConfig, userYamlPath)
 
         return formatter
             .format(program)

@@ -5,16 +5,36 @@ import org.junit.jupiter.api.Test
 import printscript.ast.Location
 import printscript.domain.FormatRuleSpec
 import printscript.domain.FormatterRulesConfig
+import printscript.domain.TokenLexemes
 import printscript.formatter.support.addition
 import printscript.formatter.support.leaf
 import printscript.formatter.support.number
 import printscript.formatter.support.program
 import printscript.formatter.support.wrap
 import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
+import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
 class PrintScriptLayoutTest {
+    private val grammar =
+        JSONGrammarConfigReader.read(
+            checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
+                "Missing grammar.config.json"
+            },
+        )
+    private val lexemes =
+        TokenLexemes(
+            mapOf(
+                "LET" to "let",
+                "COLON" to ":",
+                "ASSIGN" to "=",
+                "SEMICOLON" to ";",
+                "LEFT_PAREN" to "(",
+                "RIGHT_PAREN" to ")",
+            ),
+        )
+
     private val formatter = formatterFromLanguage()
 
     @Test
@@ -98,7 +118,7 @@ class PrintScriptLayoutTest {
 
     private fun formatterFromLanguage(user: FormatterRulesConfig = FormatterRulesConfig()): Formatter {
         val language = JSONFormatterRulesConfigReader.read(languageResource())
-        val result = DefaultFormatterFactory.createFromConfig(language, user)
+        val result = DefaultFormatterFactory.createFromConfig(language, user, grammar, lexemes)
 
         return (result as Result.Ok).value
     }

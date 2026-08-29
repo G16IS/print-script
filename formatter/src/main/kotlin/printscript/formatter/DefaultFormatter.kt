@@ -10,8 +10,9 @@ import printscript.util.flatMap
 import printscript.util.fold
 import printscript.util.map
 
-class DefaultFormatter(
+internal class DefaultFormatter(
     private val registry: RuleRegistry,
+    private val grammarWalker: GrammarWalker,
 ) : Formatter {
     private val nodeWalk = LayoutWalk()
 
@@ -56,7 +57,7 @@ class DefaultFormatter(
             return emitToken(token, parentName, state, failFast)
         }
 
-        return StatementLayouts.emit(node, state, failFast, nodeWalk)
+        return grammarWalker.emit(node, state, failFast, nodeWalk)
             ?: emitChildren(node, state, failFast)
     }
 

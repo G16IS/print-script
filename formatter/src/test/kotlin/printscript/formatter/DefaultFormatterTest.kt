@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.ast.Location
+import printscript.domain.TokenLexemes
 import printscript.formatter.rules.SpaceAroundOperatorRule
 import printscript.formatter.support.addition
 import printscript.formatter.support.expression
@@ -15,12 +16,41 @@ import printscript.formatter.support.star
 import printscript.formatter.support.term
 import printscript.formatter.support.token
 import printscript.formatter.support.wrap
+import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
 class DefaultFormatterTest {
-    private val withRule = DefaultFormatterFactory.create(listOf(SpaceAroundOperatorRule))
-    private val withoutRules = DefaultFormatterFactory.create(emptyList())
+    private val grammar =
+        JSONGrammarConfigReader.read(
+            checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
+                "Missing grammar.config.json"
+            },
+        )
+    private val lexemes =
+        TokenLexemes(
+            mapOf(
+                "LET" to "let",
+                "COLON" to ":",
+                "ASSIGN" to "=",
+                "SEMICOLON" to ";",
+                "LEFT_PAREN" to "(",
+                "RIGHT_PAREN" to ")",
+            ),
+        )
+
+    private val withRule =
+        DefaultFormatterFactory.create(
+            listOf(SpaceAroundOperatorRule),
+            grammar,
+            lexemes,
+        )
+    private val withoutRules =
+        DefaultFormatterFactory.create(
+            emptyList(),
+            grammar,
+            lexemes,
+        )
 
     @Test
     fun `formats addition with spaces around the operator`() {

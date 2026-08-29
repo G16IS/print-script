@@ -5,14 +5,33 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.domain.FormatRuleSpec
 import printscript.domain.FormatterRulesConfig
+import printscript.domain.TokenLexemes
 import printscript.formatter.config.FormatRuleLoader
 import printscript.formatter.factories.FormatRuleFactories
 import printscript.formatter.rules.SpaceAroundOperatorRule
 import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
+import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.util.Result
 
 class FormatRuleLoaderTest {
     private val loader = FormatRuleLoader(FormatRuleFactories.defaults())
+    private val grammar =
+        JSONGrammarConfigReader.read(
+            checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
+                "Missing grammar.config.json"
+            },
+        )
+    private val lexemes =
+        TokenLexemes(
+            mapOf(
+                "LET" to "let",
+                "COLON" to ":",
+                "ASSIGN" to "=",
+                "SEMICOLON" to ";",
+                "LEFT_PAREN" to "(",
+                "RIGHT_PAREN" to ")",
+            ),
+        )
 
     @Test
     fun `language json loads the built-in operator rule`() {
@@ -38,7 +57,7 @@ class FormatRuleLoaderTest {
     @Test
     fun `missing user config is not an error`() {
         val language = JSONFormatterRulesConfigReader.read(languageResource())
-        val result = DefaultFormatterFactory.createFromConfig(language)
+        val result = DefaultFormatterFactory.createFromConfig(language, grammar = grammar, lexemes = lexemes)
 
         assertTrue(result is Result.Ok)
     }
