@@ -22,4 +22,3 @@ data class InvalidPrintlnArgument(
     override val message: String
         get() = "La llamada a println solo acepta un identificador o un literal"
 }
-

@@ -3,7 +3,9 @@ package printscript.rule
 import printscript.error.LintError
 import printscript.syntax.SyntaxNode
 
-class IdentifierFormatRule(letterCase: LetterCase): LintRule {
+class IdentifierFormatRule(
+    letterCase: LetterCase,
+) : LintRule {
     override val name: String
         get() = "identifier-format-rule"
 
@@ -18,5 +20,5 @@ class IdentifierFormatRule(letterCase: LetterCase): LintRule {
 
 enum class LetterCase {
     CAMEL_CASE,
-    SNAKE_CASE
+    SNAKE_CASE,
 }
