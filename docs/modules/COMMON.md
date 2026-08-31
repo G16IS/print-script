@@ -88,12 +88,12 @@ El lexer decide `VALID` / `PARTIAL` / `INVALID` con estas reglas. `common` no ev
 
 ```kotlin
 data class LanguageConfig(
-    val order: List<String>,                       // categorías, prioridad = índice
+    val order: List<String>,                       // categorías, primero = más prioritaria
     val config: Map<String, List<TokenRule>>       // nombre de categoría → reglas
 )
 ```
 
-`order` **no significa “primero gana”** en el código actual. `RuleDrawResolver` (lexer) usa `order.indexOf(category)` y se queda con el **máximo**. Ver [LEXER.md](LEXER.md).
+`order` significa “primero gana”. `RuleDrawResolver` (lexer) usa `order.indexOf(category)` y se queda con el **mínimo**. Ver [LEXER.md](LEXER.md).
 
 ---
 

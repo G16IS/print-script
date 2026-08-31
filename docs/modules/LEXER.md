@@ -90,42 +90,32 @@ Evalúa **todas** las reglas de **todas** las categorías. No corta en la primer
 
 `partial` es obligatorio (lo valida `JSONLanguageConfigReader`).
 
-Strings: matcher `^"[^"]*"` , partial `^"` (en el JSON de resources) o `^"[^"]*$` (en tests). Números: `^[0-9]+(\.[0-9]+)?` / `^[0-9]`. IDs: `^[a-zA-Z_][a-zA-Z0-9_]*` / `^[a-zA-Z_]`.
+Strings: matcher `^"[^"]*"` , partial `^"` (JSON de resources) o `^"[^"]*$` (tests). Números: matcher `^[0-9]+(\.[0-9]+)?` ; partial `^[0-9]` (JSON, parte `1.5`) o `^[0-9]+(\.[0-9]*)?$` (tests). IDs: `^[a-zA-Z_][a-zA-Z0-9_]*` / `^[a-zA-Z_]`.
 
 Se recompila el `Regex` en cada evaluación. No hay cache.
 
 ---
 
-## Prioridad (`RuleDrawResolver`) — trampa importante
+## Prioridad (`RuleDrawResolver`)
 
-Cuando el munch termina, pueden quedar varias reglas `VALID` o `PARTIAL` (ej. `let` es keyword **e** identificador).
+Cuando el munch termina, pueden quedar varias reglas `VALID` o `PARTIAL` (ej. `let` es keyword **e** identificador). Se prueba categoría por categoría, **primera en `order` gana**.
 
 ```
-findHighestPriorityCategory = maxBy { order.indexOf(category) }
+findHighestPriorityCategory = minBy { order.indexOf(category) }  // ausente → Int.MAX_VALUE
 ```
 
-- Índice **más alto** gana → la categoría **última** en `order` gana.
-- Categoría ausente de `order`: `indexOf` = `-1` → la más baja.
+- Índice **más bajo** gana → la categoría **primera** en `order` gana.
+- Categoría ausente de `order`: prioridad más baja (no le gana a ninguna listada).
 - Si la categoría ganadora tiene **más de una** regla matching → `IllegalArgumentException`.
 - Si la regla no está en `config` → `IllegalStateException`.
 
-[LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md) documenta que gana el **último**. El JSON de resources está escrito al revés (keywords primero):
+Coincide con `language.config.json`:
 
 ```json
 "order": ["keywords", "types", "operators", "literals", "identifiers"]
 ```
 
-Con el resolver actual, **identifiers ganarían** y `let` saldría `ID`.
-
-Los tests **invierten** el order:
-
-```kotlin
-listOf("identifiers", "literals", "operators", "types", "keywords")
-```
-
-Eso está en `lexer/.../MockLexerFactory` y `application/.../PrintScriptLanguage`. El comentario en `PrintScriptLanguage` lo explica.
-
-Si cableás `JSONLanguageConfigReader` + el resource tal cual, rompés keywords. O se invierte el JSON, o se cambia el resolver para que `min` índice gane, o se invierte al cargar. Hoy no está unificado.
+`let` es `LET` (keywords antes que identifiers). Los tests usan el mismo `order`.
 
 ---
 
@@ -152,7 +142,7 @@ EOF no pasa por `TokenFactory`; lo arma `TokenStream` a mano.
 `initialPos` se toma **después** de haber leído el primer carácter no-ws, usando `reader.currentPosition()`.
 
 - `FileCodeReader`: al hacer `read()`, avanza col/línea **después** de devolver el char. Posiciones 1-based.
-- `MockReader` de tests: `currentPosition = (0, index)` post-incremento. Por eso `TokenizeTest` espera `LET` en `(0,1)-(0,3)` para `"let …"`.
+- `MockReader` de tests: `currentPosition = (0, index)` post-incremento. Por eso `TokenStreamTest.Locations` espera `LET` en `(0,1)-(0,3)` para `"let …"`.
 
 No compares locations de tests de lexer con las de `FileCodeReader`.
 
@@ -162,7 +152,7 @@ No compares locations de tests de lexer con las de `FileCodeReader`.
 
 | Situación | Qué tira |
 |---|---|
-| Primer carácter no matchea nada | `Error("Unexpected token at line …")` |
+| Primer carácter no matchea nada | `IllegalArgumentException("Unexpected token at line …")` |
 | EOF a mitad de un parcial (ej. `"hola`) | `IllegalStateException("Unexpected end of file…")` |
 | Empate en la misma categoría | `IllegalArgumentException` desde el resolver |
 | `peek`/`next` después de EOF | vuelve a emitir EOF (no avanza más allá: cada `readNextToken` al final del archivo produce otro EOF si se llama de nuevo; el parser se detiene al ver `EOF`) |
@@ -179,19 +169,29 @@ No hay tipo `LexException`. Si unificás errores, este módulo es el más inform
 
 ## Tests
 
+JUnit 5. Harness en `lexer/src/test/kotlin/printscript/support/`:
+
+- `PrintScriptLanguage` — mismo `ORDER` que el JSON (keywords first) y `partial`s que dejan terminar decimales y strings. `reversedOrder()` / `PRODUCTION_*_PARTIAL` documentan qué pasa si invertís el order o usás los `partial`s estrechos del resource.
+- `lexer` / `lex` / `assertLex` / `assertTypes` / `tok` — agregar un caso es una línea: `assertLex("letter", tok("ID", "letter"), tok("EOF"))`.
+- `MockReader` — `CodeReader` in-memory. Locations línea 0.
+
+Los tests **no** cargan `language.config.json`. Van por `DefaultLexerFactory`.
+
 | Clase | Qué cubre |
 |---|---|
-| `TokenizeTest` | `let x: string = "hello";` y `println(name + " " + lastName);`; string sin cerrar |
-| `RuleDrawResolverTest` | último en `order` gana; empates; regla desconocida |
-| `MockLexerFactory` / `MockReader` / `TokenLister` | harness |
+| `PrintScriptLexerTest` | kinds v1 (keywords vs IDs, types, números, strings, ops, statements) y que invertir el `order` hace `let` → `ID` |
+| `TokenStreamTest` | whitespace, EOF, `peek`, errores, locations, greedy / empate de prefijos, `partial`s estrechos del JSON |
+| `RuleEvaluatorTest` | VALID / PARTIAL / INVALID de exact y regex; se evalúan todas las reglas; `partial`s de production |
+| `RuleDrawResolverTest` | primero en `order` gana; empates; regla desconocida; prioridad PrintScript (`let` vs `ID`) |
+| `TokenFactoryTest` | `capture` true/false, type, location |
 
-`MockLexerFactory.createOrder()` ya trae el order invertido. Si cambiás la prioridad, actualizá factory **y** `PrintScriptLanguage`.
+Si cambiás la prioridad, actualizá `PrintScriptLanguage.ORDER` acá **y** los `PrintScriptLanguage` / `PsSupport` de application e interpreter.
 
 ---
 
 ## Cómo extender
 
-Keyword nuevo: JSON + tests. Asegurate de que su categoría quede **después** de `identifiers` en el `order` que realmente usa el resolver.
+Keyword nuevo: JSON + regla en `PrintScriptLanguage` + un caso en `PrintScriptLexerTest`. Asegurate de que su categoría quede **antes** de `identifiers` en `order` (el resolver prueba de primero a último).
 
 Literal nuevo (regex): `matcher` completo + `partial` que acepte prefijos. Si `partial` es demasiado amplio, el lexer se come caracteres de más y después falla al emitir.
 

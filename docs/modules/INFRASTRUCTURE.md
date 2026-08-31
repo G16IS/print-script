@@ -73,7 +73,7 @@ El JSON discrimina con `"type": "exact" | "regex"`.
 - cada regla tiene `matcher` no vacío y `token` no blank
 - `RegexRule.partial` no blank
 
-No valida que `order` tenga el sentido de prioridad que espera el lexer (último gana). Ver trampa abajo.
+No reordena `order`: el lexer prueba las categorías de primero a último, igual que está escrito en el JSON.
 
 `LanguageConfig` en `common` **no** está anotado `@Serializable`; el reader usa `decodeFromString<LanguageConfig>`. Los surrogates de las reglas sí. Si el decode de `LanguageConfig` se pone quisquilloso, el patrón a copiar es el de `GrammarSerializer` (surrogate explícito).
 
@@ -150,7 +150,7 @@ Categorías: `keywords`, `types`, `operators`, `literals`, `identifiers`.
 
 Tokens: `LET`, `CALL` (`println`, capture), `TYPE` (`string`/`number`, capture), puntuación sin capture, `OPERATOR` (`+ - * /`, capture), `STRING_LITERAL`, `NUMBER_LITERAL`, `ID`.
 
-`order` en el archivo: keywords → … → identifiers. **Incompatible** con `RuleDrawResolver` (último gana). Ver [LEXER.md](LEXER.md).
+`order` en el archivo: keywords → types → operators → literals → identifiers. El lexer prueba en ese orden (primero gana). Ver [LEXER.md](LEXER.md).
 
 `COMMA` está; la gramática no lo usa.
 
@@ -166,17 +166,9 @@ Partial de string en este JSON: `"^\"`. En tests: `"^\"[^\"]*$"`.
 
 ---
 
-## Trampa del `order`
+## `order`
 
-Tres fuentes, dos convenciones:
-
-| Fuente | Order | Quién gana según el código |
-|---|---|---|
-| `language.config.json` | keywords primero | identifiers (mal para `let`) |
-| [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md) | último gana (igual que el código) | — |
-| Tests (`MockLexerFactory`, `PrintScriptLanguage`) | keywords último | keywords (correcto para el lenguaje) |
-
-Antes de usar `JSONLanguageConfigReader.read` en el pipeline, unificá: o invertís el JSON, o cambiás el resolver a `min` índice, o invertís en el reader. No “fixes” silenciosos a medias.
+JSON, docs y tests coinciden: **primero gana**. Keywords antes que identifiers para que `let` sea `LET`.
 
 ---
 

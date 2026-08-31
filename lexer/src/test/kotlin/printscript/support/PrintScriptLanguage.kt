@@ -1,4 +1,4 @@
-package edu.austral.dissis.testing
+package printscript.support
 
 import printscript.domain.ExactRule
 import printscript.domain.LanguageConfig
@@ -6,22 +6,41 @@ import printscript.domain.RegexRule
 import printscript.domain.TokenRule
 
 /**
- * Same rules and `order` as language.config.json. The lexer tries categories
- * from first to last, so keywords beat identifiers.
+ * PrintScript v1 language, same `order` as `language.config.json`.
+ *
+ * [RuleDrawResolver] picks the **first** matching category in `order`: try
+ * keywords, then types, then operators, and so on. Identifiers are last so
+ * `let` is `LET` and not `ID`.
+ *
+ * Number/string `partial`s here accept mid-lexeme prefixes (`1.`, `"hola`) so
+ * decimals and unterminated-string errors work. The resource file is narrower.
  */
 object PrintScriptLanguage {
-    fun config(): LanguageConfig =
+    val ORDER = listOf("keywords", "types", "operators", "literals", "identifiers")
+
+    const val NUMBER_PARTIAL = "^[0-9]+(\\.[0-9]*)?$"
+    const val STRING_PARTIAL = "^\"[^\"]*$"
+    const val PRODUCTION_NUMBER_PARTIAL = "^[0-9]"
+    const val PRODUCTION_STRING_PARTIAL = "^\""
+
+    fun config(
+        order: List<String> = ORDER,
+        numberPartial: String = NUMBER_PARTIAL,
+        stringPartial: String = STRING_PARTIAL,
+    ): LanguageConfig =
         LanguageConfig(
-            order = listOf("keywords", "types", "operators", "literals", "identifiers"),
+            order = order,
             config =
                 mapOf(
                     "keywords" to keywords(),
                     "types" to types(),
                     "operators" to operators(),
-                    "literals" to literals(),
+                    "literals" to literals(numberPartial, stringPartial),
                     "identifiers" to identifiers(),
                 ),
         )
+
+    fun reversedOrder(): LanguageConfig = config(order = ORDER.reversed())
 
     private fun keywords(): List<TokenRule> =
         listOf(
@@ -45,10 +64,13 @@ object PrintScriptLanguage {
             ExactRule(listOf("+", "-", "*", "/"), "OPERATOR", true),
         )
 
-    private fun literals(): List<TokenRule> =
+    private fun literals(
+        numberPartial: String,
+        stringPartial: String,
+    ): List<TokenRule> =
         listOf(
-            RegexRule(listOf("^\"[^\"]*\""), "STRING_LITERAL", true, "^\"[^\"]*\$"),
-            RegexRule(listOf("^[0-9]+(\\.[0-9]+)?"), "NUMBER_LITERAL", true, "^[0-9]"),
+            RegexRule(listOf("^\"[^\"]*\""), "STRING_LITERAL", true, stringPartial),
+            RegexRule(listOf("^[0-9]+(\\.[0-9]+)?"), "NUMBER_LITERAL", true, numberPartial),
         )
 
     private fun identifiers(): List<TokenRule> =

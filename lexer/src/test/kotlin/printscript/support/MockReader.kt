@@ -1,11 +1,18 @@
-package lexer.tokenization
+package printscript.support
 
 import java.util.Optional
 import printscript.reader.CharPosition
 import printscript.reader.CodeReader
 
+/**
+ * In-memory [CodeReader] for lexer tests.
+ *
+ * Positions are `(line = 0, col = index)` after each `read()`. That is not how
+ * [printscript.infrastructure.reader.FileCodeReader] counts (1-based lines).
+ * Do not compare locations between the two.
+ */
 class MockReader(
-    val statement: String,
+    private val statement: String,
 ) : CodeReader {
     var index: Int = 0
 
@@ -18,7 +25,6 @@ class MockReader(
 
     override fun peek(): Optional<Char> {
         if (index >= statement.length) return Optional.empty()
-
         return Optional.of(statement[index])
     }
 

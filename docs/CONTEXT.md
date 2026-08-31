@@ -194,12 +194,12 @@ Ver [modules/COMMON.md](modules/COMMON.md).
 `TokenStream` lee caracteres, salta whitespace, y agranda el lexema mientras alguna regla sea `VALID` o `PARTIAL`. Cuando el próximo carácter deja todo `INVALID`, emite el token del match previo.
 
 - Matching: `RuleEvaluator` (exact = igualdad/prefijo; regex = `matcher` + `partial`)
-- Empate entre categorías: `RuleDrawResolver` — **gana la categoría con mayor índice en `LanguageConfig.order`** (la **última** de la lista)
+- Empate entre categorías: `RuleDrawResolver` — **gana la categoría con menor índice en `LanguageConfig.order`** (la **primera** de la lista)
 - Factory: `DefaultLexerFactory.create(codeReader, langConfig)`
 - `Token.type` es el string `token` de la regla (`"LET"`, `"ID"`, `"NUMBER_LITERAL"`, `"EOF"`, …)
 - `TokenRegistry` no se usa
 
-**Trampa:** el código gana con la **última** categoría de `order` ([LANGUAGE_CONFIG.md](configs/LANGUAGE_CONFIG.md)). `language.config.json` está escrito “keywords primero”. Los tests del lexer, de application y de interpreter **invierten** el `order` para que keywords ganen a identifiers. Si cargás el JSON tal cual, `let` se tokeniza como `ID`.
+JSON y código coinciden: `order` es keywords → types → operators → literals → identifiers. Si invertís esa lista, `let` se tokeniza como `ID`.
 
 Ver [modules/LEXER.md](modules/LEXER.md).
 
@@ -378,14 +378,12 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 | No hay CLI | no existe `Main.kt` | No hay entrada `args[0]` |
 | `string + number` diverge | type-system JSON vs `DefaultTypeConfiguration` | El type-checker acepta `"a" + 1`; el interpreter responde `InvalidOperands` |
 | Tabla de ops del interpreter hardcodeada | `interpreter/.../DefaultTypeConfiguration.kt` | No comparte `type-system.config.json` con el type-checker |
-| `order` del lexer invertido vs docs/JSON | `RuleDrawResolver` vs `language.config.json` | Cargar el JSON sin invertir keywords pierde contra identifiers |
-| `partial` de números en el JSON | `language.config.json` (`^[0-9]`) | `1.5` se parte en el lexer; los tests del interpreter usan un partial más amplio |
+| `partial` de números/strings en el JSON | `language.config.json` (`^[0-9]`, `^"`) | `1.5` y `"hola"` no tokenizan con el resource; los tests del lexer/interpreter usan un partial más amplio |
 | Dos `TypeError` | `common/.../error/TypeError.kt` vs `type-checker/.../TypeError.kt` | El pipeline de application usa el data class del módulo; el sealed de common lo usa el interpreter (variantes compartidas) |
 | `TokenType` enum | `common/.../TokenType.kt` | No lo usa nadie |
 | `TokenRegistry` | `lexer/.../TokenRegistry.kt` | No lo usa el `TokenStream` |
 | `repeat` listo, no usado en v1 | grammar + `RepeatRuleHandler` | Sirve para `if` / bloques |
 | `COMMA` tokenizado, no parseado | language config | Pensado para args múltiples |
-| kotlinx-collections-immutable | lexer | Usado en tests del lexer (`TokenLister`) |
 
 ---
 
@@ -393,8 +391,8 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 
 ### Nuevo token (keyword, operador, literal)
 
-1. Agregar regla en `language.config.json` (y en los `LanguageConfig` de test: `PrintScriptLanguage`, `MockLexerFactory`, `PsSupport` del interpreter).
-2. Poner la categoría en `order` **al final si tiene que ganar** (el resolver usa índice máximo). Keywords tienen que estar **después** de identifiers.
+1. Agregar regla en `language.config.json` (y en los `LanguageConfig` de test: `lexer`/`application` `PrintScriptLanguage`, `PsSupport` del interpreter) + un caso en `PrintScriptLexerTest`.
+2. Poner la categoría en `order` **al principio si tiene que ganar** (el resolver usa índice mínimo). Keywords tienen que estar **antes** de identifiers.
 3. Si el parser lo consume: usarlo en `grammar.config.json` (`"LET"` o `{ "capture": "ID" }`).
 4. Ver [LANGUAGE_CONFIG.md](configs/LANGUAGE_CONFIG.md).
 
@@ -437,7 +435,7 @@ Módulos nuevos. Docs vacíos: [modules/LINTER.md](modules/LINTER.md), [modules/
 
 | Módulo | Qué cubren |
 |---|---|
-| `lexer` | Tokenización de `let`/`println` y strings no cerrados; prioridad del resolver |
+| `lexer` | PrintScript v1 (kinds, statements, peek, errores, locations), `RuleEvaluator`, `RuleDrawResolver`, `TokenFactory`; `order` = keywords first, igual que el JSON |
 | `parser` | Cada handler, gramática PrintScript completa (precedencia, parens, errores), `Grammar` validation, `SyntaxNode` |
 | `type-checker` | Scope, resolver (literales, binarios, permutación), `TypeChecker` (match/mismatch/redeclare), `check` vs `checkStrict` |
 | `interpreter` | contexto (scope/shadow/assign), evaluators (literales/binarios/calls/div-cero), executors, integración lex+parse+interpret con `SideEffect` |
@@ -454,7 +452,7 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.y
 - No pongas `@Serializable` en `common`.
 - No hagas que el parser conozca nombres de keyword; eso va en JSON.
 - No asumas que `TokenType.IDENTIFIER` existe en runtime: el lexer emite `"ID"`.
-- No asumas que `LanguageConfig.order[0]` es la categoría más prioritaria — es la **menos**.
+- `LanguageConfig.order[0]` es la categoría **más** prioritaria (keywords primero, identifiers último).
 - `Grammar(...)` explota si `start` o una referencia no existen; no construyas gramáticas a mano sin pasar por eso.
 - `DefaultParser` cachea el `TokenSource` por identidad del `Lexer`: no reutilices un parser con **otro** lexer sin un parser nuevo (o el bind se queda corto si es el mismo objeto).
 - Locations: `FileCodeReader` arranca en `(1,1)`; el `MockReader` de tests del lexer arranca línea `0`. No compares locations entre esos dos mundos.
