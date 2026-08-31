@@ -23,4 +23,23 @@ class CheckFormatTest {
             FormatExample.check("formatted_expression.ps")
         }
     }
+
+    @Test
+    fun `unformatted file lists each whitespace mismatch`() {
+        val error =
+            assertThrows<IllegalStateException> {
+                FormatExample.check("unformatted_declaration.ps")
+            }
+
+        assertTrue(error.message!!.contains("El chequeo de formato falló"))
+        assertTrue(error.message!!.contains("Se esperaba whitespace"))
+        assertTrue(error.message!!.count { it == '\n' } >= 4)
+    }
+
+    @Test
+    fun `formatted declaration passes the format check`() {
+        assertDoesNotThrow {
+            FormatExample.check("formatted_declaration.ps")
+        }
+    }
 }

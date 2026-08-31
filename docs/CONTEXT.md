@@ -288,7 +288,7 @@ Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 ### `application` — orquestación
 
 - `InterpretCode.interpretCode(...)` — lex + parse + type-check
-- `FormatCode.formatCode(...)` / `CheckFormat.checkFormat(...)` — lex + parse + format; check compara source vs `format()`
+- `FormatCode.formatCode(...)` / `CheckFormat.checkFormat(...)` — lex + parse + format; check usa `Formatter.check`
 - No hay `Main.kt` ni CLI
 - Tests de integración con archivos `.ps` y un DSL `assertAst { node(...) }`
 

@@ -5,7 +5,6 @@ import java.nio.file.Path
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.formatter.FormatError
-import printscript.util.fold
 
 object CheckFormat {
     fun checkFormat(
@@ -18,27 +17,22 @@ object CheckFormat {
             Files
                 .readString(Path.of(path))
                 .replace("\r\n", "\n")
-                .trimEnd()
 
         val program = ParseProgram.parse(langConfig, grammar, path)
         val formatter = LoadFormatter.load(grammar, langConfig, userYamlPath)
+        val report = formatter.check(program, source)
 
-        val formatted =
-            formatter
-                .format(program)
-                .fold(
-                    onOk = { it.trimEnd() },
-                    onErr = { error(formatFailed(it)) },
-                )
-
-        if (source != formatted) {
-            error("El chequeo de formato falló: el archivo no está formateado")
+        if (!report.isOk) {
+            failFormatCheck(report.errors)
         }
     }
 
-    private fun formatFailed(error: FormatError): String {
-        val position = error.location.start
-
-        return "El formateo falló: ${error.message} @ ${position.line}:${position.col}"
+    private fun failFormatCheck(errors: List<FormatError>): Nothing {
+        val messages =
+            errors.joinToString("\n") { formatError ->
+                val position = formatError.location.start
+                "  - ${formatError.message} @ ${position.line}:${position.col}"
+            }
+        error("El chequeo de formato falló:\n$messages")
     }
 }

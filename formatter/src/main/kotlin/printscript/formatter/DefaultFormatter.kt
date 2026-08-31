@@ -1,6 +1,5 @@
 package printscript.formatter
 
-import printscript.ast.Location
 import printscript.domain.Token
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
@@ -61,38 +60,6 @@ internal class DefaultFormatter(
             ?: emitChildren(node, state, failFast)
     }
 
-    private fun emitSynthetic(
-        tokenType: String,
-        lexeme: String,
-        parentName: String?,
-        state: WalkState,
-    ): Result<WalkState, FormatError> {
-        if (state.source != null) {
-            return Result.Ok(state)
-        }
-
-        val expected =
-            expectedWhitespace(
-                state.last,
-                tokenType,
-                lexeme,
-                parentName,
-            )
-
-        return Result.Ok(
-            state.copy(
-                output = state.output + expected + lexeme,
-                last =
-                    Emitted(
-                        tokenType = tokenType,
-                        tokenValue = lexeme,
-                        location = Location.empty(),
-                        parentNodeName = parentName,
-                    ),
-            ),
-        )
-    }
-
     private fun emitToken(
         token: Token,
         parentName: String?,
@@ -102,9 +69,9 @@ internal class DefaultFormatter(
         val lexeme = token.value.orElse(null)
 
         return if (lexeme == null) {
-            fail(MissingLexeme(token.type, token.location), state, failFast)
+            failWalk(MissingLexeme(token.type, token.location), state, failFast)
         } else {
-            emitLexeme(token, lexeme, parentName, state, failFast)
+            emitLexemePiece(registry, token.type, lexeme, parentName, token.location, state, failFast)
         }
     }
 
@@ -114,7 +81,7 @@ internal class DefaultFormatter(
         failFast: Boolean,
     ): Result<WalkState, FormatError> {
         if (node.children.isEmpty()) {
-            return fail(
+            return failWalk(
                 UnrecognizedNode(node.name, node.location),
                 state,
                 failFast,
@@ -130,125 +97,6 @@ internal class DefaultFormatter(
                 }
             }
     }
-
-    private fun emitLexeme(
-        token: Token,
-        lexeme: String,
-        parentName: String?,
-        state: WalkState,
-        failFast: Boolean,
-    ): Result<WalkState, FormatError> {
-        val expected =
-            expectedWhitespace(
-                state.last,
-                token.type,
-                lexeme,
-                parentName,
-            )
-        val mismatch = whitespaceMismatch(state, token, expected)
-
-        if (mismatch != null && failFast) {
-            return Result.Err(mismatch)
-        }
-
-        val output =
-            if (state.source == null) {
-                state.output + expected + lexeme
-            } else {
-                state.output
-            }
-
-        val errors =
-            if (mismatch == null) {
-                state.errors
-            } else {
-                state.errors + mismatch
-            }
-
-        val next =
-            state.copy(
-                output = output,
-                errors = errors,
-                last =
-                    Emitted(
-                        tokenType = token.type,
-                        tokenValue = lexeme,
-                        location = token.location,
-                        parentNodeName = parentName,
-                    ),
-            )
-
-        return Result.Ok(next)
-    }
-
-    private fun whitespaceMismatch(
-        state: WalkState,
-        token: Token,
-        expected: String,
-    ): WhitespaceMismatch? {
-        val previous = state.last
-        val source = state.source
-
-        if (previous == null || source == null || expected.isEmpty()) {
-            return null
-        }
-
-        val actual =
-            SourceGaps.between(
-                source,
-                previous.location.end,
-                token.location.start,
-            )
-
-        return if (actual == expected) {
-            null
-        } else {
-            WhitespaceMismatch(expected, actual, token.location)
-        }
-    }
-
-    private fun expectedWhitespace(
-        previous: Emitted?,
-        tokenType: String,
-        lexeme: String,
-        parentName: String?,
-    ): String {
-        val afterPrevious =
-            previous?.let { emitted ->
-                registry.whitespaceFor(
-                    FormatPoint(
-                        kind = PointKind.AFTER_TOKEN,
-                        tokenType = emitted.tokenType,
-                        tokenValue = emitted.tokenValue,
-                        parentNodeName = emitted.parentNodeName,
-                    ),
-                )
-            } ?: ""
-
-        val beforeCurrent =
-            registry.whitespaceFor(
-                FormatPoint(
-                    kind = PointKind.BEFORE_TOKEN,
-                    tokenType = tokenType,
-                    tokenValue = lexeme,
-                    parentNodeName = parentName,
-                    previousTokenType = previous?.tokenType,
-                ),
-            )
-
-        return afterPrevious + beforeCurrent
-    }
-
-    private fun fail(
-        error: FormatError,
-        state: WalkState,
-        failFast: Boolean,
-    ): Result<WalkState, FormatError> =
-        if (failFast) {
-            Result.Err(error)
-        } else {
-            Result.Ok(state.copy(errors = state.errors + error))
-        }
 
     private inner class LayoutWalk : NodeWalk {
         override fun emit(
@@ -269,6 +117,8 @@ internal class DefaultFormatter(
             lexeme: String,
             parentName: String?,
             state: WalkState,
-        ): Result<WalkState, FormatError> = this@DefaultFormatter.emitSynthetic(tokenType, lexeme, parentName, state)
+            failFast: Boolean,
+        ): Result<WalkState, FormatError> =
+            emitLexemePiece(registry, tokenType, lexeme, parentName, location = null, state, failFast)
     }
 }

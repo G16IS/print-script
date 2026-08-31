@@ -78,7 +78,7 @@ internal class GrammarWalker(
         if (step.capture) {
             emitCapturedToken(node, step.type, state, failFast, walk)
         } else {
-            emitSyntheticToken(node, step.type, state, walk)
+            emitSyntheticToken(node, step.type, state, failFast, walk)
         }
 
     private fun emitCapturedToken(
@@ -98,12 +98,13 @@ internal class GrammarWalker(
         node: SyntaxNode,
         type: String,
         state: WalkState,
+        failFast: Boolean,
         walk: NodeWalk,
     ): Result<WalkState, FormatError> {
         val lexeme =
             lexemes.lexemeFor(type)
                 ?: return Result.Err(UnrecognizedNode("${node.name}/$type", node.location))
-        return walk.emitSynthetic(type, lexeme, node.name, state)
+        return walk.emitSynthetic(type, lexeme, node.name, state, failFast)
     }
 
     private fun emitRuleRef(

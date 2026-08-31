@@ -42,7 +42,7 @@ object DefaultFormatterFactory {
 Siempre crear por la factory. La impl es `DefaultFormatter` + `DefaultRuleRegistry`.
 
 - `format` recorre el árbol, emite lexemas capturados e inyecta whitespace de las rules. Fail-fast en errores estructurales (`MissingLexeme`, `UnrecognizedNode`).
-- `check` usa el **source original** (el AST no tiene trivia). En cada hueco entre tokens compara el texto real vs `registry.whitespaceFor(point)` y **acumula** todos los `WhitespaceMismatch` en un `Report`. No corta en el primero.
+- `check` usa el **source original** (el AST no tiene trivia). Recorre los mismos tokens que `format` (capturados y sintéticos). Un cursor busca cada lexema en el source y compara el hueco vs lo esperado. **No** usa `token.location.start` para el offset: el lexer deja esa posición *después* del primer carácter. Acumula todos los `WhitespaceMismatch` (también si lo esperado es `""` y hay extra, y el trailing). No corta en el primero.
 
 `FormatError` es sealed **de este módulo** (`message` + `location`).
 
@@ -115,12 +115,13 @@ Resources: `formatter-language.json`, `formatter-user-defaults.json`.
 formatter/src/main/kotlin/printscript/formatter/
   Formatter.kt
   DefaultFormatter.kt           walk puro: fold sobre WalkState inmutable
+  LexemeEmit.kt                 emite lexema (format) o compara hueco (check)
   DefaultFormatterFactory.kt
   FormatError.kt
   FormatPoint.kt
   WhitespaceChars.kt            SPACE / NEWLINE
   RuleRegistry.kt               combina addChar: newlines + como mucho un espacio
-  SourceGaps.kt                 offset CharPosition → source (para check)
+  SourceGaps.kt                 offset / position CharPosition ↔ source (para check)
   WalkState.kt
   NodeWalk.kt
   GrammarWalker.kt              SeqRule → tokens capturados / sintéticos / rule-refs
@@ -144,7 +145,7 @@ formatter/src/main/kotlin/printscript/formatter/
 |---|---|
 | `DefaultFormatterTest` | `1+2` → `1 + 2`; sin rules → `1+2`; `expression-stmt` + `;`; errores estructurales |
 | `PrintScriptLayoutTest` | `let x : number = 1;\n`; colon sin espacios; `println` con newline extra |
-| `FormatterCheckTest` | mismatches alrededor de `+` |
+| `FormatterCheckTest` | mismatches alrededor de `+`; `;` sintético; trailing; `let` sin espacios; extra líder |
 | `FormatRuleLoaderTest` | JSON de lenguaje; defaults JSON; fallback del binding; type desconocido; `count` inválido |
 | `TokenSpaceRuleTest` / `TokenNewlineRuleTest` / `RuleRegistryTest` | `addChar`, println vs otro call, combinación newline+space |
 

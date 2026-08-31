@@ -22,5 +22,6 @@ internal interface NodeWalk {
         lexeme: String,
         parentName: String?,
         state: WalkState,
+        failFast: Boolean,
     ): Result<WalkState, FormatError>
 }

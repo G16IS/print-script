@@ -24,7 +24,7 @@ application/src/main/kotlin/
   usecases/InterpretCode.kt       lex + parse + type-check
   usecases/ParseProgram.kt        lex + parse (interno)
   usecases/FormatCode.kt          formatCode(...)
-  usecases/CheckFormat.kt         checkFormat(...) — tira si source ≠ format
+  usecases/CheckFormat.kt         checkFormat(...) — `Formatter.check`, lista mismatches
   usecases/LoadFormatter.kt       JSON de lenguaje + defaults + YAML (interno; paths viven acá)
 
 application/src/test/
@@ -50,6 +50,8 @@ application/src/test/
     redeclaration.ps
     unformatted_expression.ps
     formatted_expression.ps
+    unformatted_declaration.ps
+    formatted_declaration.ps
 ```
 
 `grammar.config.json` y `type-system.config.json` de test salen del **classpath de infrastructure**. Los `.ps` sí son de application.
@@ -96,12 +98,12 @@ fun checkFormat(langConfig, grammar, path, userYamlPath = USER_YAML_PATH) // tir
 
 `formatCode` formatea el árbol. Con las rules v1: `1+2;` → `1 + 2;\n`.
 
-`checkFormat` compara el source (newline normalizado, `trimEnd`) contra `format()`. Si no coinciden: `error("El chequeo de formato falló: el archivo no está formateado")`. No usa `Formatter.check` (locations de `FileCodeReader` ≠ las del `MockReader` de tests del lexer).
+`checkFormat` llama `Formatter.check` (mismatches puntuales, con `line:col`). Si el `Report` no es ok → `error("El chequeo de formato falló:…")` con la lista, igual que `interpretCode`. Normaliza `\r\n`; no hace `trimEnd` (el newline tras `;` es parte del contrato).
 
 Tests:
 
 - `FormatCodeTest` — `unformatted_expression.ps` (`1+2;`) → `"1 + 2;\n"`
-- `CheckFormatTest` — el desformateado tira; `formatted_expression.ps` (`1 + 2;`) pasa
+- `CheckFormatTest` — `1+2;` y `let x:number=1;` tiran con mismatches; `1 + 2;` y `let x : number = 1;` pasan
 
 ---
 

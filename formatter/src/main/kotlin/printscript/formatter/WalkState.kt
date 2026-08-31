@@ -14,15 +14,11 @@ internal data class WalkState(
     val errors: List<FormatError> = emptyList(),
     val last: Emitted? = null,
     val source: String? = null,
+    val cursor: Int = 0,
 )
 
 internal fun WalkState.withTrailingAfter(registry: RuleRegistry): WalkState {
-    val last = last
-
-    if (last == null || source != null) {
-        return this
-    }
-
+    val last = last ?: return this
     val trailing =
         registry.whitespaceFor(
             FormatPoint(
@@ -32,6 +28,21 @@ internal fun WalkState.withTrailingAfter(registry: RuleRegistry): WalkState {
                 parentNodeName = last.parentNodeName,
             ),
         )
+    val source = source
+    val actual = source?.let { if (cursor <= it.length) it.substring(cursor) else "" }
 
-    return copy(output = output + trailing)
+    return when {
+        source == null -> copy(output = output + trailing)
+        actual == trailing -> this
+        else ->
+            copy(
+                errors =
+                    errors +
+                        WhitespaceMismatch(
+                            expected = trailing,
+                            actual = actual.orEmpty(),
+                            location = SourceGaps.locationAt(source, cursor),
+                        ),
+            )
+    }
 }
