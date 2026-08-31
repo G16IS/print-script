@@ -14,7 +14,6 @@ class FormatterRulesConfigReaderTest {
             listOf(
                 "space-around-operator",
                 "newline-after-semicolon",
-                "max-one-space",
                 "space-after-let",
             ),
             config.rules.map { it.type },

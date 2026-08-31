@@ -72,7 +72,7 @@ interface FormatRuleFactory {
 }
 ```
 
-El walker imprime lexemas. Las rules no devuelven un `String` libre: el registry pregunta `addChar(point, ' ')` y `addChar(point, '\n')` y **combina** (máximo de newlines, como mucho un espacio). Si nadie aplica → `""`.
+El walker imprime lexemas. Las rules no devuelven un `String` libre: el registry pregunta `addChar(point, ' ')` y `addChar(point, '\n')` y **combina** (máximo de newlines, como mucho un espacio). El cap de un espacio es invariante del combiner, no una rule (la consigna no lo configura). Si nadie aplica → `""`.
 
 El core es **inmutable**: `WalkState` es un `data class` (`output`, `errors`, `last`). `emit` / `FormatRuleLoader.instantiate` son `fold` + `copy`; no hay `StringBuilder` ni listas mutables.
 
@@ -88,7 +88,6 @@ Puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens): `
 |---|---|
 | `space-around-operator` | un espacio antes y después de `OPERATOR` |
 | `newline-after-semicolon` | `\n` después de `;` |
-| `max-one-space` | no pide whitespace; el registry capea a un espacio |
 | `space-after-let` | un espacio después de `let` |
 
 **Usuario** (YAML; si el archivo no existe o falta la rule, defaults):
@@ -116,7 +115,6 @@ Misma forma semántica en JSON y YAML. Dominio en `common` (`FormatterRulesConfi
   "rules": [
     { "type": "space-around-operator" },
     { "type": "newline-after-semicolon" },
-    { "type": "max-one-space" },
     { "type": "space-after-let" }
   ]
 }

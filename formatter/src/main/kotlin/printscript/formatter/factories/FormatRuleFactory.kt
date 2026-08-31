@@ -16,7 +16,6 @@ object FormatRuleFactories {
         listOf(
             SpaceAroundOperatorFactory,
             NewlineAfterSemicolonFactory,
-            MaxOneSpaceFactory,
             SpaceAfterLetFactory,
             SpaceBeforeColonFactory,
             SpaceAfterColonFactory,

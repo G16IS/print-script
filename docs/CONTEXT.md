@@ -266,7 +266,7 @@ Ver [modules/LINTER.md](modules/LINTER.md).
 
 ### `formatter` — pretty-print
 
-Módulo Gradle `:formatter`. Recibe `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). Strategy: `addChar(point, char)` + registry (newlines + máx. un espacio). Rules de lenguaje (operadores, `;`+newline, `let`+espacio, cap de un espacio) y de usuario (`:` / `=` / newlines antes de `println`, con defaults). Reconstruye `let` / `:` / `=` / `;` / parens. Application: `FormatCode` / `CheckFormat`.
+Módulo Gradle `:formatter`. Recibe `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). Strategy: `addChar(point, char)` + registry (newlines + máx. un espacio; el cap no es una rule). Rules de lenguaje (operadores, `;`+newline, `let`+espacio) y de usuario (`:` / `=` / newlines antes de `println`, con defaults). Reconstruye `let` / `:` / `=` / `;` / parens. Application: `FormatCode` / `CheckFormat`.
 
 Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 
