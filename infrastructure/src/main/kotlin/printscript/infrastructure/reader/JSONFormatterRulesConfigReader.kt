@@ -9,7 +9,7 @@ import printscript.infrastructure.serializer.config.FormatterRulesConfigSerializ
 import printscript.reader.FormatterRulesConfigReader
 
 /**
- * Carga `formatter-language.json` (reglas fijas de la versión).
+ * Carga JSON de rules de usuario (`type` + `enabled` / `count`).
  */
 object JSONFormatterRulesConfigReader : FormatterRulesConfigReader {
     private val json =

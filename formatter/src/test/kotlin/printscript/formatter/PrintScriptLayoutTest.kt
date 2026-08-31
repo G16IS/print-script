@@ -11,7 +11,7 @@ import printscript.formatter.support.leaf
 import printscript.formatter.support.number
 import printscript.formatter.support.program
 import printscript.formatter.support.wrap
-import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
+import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
 import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
@@ -117,7 +117,7 @@ class PrintScriptLayoutTest {
     }
 
     private fun formatterFromLanguage(user: FormatterRulesConfig = FormatterRulesConfig()): Formatter {
-        val language = JSONFormatterRulesConfigReader.read(languageResource())
+        val language = JSONFormatterLanguageConfigReader.read(languageResource())
         val result = DefaultFormatterFactory.createFromConfig(language, user, grammar, lexemes)
 
         return (result as Result.Ok).value

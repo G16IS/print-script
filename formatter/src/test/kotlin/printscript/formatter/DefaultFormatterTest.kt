@@ -6,12 +6,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.ast.Location
 import printscript.domain.TokenLexemes
-import printscript.formatter.rules.SpaceAroundOperatorRule
 import printscript.formatter.support.addition
 import printscript.formatter.support.expression
 import printscript.formatter.support.number
 import printscript.formatter.support.plus
 import printscript.formatter.support.program
+import printscript.formatter.support.spaceAroundOperator
 import printscript.formatter.support.star
 import printscript.formatter.support.term
 import printscript.formatter.support.token
@@ -41,7 +41,7 @@ class DefaultFormatterTest {
 
     private val withRule =
         DefaultFormatterFactory.create(
-            listOf(SpaceAroundOperatorRule),
+            listOf(spaceAroundOperator()),
             grammar,
             lexemes,
         )

@@ -48,6 +48,7 @@ El diseño es **pipeline + configuración declarativa**. Lexer y parser no hardc
 | [LANGUAGE_CONFIG.md](configs/LANGUAGE_CONFIG.md) | Forma de `language.config.json` (reglas exact/regex del lexer) |
 | [GRAMMAR_CONFIG.md](configs/GRAMMAR_CONFIG.md) | Forma de `grammar.config.json` (producciones del parser) |
 | [TYPE_SYSTEM_CONFIG.md](configs/TYPE_SYSTEM_CONFIG.md) | Forma de `type-system.config.json` (tipos, ops, nodos) |
+| [FORMATTER_CONFIG.md](configs/FORMATTER_CONFIG.md) | JSON de lenguaje (rules + bindings) y YAML de usuario (`type` + value) |
 
 Los JSON reales están en `infrastructure/src/main/resources/`.
 
@@ -274,11 +275,11 @@ Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 
 Único módulo con kotlinx.serialization.
 
-- `JSONLanguageConfigReader` / `JSONGrammarConfigReader` / `JSONTypeSystemConfigReader` / `JSONFormatterRulesConfigReader` / `YAMLFormatterRulesConfigReader` implementan los ports de `common`
+- `JSONLanguageConfigReader` / `JSONGrammarConfigReader` / `JSONTypeSystemConfigReader` / `JSONFormatterLanguageConfigReader` / `JSONFormatterRulesConfigReader` / `YAMLFormatterRulesConfigReader` implementan los ports de `common`
 - Serializers **surrogate** en `serializer/config`: el dominio no lleva `@Serializable`
 - Discriminación de `GrammarRule` por **clave JSON** (`or`, `seq`, `left`, `atom`, `repeat`), no por campo `type`
 - `TokenRule` sí usa `type: "exact" | "regex"`
-- Formatter: el mismo `FormatterRulesConfigSerializer` sirve para JSON (kotlinx) y YAML (kaml)
+- Formatter: `FormatterLanguageConfigSerializer` para el JSON de lenguaje; `FormatterRulesConfigSerializer` para JSON/YAML de usuario (kaml)
 - `FileCodeReader`: `CodeReader` sobre un path de filesystem
 - Resources: `language.config.json`, `grammar.config.json`, `type-system.config.json`, `formatter-language.json`
 
@@ -435,10 +436,9 @@ Módulo existente. Nuevo *kind* → entrada en `NodeKind` + `PrintScriptMapping`
 
 ### Formatter (rule nueva)
 
-1. `FormatRule` + `FormatRuleFactory` en `:formatter`.
-2. Registrar en `FormatRuleFactories.defaults()`.
-3. Lenguaje → `formatter-language.json`. Usuario → YAML (`FormatterConfig.USER_YAML_PATH`); si hay campo nuevo (`enabled`, `count`, …) extender el surrogate del serializer.
-4. Tests de `format` y `check`. Detalle: [modules/FORMATTER.md](modules/FORMATTER.md).
+1. Si entra en space/newline: `rules` o `userBindings` en `formatter-language.json`. El YAML de usuario sigue siendo `type` + `enabled`/`count`.
+2. Si no: `FormatRule` + `FormatRuleFactory` en `:formatter`.
+3. Tests de `format` y `check`. Detalle: [modules/FORMATTER.md](modules/FORMATTER.md), [configs/FORMATTER_CONFIG.md](configs/FORMATTER_CONFIG.md).
 
 ### Linter
 
@@ -454,9 +454,9 @@ Módulo a futuro. Docs vacíos: [modules/LINTER.md](modules/LINTER.md).
 | `parser` | Cada handler, gramática PrintScript completa (precedencia, parens, errores), `Grammar` validation, `SyntaxNode` |
 | `type-checker` | Scope, resolver (literales, binarios, permutación), `TypeChecker` (match/mismatch/redeclare), `check` vs `checkStrict` |
 | `interpreter` | contexto (scope/shadow/assign), evaluators (literales/binarios/calls/div-cero), executors, integración lex+parse+interpret con `SideEffect` |
-| `formatter` | `format`/`check` de `1+2`, registry, loader (type desconocido / type fijo en user), JSON real |
-| `infrastructure` | `JSONGrammarConfigReader` y `JSONTypeSystemConfigReader` contra el resource real + JSON de `repeat`; readers JSON/YAML del formatter |
-| `common` | `Result`/`Report`, `TypeSystemConfig` (tipos referenciados), variantes de `TypeError` |
+| `formatter` | `format`/`check` de `1+2`, registry, loader (bindings + type desconocido / `count` inválido), JSON real |
+| `infrastructure` | `JSONGrammarConfigReader` y `JSONTypeSystemConfigReader` contra el resource real + JSON de `repeat`; readers JSON de lenguaje y YAML de usuario del formatter |
+| `common` | `Result`/`Report`, `TypeSystemConfig` / `FormatterLanguageConfig` (validación), variantes de `TypeError` |
 | `application` | `.ps` end-to-end lex+parse+type-check; format/check de `1+2;` vs `1 + 2;` |
 
 Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.yml` corre `test` de todos los módulos; `lint.yml` corre `detekt`; `format.yml` corre `ktlintCheck`.

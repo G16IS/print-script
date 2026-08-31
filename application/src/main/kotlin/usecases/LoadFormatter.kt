@@ -9,7 +9,7 @@ import printscript.domain.TokenLexemes
 import printscript.formatter.DefaultFormatterFactory
 import printscript.formatter.Formatter
 import printscript.formatter.FormatterConfig
-import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
+import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
 import printscript.infrastructure.reader.YAMLFormatterRulesConfigReader
 import printscript.util.fold
 
@@ -20,7 +20,7 @@ internal object LoadFormatter {
         userYamlPath: Path = Path.of(FormatterConfig.USER_YAML_PATH),
     ): Formatter {
         val language =
-            JSONFormatterRulesConfigReader.read(
+            JSONFormatterLanguageConfigReader.read(
                 requireNotNull(
                     javaClass.classLoader.getResourceAsStream(FormatterConfig.LANGUAGE_JSON_RESOURCE),
                 ) {

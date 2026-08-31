@@ -4,14 +4,18 @@ import printscript.formatter.FormatPoint
 import printscript.formatter.PointKind
 import printscript.formatter.WhitespaceChars
 
-data class NewlinesBeforePrintlnRule(
-    val count: Int,
+data class TokenNewlineRule(
+    private val tokenType: String,
+    private val kinds: Set<PointKind>,
+    private val count: Int,
+    private val tokenValue: String? = null,
+    private val previousTokenType: String? = null,
 ) : FormatRule {
     override fun applies(point: FormatPoint): Boolean =
-        point.kind == PointKind.BEFORE_TOKEN &&
-            point.tokenType == "CALL" &&
-            point.tokenValue == "println" &&
-            point.previousTokenType == "SEMICOLON"
+        point.tokenType == tokenType &&
+            point.kind in kinds &&
+            (tokenValue == null || point.tokenValue == tokenValue) &&
+            (previousTokenType == null || point.previousTokenType == previousTokenType)
 
     override fun addChar(
         point: FormatPoint,
@@ -24,7 +28,6 @@ data class NewlinesBeforePrintlnRule(
         }
 
     companion object {
-        const val TYPE = "newlines-before-println"
         val ALLOWED_COUNTS = 0..2
         const val DEFAULT_COUNT = 1
     }

@@ -7,20 +7,6 @@ import printscript.domain.FormatRuleSpec
 
 class FormatterRulesConfigReaderTest {
     @Test
-    fun `reads language json resource`() {
-        val config = JSONFormatterRulesConfigReader.read(languageResource())
-
-        assertEquals(
-            listOf(
-                "space-around-operator",
-                "newline-after-semicolon",
-                "space-after-let",
-            ),
-            config.rules.map { it.type },
-        )
-    }
-
-    @Test
     fun `reads user yaml with optional params`() {
         val config =
             YAMLFormatterRulesConfigReader.read(
@@ -53,15 +39,10 @@ class FormatterRulesConfigReaderTest {
     fun `json unknown keys are ignored`() {
         val config =
             JSONFormatterRulesConfigReader.read(
-                """{"rules":[{"type":"space-around-operator","extra":true}]}""",
+                """{"rules":[{"type":"space-before-colon","extra":true}]}""",
             )
 
-        assertEquals("space-around-operator", config.rules.single().type)
+        assertEquals("space-before-colon", config.rules.single().type)
         assertNull(config.rules.single().enabled)
     }
-
-    private fun languageResource() =
-        checkNotNull(javaClass.getResourceAsStream("/formatter-language.json")) {
-            "Missing formatter-language.json"
-        }
 }

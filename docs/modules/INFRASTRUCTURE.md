@@ -24,6 +24,7 @@ infrastructure/src/main/
       JSONLanguageConfigReader.kt
       JSONGrammarConfigReader.kt
       JSONTypeSystemConfigReader.kt
+      JSONFormatterLanguageConfigReader.kt
       JSONFormatterRulesConfigReader.kt
       YAMLFormatterRulesConfigReader.kt
       FileCodeReader.kt
@@ -43,6 +44,7 @@ infrastructure/src/main/
       OperationSerializer.kt
       NodeConfigSerializer.kt
       FormatterRulesConfigSerializer.kt
+      FormatterLanguageConfigSerializer.kt
   resources/
     language.config.json
     grammar.config.json
@@ -50,7 +52,7 @@ infrastructure/src/main/
     formatter-language.json
 ```
 
-Specs: [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](../configs/GRAMMAR_CONFIG.md), [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md).
+Specs: [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](../configs/GRAMMAR_CONFIG.md), [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md), [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
 
 ---
 
@@ -194,7 +196,9 @@ Antes de usar `JSONLanguageConfigReader.read` en el pipeline, unificá: o invert
 
 `JSONTypeSystemConfigReaderTest`: resource canónico, `commutative: false`, rechaza tipos inexistentes.
 
-`FormatterRulesConfigReaderTest`: `formatter-language.json` + YAML de usuario (`enabled` / `count`). JSON y YAML comparten `FormatterRulesConfigSerializer`.
+`FormatterLanguageConfigReaderTest`: resource `formatter-language.json` (`rules` + `userBindings`).
+
+`FormatterRulesConfigReaderTest`: YAML de usuario (`enabled` / `count`). JSON y YAML de usuario comparten `FormatterRulesConfigSerializer`.
 
 No hay test de `JSONLanguageConfigReader` ni de `FileCodeReader`.
 

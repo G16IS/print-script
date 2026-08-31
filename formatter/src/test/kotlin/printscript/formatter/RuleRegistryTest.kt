@@ -3,7 +3,7 @@ package printscript.formatter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import printscript.formatter.rules.FormatRule
-import printscript.formatter.rules.SpaceAroundOperatorRule
+import printscript.formatter.support.spaceAroundOperator
 
 class RuleRegistryTest {
     @Test
@@ -25,7 +25,7 @@ class RuleRegistryTest {
                     whitespace: Char,
                 ) = if (whitespace == WhitespaceChars.NEWLINE) 1 else 0
             }
-        val registry = DefaultRuleRegistry(listOf(SpaceAroundOperatorRule, extra))
+        val registry = DefaultRuleRegistry(listOf(spaceAroundOperator(), extra))
         val point = FormatPoint(PointKind.AFTER_TOKEN, tokenType = "OPERATOR", tokenValue = "+")
 
         assertEquals("\n ", registry.whitespaceFor(point))
@@ -42,7 +42,7 @@ class RuleRegistryTest {
                     whitespace: Char,
                 ) = if (whitespace == WhitespaceChars.SPACE) 2 else 0
             }
-        val registry = DefaultRuleRegistry(listOf(SpaceAroundOperatorRule, doubleSpace))
+        val registry = DefaultRuleRegistry(listOf(spaceAroundOperator(), doubleSpace))
         val point = FormatPoint(PointKind.AFTER_TOKEN, tokenType = "OPERATOR", tokenValue = "+")
 
         assertEquals(" ", registry.whitespaceFor(point))

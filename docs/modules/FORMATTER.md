@@ -4,13 +4,14 @@ Dependencias: `common`. Tests tiran de `infrastructure` para cargar `formatter-l
 
 Pretty-printer de PrintScript sobre `SyntaxProgram`. No es linter (el linter reporta; este reescribe o chequea whitespace). No ejecuta. Application lo llama desde `FormatCode` / `CheckFormat`.
 
-Pretty-printer dirigido por rules. JSON de lenguaje (fijas) + YAML de usuario (configurables, con defaults si falta el archivo). Reconstruye la puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens).
+Pretty-printer dirigido por rules. JSON de lenguaje (rules fijas + bindings de types de usuario) + YAML de usuario (`type` + `enabled`/`count`, consigna). Reconstruye la puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens). Spec de las configs: [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
 
 ---
 
 ## Cuándo tocarlo
 
-- Nueva rule de estilo → `FormatRule` + `FormatRuleFactory` + entrada en `FormatRuleFactories` + JSON o YAML
+- Nueva rule de estilo que entre en space/newline → binding o rule en `formatter-language.json`
+- Nuevo *kind* de whitespace → `FormatRule` + `FormatRuleFactory` + JSON
 - Cambiar el walk / `FormatPoint` / `GrammarWalker`
 - Política de errores de `format` (`Result`) o `check` (`Report`)
 - **No** para tokens/gramática del lenguaje
@@ -29,7 +30,7 @@ interface Formatter {
 object DefaultFormatterFactory {
     fun create(rules: List<FormatRule>, grammar: Grammar, lexemes: TokenLexemes): Formatter
     fun createFromConfig(
-        language: FormatterRulesConfig,
+        language: FormatterLanguageConfig,
         user: FormatterRulesConfig = FormatterRulesConfig(),
         grammar: Grammar,
         lexemes: TokenLexemes,
@@ -66,9 +67,8 @@ interface FormatRule {
 }
 
 interface FormatRuleFactory {
-    val type: String
-    val userConfigurable: Boolean
-    fun create(params: Map<String, Any?>): Result<FormatRule, FormatError>
+    val types: Set<String>
+    fun create(spec: ResolvedFormatRule): Result<FormatRule, FormatError>
 }
 ```
 
@@ -82,15 +82,16 @@ Puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens): `
 
 ### Rules
 
-**Lenguaje** (`formatter-language.json`, el usuario no las overridea):
+**Implementaciones** (el JSON de lenguaje elige `type` + `token`):
 
-| `type` | Qué hace |
-|---|---|
-| `space-around-operator` | un espacio antes y después de `OPERATOR` |
-| `newline-after-semicolon` | `\n` después de `;` |
-| `space-after-let` | un espacio después de `let` |
+| `type` | Rule | Qué hace |
+|---|---|---|
+| `space-before` / `space-after` / `space-around` | `TokenSpaceRule` | espacio en esos puntos del `token` |
+| `newline-before` / `newline-after` | `TokenNewlineRule` | N newlines (`count` 0..2); `value` / `previous` opcionales |
 
-**Usuario** (YAML; si el archivo no existe o falta la rule, defaults):
+v1 en `rules`: `space-around`+`OPERATOR`, `newline-after`+`SEMICOLON`, `space-after`+`LET`.
+
+**Usuario** (YAML; `type` = `userType` del binding; si el archivo no existe o falta la rule, defaults):
 
 | `type` | Default | Qué hace |
 |---|---|---|
@@ -105,30 +106,12 @@ Ejemplo con defaults: `let x : number = 1 + 2;\n` y `1 + 2;\n\nprintln(1);\n`.
 
 ## Config
 
-Misma forma semántica en JSON y YAML. Dominio en `common` (`FormatterRulesConfig` / `FormatRuleSpec`); **no** `@Serializable`. Lectura en `infrastructure`, igual que language/grammar/type-system:
+Dos formas. Lectura en `infrastructure`, dominio en `common` (**no** `@Serializable`). Detalle: [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
 
-- `JSONFormatterRulesConfigReader` + `FormatterRulesConfigSerializer` (surrogate)
-- `YAMLFormatterRulesConfigReader` — **el mismo serializer**, vía kaml
+- Lenguaje: `JSONFormatterLanguageConfigReader` + `FormatterLanguageConfigSerializer` (`rules` + `userBindings`)
+- Usuario: `YAMLFormatterRulesConfigReader` / `JSONFormatterRulesConfigReader` + `FormatterRulesConfigSerializer` (`type` + `enabled`/`count`)
 
-```json
-{
-  "rules": [
-    { "type": "space-around-operator" },
-    { "type": "newline-after-semicolon" },
-    { "type": "space-after-let" }
-  ]
-}
-```
-
-```yaml
-rules:
-  - type: space-before-colon
-    enabled: true
-  - type: newlines-before-println
-    count: 1
-```
-
-`FormatRuleLoader` (en `:formatter`) no lee archivos: instancia specs ya decodificadas. `type` desconocido o type fijo (`userConfigurable == false`) en el YAML de usuario → `Result.Err` al cargar.
+`FormatRuleLoader` no lee archivos: instancia `FormatterLanguageConfig` + `FormatterRulesConfig` ya decodificadas. YAML `type` que no está en `userBindings` → `UnknownRuleType`.
 
 Resource interno: `infrastructure/src/main/resources/formatter-language.json`.
 
@@ -150,13 +133,14 @@ formatter/src/main/kotlin/printscript/formatter/
   WalkState.kt
   NodeWalk.kt
   GrammarWalker.kt              SeqRule → tokens capturados / sintéticos / rule-refs
-  rules/                        TokenSpaceRule + fijas + NewlinesBeforePrintlnRule
+  rules/                        TokenSpaceRule + TokenNewlineRule
   factories/
-    FormatRuleFactory.kt        lista de factories
-    FactoryParams.kt            enabled / count
-    *Factory.kt
+    FormatRuleFactory.kt        SpaceRuleFactory + NewlineRuleFactory
+    ResolvedFormatRule.kt       type genérico + token + enabled/count
+    SpaceRuleFactory.kt
+    NewlineRuleFactory.kt
   config/
-    FormatRuleLoader.kt         specs → FormatRule + defaults de usuario
+    FormatRuleLoader.kt         language + YAML → FormatRule + defaults de usuario
 ```
 
 ---
@@ -170,17 +154,15 @@ formatter/src/main/kotlin/printscript/formatter/
 | `DefaultFormatterTest` | `1+2` → `1 + 2`; sin rules → `1+2`; `expression-stmt` + `;`; errores estructurales |
 | `PrintScriptLayoutTest` | `let x : number = 1;\n`; colon sin espacios; `println` con newline extra |
 | `FormatterCheckTest` | mismatches alrededor de `+` |
-| `FormatRuleLoaderTest` | JSON de lenguaje; defaults de usuario; type fijo; `count` inválido |
-| `SpaceAroundOperatorRuleTest` / `RuleRegistryTest` | `addChar`, combinación newline+space |
+| `FormatRuleLoaderTest` | JSON de lenguaje; defaults de usuario; type desconocido; `count` inválido |
+| `TokenSpaceRuleTest` / `TokenNewlineRuleTest` / `RuleRegistryTest` | `addChar`, println vs otro call, combinación newline+space |
 
-Infrastructure: `FormatterRulesConfigReaderTest` (JSON resource + YAML con `enabled`/`count`).
+Infrastructure: `FormatterLanguageConfigReaderTest` (resource) + `FormatterRulesConfigReaderTest` (YAML `enabled`/`count`).
 
 ---
 
 ## Cómo extender
 
-1. `FormatRule` + `FormatRuleFactory`.
-2. Agregar la factory a `FormatRuleFactories.defaults()`.
-3. Si es de lenguaje: entrada en `formatter-language.json`.
-4. Si es de usuario: documentar params (`enabled`, `count`, …) en el surrogate del serializer.
-5. Tests de `format` / `check`. La puntuación que el parser no deja en el árbol la reinyecta `GrammarWalker` desde la gramática + `TokenLexemes`.
+1. Si entra en space/newline: `rules` o `userBindings` en `formatter-language.json`. El YAML de usuario no cambia de forma (`type` + un value).
+2. Si no: `FormatRule` + `FormatRuleFactory` en `FormatRuleFactories.defaults()`.
+3. Tests de `format` / `check`. La puntuación que el parser no deja en el árbol la reinyecta `GrammarWalker`.

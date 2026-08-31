@@ -4,9 +4,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.domain.TokenLexemes
-import printscript.formatter.rules.SpaceAroundOperatorRule
 import printscript.formatter.support.addition
 import printscript.formatter.support.program
+import printscript.formatter.support.spaceAroundOperator
 import printscript.infrastructure.reader.JSONGrammarConfigReader
 
 class FormatterCheckTest {
@@ -30,7 +30,7 @@ class FormatterCheckTest {
 
     private val formatter =
         DefaultFormatterFactory.create(
-            listOf(SpaceAroundOperatorRule),
+            listOf(spaceAroundOperator()),
             grammar,
             lexemes,
         )

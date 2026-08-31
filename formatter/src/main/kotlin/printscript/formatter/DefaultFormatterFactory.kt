@@ -1,5 +1,6 @@
 package printscript.formatter
 
+import printscript.domain.FormatterLanguageConfig
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.Grammar
 import printscript.domain.TokenLexemes
@@ -21,7 +22,7 @@ object DefaultFormatterFactory {
         )
 
     fun createFromConfig(
-        language: FormatterRulesConfig,
+        language: FormatterLanguageConfig,
         user: FormatterRulesConfig = FormatterRulesConfig(),
         grammar: Grammar,
         lexemes: TokenLexemes,
