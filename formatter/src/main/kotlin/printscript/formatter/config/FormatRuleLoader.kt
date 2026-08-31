@@ -25,20 +25,22 @@ class FormatRuleLoader(
     fun load(
         language: FormatterLanguageConfig,
         user: FormatterRulesConfig = FormatterRulesConfig(),
+        defaults: FormatterRulesConfig = FormatterRulesConfig(),
     ): Result<List<FormatRule>, FormatError> =
         instantiateAll(language.rules.map { it.toResolved() })
             .flatMap { languageRules ->
-                instantiateUser(language.userBindings, user.rules)
+                instantiateUser(language.userBindings, user.rules, defaults.rules)
                     .map { userRules -> languageRules + userRules }
             }
 
     private fun instantiateUser(
         bindings: List<UserRuleBinding>,
         userRules: List<FormatRuleSpec>,
+        defaultRules: List<FormatRuleSpec>,
     ): Result<List<FormatRule>, FormatError> {
         val bindingByUserType = bindings.associateBy { it.userType }
         val resolved =
-            mergeUserRules(userRules, bindingByUserType.keys).map { spec ->
+            mergeUserRules(userRules, defaultRules, bindingByUserType).map { spec ->
                 val binding =
                     bindingByUserType[spec.type]
                         ?: return Result.Err(UnknownRuleType(spec.type))
@@ -50,19 +52,28 @@ class FormatRuleLoader(
 
     private fun mergeUserRules(
         userRules: List<FormatRuleSpec>,
-        knownUserTypes: Set<String>,
+        defaultRules: List<FormatRuleSpec>,
+        bindings: Map<String, UserRuleBinding>,
     ): List<FormatRuleSpec> {
-        val byType = userRules.associateBy { it.type }
-        val withDefaults =
-            USER_DEFAULTS
-                .filter { it.type in knownUserTypes }
-                .map { default -> byType[default.type] ?: default }
-        val extra =
-            userRules.filter { spec ->
-                USER_DEFAULTS.none { it.type == spec.type }
+        val userByType = userRules.associateBy { it.type }
+        val defaultsByType = defaultRules.associateBy { it.type }
+        val known = bindings.keys
+        val fromBindings =
+            bindings.values.map { binding ->
+                userByType[binding.userType]
+                    ?: defaultsByType[binding.userType]
+                    ?: FormatRuleSpec(
+                        type = binding.userType,
+                        enabled = binding.defaultEnabled,
+                        count = binding.defaultCount,
+                    )
             }
+        val extras =
+            (userRules + defaultRules)
+                .filter { spec -> spec.type !in known }
+                .distinctBy { it.type }
 
-        return withDefaults + extra
+        return fromBindings + extras
     }
 
     private fun instantiateAll(specs: List<ResolvedFormatRule>): Result<List<FormatRule>, FormatError> {
@@ -81,16 +92,6 @@ class FormatRuleLoader(
                 ?: return Result.Err(UnknownRuleType(spec.type))
 
         return factory.create(spec)
-    }
-
-    companion object {
-        val USER_DEFAULTS =
-            listOf(
-                FormatRuleSpec(type = "space-before-colon", enabled = true),
-                FormatRuleSpec(type = "space-after-colon", enabled = true),
-                FormatRuleSpec(type = "space-around-assign", enabled = true),
-                FormatRuleSpec(type = "newlines-before-println", count = 1),
-            )
     }
 }
 

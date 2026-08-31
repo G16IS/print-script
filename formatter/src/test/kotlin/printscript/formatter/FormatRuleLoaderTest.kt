@@ -11,6 +11,7 @@ import printscript.formatter.config.FormatRuleLoader
 import printscript.formatter.factories.FormatRuleFactories
 import printscript.formatter.support.spaceAroundOperator
 import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
+import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
 import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.util.Result
 
@@ -34,10 +35,11 @@ class FormatRuleLoaderTest {
             ),
         )
     private val language = JSONFormatterLanguageConfigReader.read(languageResource())
+    private val defaults = JSONFormatterRulesConfigReader.read(defaultsResource())
 
     @Test
     fun `language json loads the built-in operator rule`() {
-        val result = loader.load(language)
+        val result = loader.load(language, defaults = defaults)
 
         assertTrue(result is Result.Ok)
 
@@ -49,6 +51,14 @@ class FormatRuleLoaderTest {
 
     @Test
     fun `empty user config still loads colon assign and println defaults`() {
+        val result = loader.load(language, defaults = defaults)
+
+        assertTrue(result is Result.Ok)
+        assertEquals(7, (result as Result.Ok).value.size)
+    }
+
+    @Test
+    fun `binding default applies when defaults json omits the rule`() {
         val result = loader.load(language)
 
         assertTrue(result is Result.Ok)
@@ -57,7 +67,13 @@ class FormatRuleLoaderTest {
 
     @Test
     fun `missing user config is not an error`() {
-        val result = DefaultFormatterFactory.createFromConfig(language, grammar = grammar, lexemes = lexemes)
+        val result =
+            DefaultFormatterFactory.createFromConfig(
+                language,
+                defaults = defaults,
+                grammar = grammar,
+                lexemes = lexemes,
+            )
 
         assertTrue(result is Result.Ok)
     }
@@ -74,7 +90,7 @@ class FormatRuleLoaderTest {
     @Test
     fun `user config cannot declare a language generic type`() {
         val user = FormatterRulesConfig(listOf(FormatRuleSpec(type = "space-around")))
-        val result = loader.load(language, user)
+        val result = loader.load(language, user, defaults)
 
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is UnknownRuleType)
@@ -86,7 +102,7 @@ class FormatRuleLoaderTest {
             FormatterRulesConfig(
                 listOf(FormatRuleSpec(type = "newlines-before-println", count = 5)),
             )
-        val result = loader.load(language, user)
+        val result = loader.load(language, user, defaults)
 
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is InvalidRuleParams)
@@ -95,5 +111,10 @@ class FormatRuleLoaderTest {
     private fun languageResource() =
         checkNotNull(javaClass.getResourceAsStream("/formatter-language.json")) {
             "Missing formatter-language.json"
+        }
+
+    private fun defaultsResource() =
+        checkNotNull(javaClass.getResourceAsStream("/formatter-user-defaults.json")) {
+            "Missing formatter-user-defaults.json"
         }
 }

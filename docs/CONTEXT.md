@@ -267,7 +267,7 @@ Ver [modules/LINTER.md](modules/LINTER.md).
 
 ### `formatter` — pretty-print
 
-Módulo Gradle `:formatter`. Recibe `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). Strategy: `addChar(point, char)` + registry (newlines + máx. un espacio; el cap no es una rule). Rules de lenguaje (operadores, `;`+newline, `let`+espacio) y de usuario (`:` / `=` / newlines antes de `println`, con defaults). Reconstruye `let` / `:` / `=` / `;` / parens. Application: `FormatCode` / `CheckFormat`.
+Módulo Gradle `:formatter`. Recibe configs ya parseadas + `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). No lee archivos. Strategy: `addChar(point, char)` + registry (newlines + máx. un espacio; el cap no es una rule). Rules de lenguaje (operadores, `;`+newline, `let`+espacio) y de usuario (`:` / `=` / newlines antes de `println`, con defaults). Reconstruye `let` / `:` / `=` / `;` / parens. Application: `FormatCode` / `CheckFormat` (carga JSON/YAML).
 
 Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 
@@ -281,7 +281,7 @@ Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 - `TokenRule` sí usa `type: "exact" | "regex"`
 - Formatter: `FormatterLanguageConfigSerializer` para el JSON de lenguaje; `FormatterRulesConfigSerializer` para JSON/YAML de usuario (kaml)
 - `FileCodeReader`: `CodeReader` sobre un path de filesystem
-- Resources: `language.config.json`, `grammar.config.json`, `type-system.config.json`, `formatter-language.json`
+- Resources: `language.config.json`, `grammar.config.json`, `type-system.config.json`, `formatter-language.json`, `formatter-user-defaults.json`
 
 Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 
@@ -454,7 +454,7 @@ Módulo a futuro. Docs vacíos: [modules/LINTER.md](modules/LINTER.md).
 | `parser` | Cada handler, gramática PrintScript completa (precedencia, parens, errores), `Grammar` validation, `SyntaxNode` |
 | `type-checker` | Scope, resolver (literales, binarios, permutación), `TypeChecker` (match/mismatch/redeclare), `check` vs `checkStrict` |
 | `interpreter` | contexto (scope/shadow/assign), evaluators (literales/binarios/calls/div-cero), executors, integración lex+parse+interpret con `SideEffect` |
-| `formatter` | `format`/`check` de `1+2`, registry, loader (bindings + type desconocido / `count` inválido), JSON real |
+| `formatter` | `format`/`check` de `1+2`, registry, loader (bindings + defaults JSON / type desconocido / `count` inválido), JSON real |
 | `infrastructure` | `JSONGrammarConfigReader` y `JSONTypeSystemConfigReader` contra el resource real + JSON de `repeat`; readers JSON de lenguaje y YAML de usuario del formatter |
 | `common` | `Result`/`Report`, `TypeSystemConfig` / `FormatterLanguageConfig` (validación), variantes de `TypeError` |
 | `application` | `.ps` end-to-end lex+parse+type-check; format/check de `1+2;` vs `1 + 2;` |

@@ -2,9 +2,9 @@
 
 Dependencias: `common`. Tests tiran de `infrastructure` para cargar `formatter-language.json`.
 
-Pretty-printer de PrintScript sobre `SyntaxProgram`. No es linter (el linter reporta; este reescribe o chequea whitespace). No ejecuta. Application lo llama desde `FormatCode` / `CheckFormat`.
+Pretty-printer de PrintScript sobre `SyntaxProgram`. No es linter (el linter reporta; este reescribe o chequea whitespace). No ejecuta. No lee archivos: recibe configs ya parseadas. Application lo llama desde `FormatCode` / `CheckFormat`.
 
-Pretty-printer dirigido por rules. JSON de lenguaje (rules fijas + bindings de types de usuario) + YAML de usuario (`type` + `enabled`/`count`, consigna). Reconstruye la puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens). Spec de las configs: [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
+Pretty-printer dirigido por rules. JSON de lenguaje (rules fijas + bindings) + JSON de defaults de usuario + YAML de usuario (`type` + `enabled`/`count`, consigna). Reconstruye la puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens). Spec de las configs: [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
 
 ---
 
@@ -32,6 +32,7 @@ object DefaultFormatterFactory {
     fun createFromConfig(
         language: FormatterLanguageConfig,
         user: FormatterRulesConfig = FormatterRulesConfig(),
+        defaults: FormatterRulesConfig = FormatterRulesConfig(),
         grammar: Grammar,
         lexemes: TokenLexemes,
     ): Result<Formatter, FormatError>
@@ -45,16 +46,7 @@ Siempre crear por la factory. La impl es `DefaultFormatter` + `DefaultRuleRegist
 
 `FormatError` es sealed **de este módulo** (`message` + `location`).
 
----
-
-## Constantes de lenguaje
-
-`FormatterConfig` (no es YAML de usuario). Solo paths de config; **no** hay knobs de pipeline (type-check, CLI, etc.):
-
-| Constante | Default | Para qué |
-|---|---|---|
-| `USER_YAML_PATH` | `.printscript/formatter.yml` | Path del YAML de usuario; se cambia acá |
-| `LANGUAGE_JSON_RESOURCE` | `formatter-language.json` | Resource de reglas fijas |
+El módulo **no lee archivos**. Application carga JSON/YAML y pasa `FormatterLanguageConfig` + `FormatterRulesConfig` ya parseadas.
 
 ---
 
@@ -91,7 +83,7 @@ Puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens): `
 
 v1 en `rules`: `space-around`+`OPERATOR`, `newline-after`+`SEMICOLON`, `space-after`+`LET`.
 
-**Usuario** (YAML; `type` = `userType` del binding; si el archivo no existe o falta la rule, defaults):
+**Usuario** (YAML; `type` = `userType` del binding; si el archivo no existe o falta la rule, `formatter-user-defaults.json` o el `default` del binding):
 
 | `type` | Default | Qué hace |
 |---|---|---|
@@ -109,11 +101,11 @@ Ejemplo con defaults: `let x : number = 1 + 2;\n` y `1 + 2;\n\nprintln(1);\n`.
 Dos formas. Lectura en `infrastructure`, dominio en `common` (**no** `@Serializable`). Detalle: [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
 
 - Lenguaje: `JSONFormatterLanguageConfigReader` + `FormatterLanguageConfigSerializer` (`rules` + `userBindings`)
-- Usuario: `YAMLFormatterRulesConfigReader` / `JSONFormatterRulesConfigReader` + `FormatterRulesConfigSerializer` (`type` + `enabled`/`count`)
+- Usuario / defaults: `YAMLFormatterRulesConfigReader` / `JSONFormatterRulesConfigReader` + `FormatterRulesConfigSerializer` (`type` + `enabled`/`count`)
 
-`FormatRuleLoader` no lee archivos: instancia `FormatterLanguageConfig` + `FormatterRulesConfig` ya decodificadas. YAML `type` que no está en `userBindings` → `UnknownRuleType`.
+`FormatRuleLoader` no lee archivos: instancia `FormatterLanguageConfig` + user + defaults ya decodificadas. Merge: YAML pisa defaults JSON por `type`; si falta en ambos, el `default` del binding. YAML `type` que no está en `userBindings` → `UnknownRuleType`.
 
-Resource interno: `infrastructure/src/main/resources/formatter-language.json`.
+Resources: `formatter-language.json`, `formatter-user-defaults.json`.
 
 ---
 
@@ -124,7 +116,6 @@ formatter/src/main/kotlin/printscript/formatter/
   Formatter.kt
   DefaultFormatter.kt           walk puro: fold sobre WalkState inmutable
   DefaultFormatterFactory.kt
-  FormatterConfig.kt
   FormatError.kt
   FormatPoint.kt
   WhitespaceChars.kt            SPACE / NEWLINE
@@ -140,7 +131,7 @@ formatter/src/main/kotlin/printscript/formatter/
     SpaceRuleFactory.kt
     NewlineRuleFactory.kt
   config/
-    FormatRuleLoader.kt         language + YAML → FormatRule + defaults de usuario
+    FormatRuleLoader.kt         language + user + defaults → FormatRule
 ```
 
 ---
@@ -154,10 +145,10 @@ formatter/src/main/kotlin/printscript/formatter/
 | `DefaultFormatterTest` | `1+2` → `1 + 2`; sin rules → `1+2`; `expression-stmt` + `;`; errores estructurales |
 | `PrintScriptLayoutTest` | `let x : number = 1;\n`; colon sin espacios; `println` con newline extra |
 | `FormatterCheckTest` | mismatches alrededor de `+` |
-| `FormatRuleLoaderTest` | JSON de lenguaje; defaults de usuario; type desconocido; `count` inválido |
+| `FormatRuleLoaderTest` | JSON de lenguaje; defaults JSON; fallback del binding; type desconocido; `count` inválido |
 | `TokenSpaceRuleTest` / `TokenNewlineRuleTest` / `RuleRegistryTest` | `addChar`, println vs otro call, combinación newline+space |
 
-Infrastructure: `FormatterLanguageConfigReaderTest` (resource) + `FormatterRulesConfigReaderTest` (YAML `enabled`/`count`).
+Infrastructure: `FormatterLanguageConfigReaderTest` (resource) + `FormatterRulesConfigReaderTest` (YAML + defaults JSON).
 
 ---
 

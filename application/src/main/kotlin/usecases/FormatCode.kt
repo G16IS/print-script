@@ -4,7 +4,6 @@ import java.nio.file.Path
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.formatter.FormatError
-import printscript.formatter.FormatterConfig
 import printscript.util.fold
 
 object FormatCode {
@@ -12,7 +11,7 @@ object FormatCode {
         langConfig: LanguageConfig,
         grammar: Grammar,
         path: String,
-        userYamlPath: Path = Path.of(FormatterConfig.USER_YAML_PATH),
+        userYamlPath: Path = Path.of(LoadFormatter.USER_YAML_PATH),
     ): String {
         val program = ParseProgram.parse(langConfig, grammar, path)
         val formatter = LoadFormatter.load(grammar, langConfig, userYamlPath)

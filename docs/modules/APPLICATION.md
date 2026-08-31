@@ -25,7 +25,7 @@ application/src/main/kotlin/
   usecases/ParseProgram.kt        lex + parse (interno)
   usecases/FormatCode.kt          formatCode(...)
   usecases/CheckFormat.kt         checkFormat(...) — tira si source ≠ format
-  usecases/LoadFormatter.kt       JSON de lenguaje + YAML de usuario (interno)
+  usecases/LoadFormatter.kt       JSON de lenguaje + defaults + YAML (interno; paths viven acá)
 
 application/src/test/
   kotlin/edu/austral/dissis/
@@ -87,7 +87,7 @@ No hay `Main.kt` ni CLI (`args[0]`, flags de versión, etc.).
 
 ## Casos de uso: `formatCode` / `checkFormat`
 
-No type-chequean: application parsea con `ParseProgram` y formatea; el type-checker no entra en este camino (el formatter no lo pide ni lo sabe). Cargan el formatter: JSON `formatter-language.json` + YAML en `FormatterConfig.USER_YAML_PATH` si existe.
+No type-chequean: application parsea con `ParseProgram` y formatea; el type-checker no entra en este camino (el formatter no lo pide ni lo sabe). `LoadFormatter` lee JSON `formatter-language.json` + `formatter-user-defaults.json` + YAML `.printscript/formatter.yml` si existe, y le pasa al formatter configs ya parseadas.
 
 ```kotlin
 fun formatCode(langConfig, grammar, path, userYamlPath = USER_YAML_PATH): String
@@ -193,5 +193,6 @@ Archivo en `resources/examples/` + test en `InterpretCodeTest` con el DSL. Prefe
 ## Invariantes
 
 - Application no reimplementa reglas de token ni de gramática.
+- El formatter no lee archivos: `LoadFormatter` le inyecta configs ya parseadas. Paths de JSON/YAML viven en application.
 - El `LanguageConfig` que usás en runtime tiene que tener el `order` que el **lexer real** espera (último = más prioritario), no el del markdown.
 - `interpretCode` asume que hay statements hasta EOF. Un archivo vacío (solo whitespace) hace `peek` → `EOF` y devuelve `SyntaxProgram.empty()` sin llamar al parser. Un archivo con basura al inicio tira desde lexer o parser.

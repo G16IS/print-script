@@ -50,6 +50,7 @@ infrastructure/src/main/
     grammar.config.json
     type-system.config.json
     formatter-language.json
+    formatter-user-defaults.json
 ```
 
 Specs: [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](../configs/GRAMMAR_CONFIG.md), [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md), [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
@@ -198,7 +199,7 @@ Antes de usar `JSONLanguageConfigReader.read` en el pipeline, unificá: o invert
 
 `FormatterLanguageConfigReaderTest`: resource `formatter-language.json` (`rules` + `userBindings`).
 
-`FormatterRulesConfigReaderTest`: YAML de usuario (`enabled` / `count`). JSON y YAML de usuario comparten `FormatterRulesConfigSerializer`.
+`FormatterRulesConfigReaderTest`: YAML de usuario (`enabled` / `count`) + resource `formatter-user-defaults.json`. JSON y YAML de usuario comparten `FormatterRulesConfigSerializer`.
 
 No hay test de `JSONLanguageConfigReader` ni de `FileCodeReader`.
 

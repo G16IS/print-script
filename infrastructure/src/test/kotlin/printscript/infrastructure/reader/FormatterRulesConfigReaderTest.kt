@@ -36,6 +36,26 @@ class FormatterRulesConfigReaderTest {
     }
 
     @Test
+    fun `reads user defaults json resource`() {
+        val config =
+            JSONFormatterRulesConfigReader.read(
+                checkNotNull(javaClass.getResourceAsStream("/formatter-user-defaults.json")) {
+                    "Missing formatter-user-defaults.json"
+                },
+            )
+
+        assertEquals(
+            listOf(
+                FormatRuleSpec(type = "space-before-colon", enabled = true),
+                FormatRuleSpec(type = "space-after-colon", enabled = true),
+                FormatRuleSpec(type = "space-around-assign", enabled = true),
+                FormatRuleSpec(type = "newlines-before-println", count = 1),
+            ),
+            config.rules,
+        )
+    }
+
+    @Test
     fun `json unknown keys are ignored`() {
         val config =
             JSONFormatterRulesConfigReader.read(

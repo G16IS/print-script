@@ -24,10 +24,11 @@ object DefaultFormatterFactory {
     fun createFromConfig(
         language: FormatterLanguageConfig,
         user: FormatterRulesConfig = FormatterRulesConfig(),
+        defaults: FormatterRulesConfig = FormatterRulesConfig(),
         grammar: Grammar,
         lexemes: TokenLexemes,
     ): Result<Formatter, FormatError> =
         FormatRuleLoader(FormatRuleFactories.defaults())
-            .load(language, user)
+            .load(language, user, defaults)
             .map { create(it, grammar, lexemes) }
 }

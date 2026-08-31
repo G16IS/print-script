@@ -5,17 +5,21 @@ Dos archivos, dos formas. Mismo patrón que language/grammar/type-system: interf
 | Archivo | Quién lo escribe | Dominio | Reader |
 |---|---|---|---|
 | `formatter-language.json` | el lenguaje (resource interno) | `FormatterLanguageConfig` | `JSONFormatterLanguageConfigReader` |
+| `formatter-user-defaults.json` | el lenguaje (resource interno) | `FormatterRulesConfig` | `JSONFormatterRulesConfigReader` |
 | `.printscript/formatter.yml` | el usuario | `FormatterRulesConfig` | `YAMLFormatterRulesConfigReader` |
 
 El YAML de usuario es **una rule y un value** (`type` + `enabled` o `count`). Tokens (`COLON`, `println`, …) no van ahí: viven en el JSON de lenguaje.
 
 ```kotlin
 val language = JSONFormatterLanguageConfigReader.read(languageStream)
+val defaults = JSONFormatterRulesConfigReader.read(defaultsStream)
 val user = YAMLFormatterRulesConfigReader.read(userYamlPath)
-val formatter = DefaultFormatterFactory.createFromConfig(language, user, grammar, lexemes)
+val formatter = DefaultFormatterFactory.createFromConfig(language, user, defaults, grammar, lexemes)
 ```
 
-Resources reales: `infrastructure/src/main/resources/formatter-language.json`.
+Resources reales: `infrastructure/src/main/resources/formatter-language.json` y `formatter-user-defaults.json`.
+
+Merge de usuario: YAML pisa defaults JSON por `type`; si no está en ninguno, vale el `default` del binding.
 
 ---
 
@@ -66,6 +70,23 @@ Mapea el `type` del YAML de usuario a una implementación genérica.
 `userType` duplicado o `param` que no sea `enabled`/`count` → `IllegalArgumentException` al construir el dominio.
 
 Una rule de usuario nueva que entre en `TokenSpaceRule` / `TokenNewlineRule` es **solo un binding** en este JSON. Kotlin nuevo solo si aparece un kind que esas dos no cubren.
+
+---
+
+## Defaults — `formatter-user-defaults.json`
+
+Misma forma que el YAML de usuario. Application lo carga siempre; si no hay YAML, estas son las rules de usuario.
+
+```json
+{
+  "rules": [
+    { "type": "space-before-colon", "enabled": true },
+    { "type": "space-after-colon", "enabled": true },
+    { "type": "space-around-assign", "enabled": true },
+    { "type": "newlines-before-println", "count": 1 }
+  ]
+}
+```
 
 ---
 

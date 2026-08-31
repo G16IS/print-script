@@ -12,6 +12,7 @@ import printscript.formatter.support.number
 import printscript.formatter.support.program
 import printscript.formatter.support.wrap
 import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
+import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
 import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
@@ -118,7 +119,8 @@ class PrintScriptLayoutTest {
 
     private fun formatterFromLanguage(user: FormatterRulesConfig = FormatterRulesConfig()): Formatter {
         val language = JSONFormatterLanguageConfigReader.read(languageResource())
-        val result = DefaultFormatterFactory.createFromConfig(language, user, grammar, lexemes)
+        val defaults = JSONFormatterRulesConfigReader.read(defaultsResource())
+        val result = DefaultFormatterFactory.createFromConfig(language, user, defaults, grammar, lexemes)
 
         return (result as Result.Ok).value
     }
@@ -126,6 +128,11 @@ class PrintScriptLayoutTest {
     private fun languageResource() =
         checkNotNull(javaClass.getResourceAsStream("/formatter-language.json")) {
             "Missing formatter-language.json"
+        }
+
+    private fun defaultsResource() =
+        checkNotNull(javaClass.getResourceAsStream("/formatter-user-defaults.json")) {
+            "Missing formatter-user-defaults.json"
         }
 
     private fun ok(result: Result<String, FormatError>): String {
