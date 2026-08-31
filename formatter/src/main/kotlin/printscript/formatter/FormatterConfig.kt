@@ -5,9 +5,6 @@ package printscript.formatter
  * (they are not user YAML).
  */
 object FormatterConfig {
-    /** Application should skip the type-checker before format/check when false. */
-    const val REQUIRES_TYPE_CHECK = false
-
     /**
      * User style file, relative to the working directory / project root.
      * The CLI / use-case will read this path; override later if the convention changes.

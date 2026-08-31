@@ -87,7 +87,7 @@ No hay `Main.kt` ni CLI (`args[0]`, flags de versión, etc.).
 
 ## Casos de uso: `formatCode` / `checkFormat`
 
-No type-chequean (`FormatterConfig.REQUIRES_TYPE_CHECK = false`). Parsean con `ParseProgram` y cargan el formatter: JSON `formatter-language.json` + YAML en `FormatterConfig.USER_YAML_PATH` si existe.
+No type-chequean: application parsea con `ParseProgram` y formatea; el type-checker no entra en este camino (el formatter no lo pide ni lo sabe). Cargan el formatter: JSON `formatter-language.json` + YAML en `FormatterConfig.USER_YAML_PATH` si existe.
 
 ```kotlin
 fun formatCode(langConfig, grammar, path, userYamlPath = USER_YAML_PATH): String

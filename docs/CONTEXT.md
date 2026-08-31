@@ -27,7 +27,7 @@ El diseño es **pipeline + configuración declarativa**. Lexer y parser no hardc
 | `interpreter` | [modules/INTERPRETER.md](modules/INTERPRETER.md) | `SyntaxProgram` → `List<SideEffect>`. Módulo listo, **no cableado** en application |
 | `infrastructure` | [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md) | JSON + filesystem: configs y `FileCodeReader` |
 | `application` | [modules/APPLICATION.md](modules/APPLICATION.md) | Caso de uso `interpretCode`: lex + parse + type-check |
-| `formatter` | [modules/FORMATTER.md](modules/FORMATTER.md) | Pretty-print / check de whitespace. Core: una rule. Cableado en `FormatCode` / `CheckFormat` |
+| `formatter` | [modules/FORMATTER.md](modules/FORMATTER.md) | Pretty-print / check de whitespace. Cableado en `FormatCode` / `CheckFormat` |
 
 ### Módulos a futuro (pipeline)
 
@@ -76,7 +76,7 @@ No está en la gramática v1 (pero el parser ya sabe evaluar `repeat`, pensado p
 
 - `if`, braces, asignaciones sueltas, múltiples argumentos en `println`
 
-Hoy el pipeline de `interpretCode` **corta en el type-checker**: lexea, parsea y valida tipos. Si hay errores de tipo, `interpretCode` falla. El interpreter y el formatter existen como módulos Gradle con tests (ver [modules/INTERPRETER.md](modules/INTERPRETER.md), [modules/FORMATTER.md](modules/FORMATTER.md)) pero **no están en las dependencias de application**. Linter no existe.
+Hoy el pipeline de `interpretCode` **corta en el type-checker**: lexea, parsea y valida tipos. Si hay errores de tipo, `interpretCode` falla. El formatter está cableado en `FormatCode` / `CheckFormat` (lex + parse, **sin** type-check: lo decide application, no el módulo). El interpreter existe como módulo Gradle con tests y **no** está en las dependencias de application. Linter no existe.
 
 ---
 
@@ -102,10 +102,10 @@ DefaultInterpreter      interpreter        SyntaxProgram → List<SideEffect>
                                            módulo listo; no lo llama interpretCode
 
 DefaultFormatter        formatter          SyntaxProgram → String / Report
-                                           core (una rule); no lo llama interpretCode
+                                           FormatCode / CheckFormat; no lo llama interpretCode
 ```
 
-Linter no está en esa cadena. El formatter corre sobre el árbol (post-parser; type-check opcional, `FormatterConfig.REQUIRES_TYPE_CHECK = false`). Ver [modules/LINTER.md](modules/LINTER.md) y [modules/FORMATTER.md](modules/FORMATTER.md).
+Linter no está en esa cadena. El formatter corre sobre el árbol post-parser; no pide ni asume type-check. Ver [modules/LINTER.md](modules/LINTER.md) y [modules/FORMATTER.md](modules/FORMATTER.md).
 
 Armado típico (lo que hace `interpretCode` **hoy**):
 
@@ -264,7 +264,7 @@ Reglas de estilo sobre el árbol. No existe módulo Gradle todavía. No es type-
 
 Ver [modules/LINTER.md](modules/LINTER.md).
 
-### `formatter` — pretty-print (core)
+### `formatter` — pretty-print
 
 Módulo Gradle `:formatter`. Recibe `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). Strategy: `addChar(point, char)` + registry (newlines + máx. un espacio). Rules de lenguaje (operadores, `;`+newline, `let`+espacio, cap de un espacio) y de usuario (`:` / `=` / newlines antes de `println`, con defaults). Reconstruye `let` / `:` / `=` / `;` / parens. Application: `FormatCode` / `CheckFormat`.
 

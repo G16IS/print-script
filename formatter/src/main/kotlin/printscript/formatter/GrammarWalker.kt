@@ -11,8 +11,7 @@ import printscript.util.Result
 import printscript.util.flatMap
 
 /**
- * Drives formatter emission by reading grammar rules,
- * replacing hardcoded StatementLayouts.
+ * Drives formatter emission from grammar `SeqRule`s.
  *
  * For each SyntaxNode whose grammar rule is a SeqRule,
  * walks the steps:

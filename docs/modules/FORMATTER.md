@@ -11,10 +11,10 @@ Pretty-printer dirigido por rules. JSON de lenguaje (fijas) + YAML de usuario (c
 ## Cuándo tocarlo
 
 - Nueva rule de estilo → `FormatRule` + `FormatRuleFactory` + entrada en `FormatRuleFactories` + JSON o YAML
-- Cambiar el walk / `FormatPoint`
+- Cambiar el walk / `FormatPoint` / `GrammarWalker`
 - Política de errores de `format` (`Result`) o `check` (`Report`)
 - **No** para tokens/gramática del lenguaje
-- **No** para type-check (ver `FormatterConfig.REQUIRES_TYPE_CHECK`)
+- **No** para type-check: este módulo formatea el `SyntaxProgram` que le pasen; si hay que type-chequear antes, lo decide application
 
 ---
 
@@ -27,10 +27,12 @@ interface Formatter {
 }
 
 object DefaultFormatterFactory {
-    fun create(rules: List<FormatRule>): Formatter
+    fun create(rules: List<FormatRule>, grammar: Grammar, lexemes: TokenLexemes): Formatter
     fun createFromConfig(
         language: FormatterRulesConfig,
         user: FormatterRulesConfig = FormatterRulesConfig(),
+        grammar: Grammar,
+        lexemes: TokenLexemes,
     ): Result<Formatter, FormatError>
 }
 ```
@@ -46,11 +48,10 @@ Siempre crear por la factory. La impl es `DefaultFormatter` + `DefaultRuleRegist
 
 ## Constantes de lenguaje
 
-`FormatterConfig` (no es YAML de usuario):
+`FormatterConfig` (no es YAML de usuario). Solo paths de config; **no** hay knobs de pipeline (type-check, CLI, etc.):
 
 | Constante | Default | Para qué |
 |---|---|---|
-| `REQUIRES_TYPE_CHECK` | `false` | El use-case/CLI (cuando exista) puede saltear el type-checker |
 | `USER_YAML_PATH` | `.printscript/formatter.yml` | Path del YAML de usuario; se cambia acá |
 | `LANGUAGE_JSON_RESOURCE` | `formatter-language.json` | Resource de reglas fijas |
 
@@ -76,6 +77,8 @@ El walker imprime lexemas. Las rules no devuelven un `String` libre: el registry
 El core es **inmutable**: `WalkState` es un `data class` (`output`, `errors`, `last`). `emit` / `FormatRuleLoader.instantiate` son `fold` + `copy`; no hay `StringBuilder` ni listas mutables.
 
 El hueco entre dos tokens es `AFTER` del anterior + `BEFORE` del actual. Al terminar el programa se emite el `AFTER` del último token (newline tras `;`).
+
+Puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens): `GrammarWalker` la reinyecta leyendo `SeqRule` + `TokenLexemes` (lexemas exactos de un solo matcher). Nodos que no son `SeqRule` (`Or`, `Left`, `Atom`, `Repeat`) caen al walk genérico de hijos.
 
 ### Rules
 
@@ -148,7 +151,7 @@ formatter/src/main/kotlin/printscript/formatter/
   SourceGaps.kt                 offset CharPosition → source (para check)
   WalkState.kt
   NodeWalk.kt
-  StatementLayouts.kt           variable / call / group / expression-stmt
+  GrammarWalker.kt              SeqRule → tokens capturados / sintéticos / rule-refs
   rules/                        TokenSpaceRule + fijas + NewlinesBeforePrintlnRule
   factories/
     FormatRuleFactory.kt        lista de factories
@@ -182,4 +185,4 @@ Infrastructure: `FormatterRulesConfigReaderTest` (JSON resource + YAML con `enab
 2. Agregar la factory a `FormatRuleFactories.defaults()`.
 3. Si es de lenguaje: entrada en `formatter-language.json`.
 4. Si es de usuario: documentar params (`enabled`, `count`, …) en el surrogate del serializer.
-5. Tests de `format` / `check`. Si el parser no deja el token en el árbol, el layout en `StatementLayouts`.
+5. Tests de `format` / `check`. La puntuación que el parser no deja en el árbol la reinyecta `GrammarWalker` desde la gramática + `TokenLexemes`.

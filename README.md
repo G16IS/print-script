@@ -63,7 +63,7 @@ flowchart LR
 | **Parser** | Arma el árbol de sintaxis statement por statement, respetando precedencia (`*` / `/` ganan a `+` / `-`) | Listo |
 | **Type checker** | Chequea tipos, redeclaraciones y variables que no existen | Listo |
 | **Interpreter** | Ejecuta el programa (`println`, expresiones, más adelante control de flujo) | Módulo listo, no cableado |
-| **Formatter** | Pretty-print / check de whitespace sobre el árbol | Core (una rule), cableado en application |
+| **Formatter** | Pretty-print / check de whitespace sobre el árbol | Cableado en `FormatCode` / `CheckFormat` |
 | **Linter** | Estilo / análisis estático | A futuro |
 
 Dos ideas que recorren todo el proyecto:
