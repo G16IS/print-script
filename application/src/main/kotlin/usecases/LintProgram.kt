@@ -13,9 +13,9 @@ internal object LintProgram {
         langConfig: LanguageConfig,
         grammar: Grammar,
         path: String,
-        linterConfig: LinterConfig
+        linterConfig: LinterConfig,
     ): Report<SyntaxProgram, LintError> {
-        val program: SyntaxProgram  = ParseProgram.parse(langConfig, grammar, path)
+        val program: SyntaxProgram = ParseProgram.parse(langConfig, grammar, path)
 
         val linter = DefaultLinterFactory.create(linterConfig)
 
