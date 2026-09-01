@@ -35,7 +35,7 @@ application/src/test/
     testing/
       ParseExample.kt              carga grammar + type-system JSON + LanguageConfig de test
       FormatExample.kt             grammar + LanguageConfig para format/check
-      PrintScriptLanguage.kt       LanguageConfig con order invertido
+      PrintScriptLanguage.kt       LanguageConfig (mismo order que el JSON)
       ast/
         AstBuilder.kt              DSL node("variable") { … }
         AstSpec.kt
@@ -116,7 +116,7 @@ Tests:
 - Type-system: resource `type-system.config.json`
 - Path: resource `examples/foo.ps` resuelto a `File` absoluto
 
-`PrintScriptLanguage` duplica las reglas de `language.config.json` con el `order` invertido. Comentario explícito: el resolver trata la **última** categoría como máxima prioridad. Si agregás un token, actualizá JSON **y** esta clase **y** `MockLexerFactory` del lexer.
+`PrintScriptLanguage` duplica las reglas de `language.config.json` con el mismo `order` (keywords primero). Si agregás un token, actualizá JSON **y** esta clase **y** el `PrintScriptLanguage` del lexer (y `PsSupport` del interpreter).
 
 `InterpretCodeTest` aserta la **forma** del árbol, no locations:
 

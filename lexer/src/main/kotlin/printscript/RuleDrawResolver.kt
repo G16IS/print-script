@@ -7,17 +7,8 @@ data class RuleDrawResolver(
     val langConfig: LanguageConfig,
 ) {
     /**
-     * Resolve multiple rule matchings
-     *
-     * @param config Language configuration
-     * @param matchingRules List of matching rules
-     * @return The rule with the highest priority
-     *
-     * Algorithm:
-     * - iterate over matchingRules
-     * - for each rule, check priority
-     * - if rule has the most priority, save it
-     * - return saved rule
+     * Picks the matching rule whose category appears first in [LanguageConfig.order].
+     * If several rules share that category, throws.
      */
     fun resolve(matchingRules: List<TokenRule>): TokenRule {
         require(matchingRules.isNotEmpty()) { "No matching rules provided" }
@@ -32,7 +23,7 @@ data class RuleDrawResolver(
     private fun findHighestPriorityCategory(rules: List<TokenRule>): String =
         rules
             .map { findCategory(it) }
-            .maxByOrNull { findPriority(it) }
+            .minByOrNull { findPriority(it) }
             ?: error("No categories found")
 
     private fun filterByCategory(
@@ -46,7 +37,11 @@ data class RuleDrawResolver(
         }
     }
 
-    private fun findPriority(category: String): Int = langConfig.order.indexOf(category)
+    /** Lower index in `order` = higher priority. A category missing from `order` loses to every listed one. */
+    private fun findPriority(category: String): Int {
+        val index = langConfig.order.indexOf(category)
+        return if (index < 0) Int.MAX_VALUE else index
+    }
 
     private fun findCategory(rule: TokenRule): String {
         val entry =

@@ -37,12 +37,12 @@ object PsSupport {
     }
 
     /**
-     * Same rules as language.config.json. `order` is reversed because the lexer
-     * resolver treats the LAST matching category as highest priority.
+     * Same rules and `order` as language.config.json. The lexer tries categories
+     * from first to last, so keywords beat identifiers.
      */
     private fun language(): LanguageConfig =
         LanguageConfig(
-            order = listOf("identifiers", "literals", "operators", "types", "keywords"),
+            order = listOf("keywords", "types", "operators", "literals", "identifiers"),
             config =
                 mapOf(
                     "keywords" to keywords(),
