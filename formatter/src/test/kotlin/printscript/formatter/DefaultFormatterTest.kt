@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.ast.Location
 import printscript.domain.TokenLexemes
+import printscript.error.FormatError
+import printscript.error.MissingLexeme
+import printscript.error.UnrecognizedFormatNode
 import printscript.formatter.support.addition
 import printscript.formatter.support.expression
 import printscript.formatter.support.number
@@ -113,7 +116,7 @@ class DefaultFormatterTest {
         val result = withRule.format(program(node))
 
         assertTrue(result is Result.Err)
-        assertTrue((result as Result.Err).error is UnrecognizedNode)
+        assertTrue((result as Result.Err).error is UnrecognizedFormatNode)
     }
 
     private fun ok(result: Result<String, FormatError>): String {

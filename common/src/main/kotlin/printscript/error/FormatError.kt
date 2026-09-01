@@ -1,8 +1,8 @@
-package printscript.formatter
+package printscript.error
 
 import printscript.ast.Location
 
-sealed interface FormatError {
+sealed interface FormatError : Error {
     val message: String
     val location: Location
 }
@@ -14,7 +14,7 @@ data class MissingLexeme(
     override val message: String = "El token '$tokenType' no tiene lexema para emitir"
 }
 
-data class UnrecognizedNode(
+data class UnrecognizedFormatNode(
     val nodeName: String,
     override val location: Location,
 ) : FormatError {

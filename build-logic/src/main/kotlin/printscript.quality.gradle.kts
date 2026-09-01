@@ -21,9 +21,10 @@ if (project != rootProject) {
     }
 
     extensions.configure<DetektExtension> {
-        buildUponDefaultConfig = true
-        allRules = false
-        parallel = true
+        buildUponDefaultConfig.set(true)
+        allRules.set(false)
+        parallel.set(true)
+        config.setFrom(files("${project.rootDir}/config/detekt/detekt.yml"))
     }
 
     tasks.withType<dev.detekt.gradle.Detekt>().configureEach {

@@ -4,6 +4,7 @@ import printscript.domain.FormatterLanguageConfig
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.Grammar
 import printscript.domain.TokenLexemes
+import printscript.error.FormatError
 import printscript.formatter.config.FormatRuleLoader
 import printscript.formatter.factories.FormatRuleFactories
 import printscript.formatter.rules.FormatRule

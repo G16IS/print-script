@@ -41,10 +41,10 @@ object DefaultFormatterFactory {
 
 Siempre crear por la factory. La impl es `DefaultFormatter` + `DefaultRuleRegistry`.
 
-- `format` recorre el árbol, emite lexemas capturados e inyecta whitespace de las rules. Fail-fast en errores estructurales (`MissingLexeme`, `UnrecognizedNode`).
+- `format` recorre el árbol, emite lexemas capturados e inyecta whitespace de las rules. Fail-fast en errores estructurales (`MissingLexeme`, `UnrecognizedFormatNode`).
 - `check` usa el **source original** (el AST no tiene trivia). Recorre los mismos tokens que `format` (capturados y sintéticos). Un cursor busca cada lexema en el source y compara el hueco vs lo esperado. **No** usa `token.location.start` para el offset: el lexer deja esa posición *después* del primer carácter. Acumula todos los `WhitespaceMismatch` (también si lo esperado es `""` y hay extra, y el trailing). No corta en el primero.
 
-`FormatError` es sealed **de este módulo** (`message` + `location`).
+`FormatError` es sealed en `common` (`printscript.error`, `message` + `location`). `UnrecognizedFormatNode` (no `UnrecognizedNode`: ese nombre ya lo usan type/runtime).
 
 El módulo **no lee archivos**. Application carga JSON/YAML y pasa `FormatterLanguageConfig` + `FormatterRulesConfig` ya parseadas.
 
@@ -117,7 +117,6 @@ formatter/src/main/kotlin/printscript/formatter/
   DefaultFormatter.kt           walk puro: fold sobre WalkState inmutable
   LexemeEmit.kt                 emite lexema (format) o compara hueco (check)
   DefaultFormatterFactory.kt
-  FormatError.kt
   FormatPoint.kt
   WhitespaceChars.kt            SPACE / NEWLINE
   RuleRegistry.kt               combina addChar: newlines + como mucho un espacio

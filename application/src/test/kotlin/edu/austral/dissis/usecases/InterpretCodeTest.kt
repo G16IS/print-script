@@ -3,15 +3,16 @@ package edu.austral.dissis.usecases
 import edu.austral.dissis.testing.ParseExample
 import edu.austral.dissis.testing.ast.AstBuilder
 import edu.austral.dissis.testing.ast.assertAst
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class InterpretCodeTest {
     @Test
     fun `declarations and prints produce the expected tree`() {
-        val program = ParseExample.parse("declarations_and_prints.ps")
-        assertAst(program) {
+        val report = ParseExample.parse("declarations_and_prints.ps")
+        assertTrue(report.isOk)
+        assertAst(report.value!!) {
             node("variable") {
                 node("ID", "pepe")
                 node("TYPE", "string")
@@ -37,8 +38,9 @@ class InterpretCodeTest {
 
     @Test
     fun `binary expression respects precedence`() {
-        val program = ParseExample.parse("binary_expression.ps")
-        assertAst(program) {
+        val report = ParseExample.parse("binary_expression.ps")
+        assertTrue(report.isOk)
+        assertAst(report.value!!) {
             node("variable") {
                 node("ID", "x")
                 node("TYPE", "number")
@@ -58,8 +60,9 @@ class InterpretCodeTest {
 
     @Test
     fun `string literal is kept as a token value`() {
-        val program = ParseExample.parse("string_literal.ps")
-        assertAst(program) {
+        val report = ParseExample.parse("string_literal.ps")
+        assertTrue(report.isOk)
+        assertAst(report.value!!) {
             node("variable") {
                 node("ID", "greeting")
                 node("TYPE", "string")
@@ -75,33 +78,26 @@ class InterpretCodeTest {
 
     @Test
     fun `type mismatch fails type check`() {
-        val error =
-            assertThrows<IllegalStateException> {
-                ParseExample.parse("type_mismatch.ps")
-            }
+        val report = ParseExample.parse("type_mismatch.ps")
 
-        assertTrue(error.message!!.contains("El chequeo de tipos falló"))
-        assertTrue(error.message!!.contains("Se esperaba number pero se encontró string"))
+        assertFalse(report.isOk)
+        assertTrue(report.errors.any { it.message.contains("Se esperaba number pero se encontró string") })
     }
 
     @Test
     fun `undeclared variable fails type check`() {
-        val error =
-            assertThrows<IllegalStateException> {
-                ParseExample.parse("undeclared_variable.ps")
-            }
+        val report = ParseExample.parse("undeclared_variable.ps")
 
-        assertTrue(error.message!!.contains("Variable 'x' no declarada"))
+        assertFalse(report.isOk)
+        assertTrue(report.errors.any { it.message.contains("Variable 'x' no declarada") })
     }
 
     @Test
     fun `redeclaration fails type check`() {
-        val error =
-            assertThrows<IllegalStateException> {
-                ParseExample.parse("redeclaration.ps")
-            }
+        val report = ParseExample.parse("redeclaration.ps")
 
-        assertTrue(error.message!!.contains("La variable 'x' ya fue declarada"))
+        assertFalse(report.isOk)
+        assertTrue(report.errors.any { it.message.contains("La variable 'x' ya fue declarada") })
     }
 
     private fun AstBuilder.printCall(name: String) {

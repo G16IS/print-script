@@ -1,7 +1,7 @@
 package printscript.formatter.factories
 
-import printscript.formatter.FormatError
-import printscript.formatter.InvalidRuleParams
+import printscript.error.FormatError
+import printscript.error.InvalidRuleParams
 import printscript.formatter.PointKind
 import printscript.formatter.rules.FormatRule
 import printscript.formatter.rules.TokenSpaceRule

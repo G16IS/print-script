@@ -7,6 +7,8 @@ import printscript.domain.FormatRuleSpec
 import printscript.domain.FormatterLanguageConfig
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.TokenLexemes
+import printscript.error.InvalidRuleParams
+import printscript.error.UnknownRuleType
 import printscript.formatter.config.FormatRuleLoader
 import printscript.formatter.factories.FormatRuleFactories
 import printscript.formatter.support.spaceAroundOperator

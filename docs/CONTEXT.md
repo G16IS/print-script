@@ -188,7 +188,7 @@ Paquetes:
 - **Árbol que produce el parser:** `SyntaxNode` / `SyntaxProgram` (nombres = reglas de la gramática)
 - **Type-system:** `TypeSystemConfig` / `Operation` / `NodeConfig` (valida tipos referenciados al construirse)
 - **Resultados:** `Result` / `Report` en `util/` (`map` / `flatMap` / `fold`)
-- **Errores:** `TypeError` sealed (`TypeMismatch`, `Redeclaration`, `UndeclaredIdentifier`, …) y `RuntimeError` sealed (`DivisionByZero`, `InvalidLiteral`, `UnresolvableCall`, …). Algunas variantes implementan **ambos** (`UndeclaredIdentifier`, `InvalidOperands`, `UnrecognizedNode`). El módulo `:type-checker` **no** usa este sealed: tiene su propio `printscript.typechecker.TypeError` (data class con `message` + `location`)
+- **Errores:** sealed raíz `Error`. `TypeError` (`TypeMismatch`, `Redeclaration`, …), `RuntimeError` (`DivisionByZero`, `InvalidLiteral`, …), `FormatError` (`MissingLexeme`, `UnrecognizedFormatNode`, `WhitespaceMismatch`, …). Algunas variantes de tipo/runtime implementan **ambos** (`UndeclaredIdentifier`, `InvalidOperands`, `UnrecognizedNode`). El formatter usa `UnrecognizedFormatNode` para no chocar con ese `UnrecognizedNode`. El módulo `:type-checker` **no** usa el sealed de common: tiene su propio `printscript.typechecker.TypeError` (data class con `message` + `location`)
 - **Efectos:** `SideEffect` / `PrintEffect` (lo que emite el interpreter)
 - **Puertos:** `CodeReader`, `LanguageConfigReader`, `GrammarConfigReader`, `TypeSystemConfigReader`
 - **Ubicación:** `Location` + `CharPosition`
@@ -287,8 +287,8 @@ Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 
 ### `application` — orquestación
 
-- `InterpretCode.interpretCode(...)` — lex + parse + type-check
-- `FormatCode.formatCode(...)` / `CheckFormat.checkFormat(...)` — lex + parse + format; check usa `Formatter.check`
+- `InterpretCode.interpretCode(...)` — lex + parse + type-check → `Report`
+- `FormatCode.formatCode(...)` / `CheckFormat.checkFormat(...)` — lex + parse + format/check → `Result` / `Report`
 - No hay `Main.kt` ni CLI
 - Tests de integración con archivos `.ps` y un DSL `assertAst { node(...) }`
 
@@ -308,7 +308,7 @@ Ver [modules/BUILD_LOGIC.md](modules/BUILD_LOGIC.md).
 2. **Tokens genéricos.** `Token.type: String`. El enum `TokenType` es leftover; no lo uses en código nuevo.
 3. **Parser genérico.** El parser no conoce `let` ni `println`. Esas palabras están en los JSON. Un handler nuevo = data class en `common` + serializer + `RuleHandler` + registro.
 4. **Árbol de sintaxis.** El pipeline camina `SyntaxNode` (`child` / `find` / `value`). No hay AST tipado aparte.
-5. **Errores por capa.** Lexer tira `Error` / `IllegalStateException`. Parser tira `ParseException`. Type-checker acumula en `Report` / `Result` (su `TypeError` data class, no lanza). `interpretCode` sí lanza si el report no es ok. Interpreter reporta `Result.Err(RuntimeError)` y no lanza.
+5. **Errores por capa.** Lexer tira `Error` / `IllegalStateException`. Parser tira `ParseException`. Type-checker acumula en `Report` / `Result` (su `TypeError` data class, no lanza). `interpretCode` / `formatCode` / `checkFormat` **no** lanzan: devuelven `Report` / `Result`. Interpreter reporta `Result.Err(RuntimeError)` y no lanza.
 6. **Streaming.** Ni lexer ni parser cargan el programa entero de una: caracteres → tokens on demand → un statement por llamada.
 
 El interpreter **sí** conoce `"println"` (en `CallEvaluator`) y los nombres de regla v1 (en `PrintScriptMapping`). Extenderlo es registrar executor/evaluator, no tocar el motor de dispatch.
@@ -456,8 +456,8 @@ Módulo a futuro. Docs vacíos: [modules/LINTER.md](modules/LINTER.md).
 | `interpreter` | contexto (scope/shadow/assign), evaluators (literales/binarios/calls/div-cero), executors, integración lex+parse+interpret con `SideEffect` |
 | `formatter` | `format`/`check` de `1+2`, registry, loader (bindings + defaults JSON / type desconocido / `count` inválido), JSON real |
 | `infrastructure` | `JSONGrammarConfigReader` y `JSONTypeSystemConfigReader` contra el resource real + JSON de `repeat`; readers JSON de lenguaje y YAML de usuario del formatter |
-| `common` | `Result`/`Report`, `TypeSystemConfig` / `FormatterLanguageConfig` (validación), variantes de `TypeError` |
-| `application` | `.ps` end-to-end lex+parse+type-check; format/check de `1+2;` vs `1 + 2;` |
+| `common` | `Result`/`Report`, `TypeSystemConfig` / `FormatterLanguageConfig` (validación), variantes de `TypeError` / `FormatError` |
+| `application` | `.ps` end-to-end lex+parse+type-check (`Report`); format/check de `1+2;` vs `1 + 2;` (`Result`/`Report`) |
 
 Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.yml` corre `test` de todos los módulos; `lint.yml` corre `detekt`; `format.yml` corre `ktlintCheck`.
 

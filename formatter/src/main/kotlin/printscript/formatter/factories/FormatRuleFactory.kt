@@ -1,6 +1,6 @@
 package printscript.formatter.factories
 
-import printscript.formatter.FormatError
+import printscript.error.FormatError
 import printscript.formatter.rules.FormatRule
 import printscript.util.Result
 

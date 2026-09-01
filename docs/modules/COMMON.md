@@ -40,8 +40,10 @@ common/src/main/kotlin/printscript/
   ast/
     Location.kt           start/end CharPosition
   error/
+    Error.kt              sealed raíz
     TypeError.kt          sealed con variantes (el checker usa otro TypeError, ver TYPE_CHECKER.md)
     RuntimeError.kt       sealed del interpreter (DivisionByZero, InvalidLiteral, …)
+    FormatError.kt        sealed del formatter (MissingLexeme, UnrecognizedFormatNode, WhitespaceMismatch, …)
   SideEffect.kt           PrintEffect — output observable del interpreter
   reader/
     CodeReader.kt         puerto: read / peek / currentPosition

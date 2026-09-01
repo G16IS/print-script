@@ -1,5 +1,6 @@
 package printscript.formatter
 
+import printscript.error.FormatError
 import printscript.syntax.SyntaxProgram
 import printscript.util.Report
 import printscript.util.Result

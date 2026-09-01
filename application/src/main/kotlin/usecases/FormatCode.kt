@@ -3,8 +3,9 @@ package usecases
 import java.nio.file.Path
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
-import printscript.formatter.FormatError
-import printscript.util.fold
+import printscript.error.FormatError
+import printscript.util.Result
+import printscript.util.flatMap
 
 object FormatCode {
     fun formatCode(
@@ -12,21 +13,11 @@ object FormatCode {
         grammar: Grammar,
         path: String,
         userYamlPath: Path = Path.of(LoadFormatter.USER_YAML_PATH),
-    ): String {
+    ): Result<String, FormatError> {
         val program = ParseProgram.parse(langConfig, grammar, path)
-        val formatter = LoadFormatter.load(grammar, langConfig, userYamlPath)
 
-        return formatter
-            .format(program)
-            .fold(
-                onOk = { it },
-                onErr = { error(formatFailed(it)) },
-            )
-    }
-
-    private fun formatFailed(error: FormatError): String {
-        val position = error.location.start
-
-        return "El formateo falló: ${error.message} @ ${position.line}:${position.col}"
+        return LoadFormatter.load(grammar, langConfig, userYamlPath).flatMap { formatter ->
+            formatter.format(program)
+        }
     }
 }

@@ -4,18 +4,6 @@ import printscript.ast.Location
 import printscript.reader.CharPosition
 
 internal object SourceGaps {
-    fun offset(
-        source: String,
-        position: CharPosition,
-    ): Int {
-        val lines = source.split('\n')
-        val lineIndex = if (position.line <= 0) 0 else position.line - 1
-        val columnIndex = if (position.col <= 0) 0 else position.col - 1
-        val before = lines.take(lineIndex).sumOf { it.length + 1 }
-
-        return (before + columnIndex).coerceIn(0, source.length)
-    }
-
     fun position(
         source: String,
         offset: Int,

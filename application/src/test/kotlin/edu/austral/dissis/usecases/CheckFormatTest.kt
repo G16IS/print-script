@@ -1,45 +1,43 @@
 package edu.austral.dissis.usecases
 
 import edu.austral.dissis.testing.FormatExample
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
+import printscript.error.WhitespaceMismatch
 
 class CheckFormatTest {
     @Test
     fun `unformatted file fails the format check`() {
-        val error =
-            assertThrows<IllegalStateException> {
-                FormatExample.check("unformatted_expression.ps")
-            }
+        val report = FormatExample.check("unformatted_expression.ps")
 
-        assertTrue(error.message!!.contains("El chequeo de formato falló"))
+        assertFalse(report.isOk)
+        assertTrue(report.errors.any { it is WhitespaceMismatch })
     }
 
     @Test
     fun `formatted file passes the format check`() {
-        assertDoesNotThrow {
-            FormatExample.check("formatted_expression.ps")
-        }
+        val report = FormatExample.check("formatted_expression.ps")
+
+        assertTrue(report.isOk)
+        assertEquals(0, report.errors.size)
     }
 
     @Test
     fun `unformatted file lists each whitespace mismatch`() {
-        val error =
-            assertThrows<IllegalStateException> {
-                FormatExample.check("unformatted_declaration.ps")
-            }
+        val report = FormatExample.check("unformatted_declaration.ps")
 
-        assertTrue(error.message!!.contains("El chequeo de formato falló"))
-        assertTrue(error.message!!.contains("Se esperaba whitespace"))
-        assertTrue(error.message!!.count { it == '\n' } >= 4)
+        assertFalse(report.isOk)
+        assertTrue(report.errors.all { it is WhitespaceMismatch })
+        assertTrue(report.errors.size >= 4)
     }
 
     @Test
     fun `formatted declaration passes the format check`() {
-        assertDoesNotThrow {
-            FormatExample.check("formatted_declaration.ps")
-        }
+        val report = FormatExample.check("formatted_declaration.ps")
+
+        assertTrue(report.isOk)
+        assertEquals(0, report.errors.size)
     }
 }

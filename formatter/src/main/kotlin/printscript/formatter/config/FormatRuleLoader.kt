@@ -5,8 +5,8 @@ import printscript.domain.FormatterLanguageConfig
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.LanguageFormatRuleSpec
 import printscript.domain.UserRuleBinding
-import printscript.formatter.FormatError
-import printscript.formatter.UnknownRuleType
+import printscript.error.FormatError
+import printscript.error.UnknownRuleType
 import printscript.formatter.factories.FormatRuleFactory
 import printscript.formatter.factories.ResolvedFormatRule
 import printscript.formatter.rules.FormatRule

@@ -1,6 +1,9 @@
 package printscript.formatter
 
 import printscript.domain.Token
+import printscript.error.FormatError
+import printscript.error.MissingLexeme
+import printscript.error.UnrecognizedFormatNode
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
 import printscript.util.Report
@@ -82,7 +85,7 @@ internal class DefaultFormatter(
     ): Result<WalkState, FormatError> {
         if (node.children.isEmpty()) {
             return failWalk(
-                UnrecognizedNode(node.name, node.location),
+                UnrecognizedFormatNode(node.name, node.location),
                 state,
                 failFast,
             )

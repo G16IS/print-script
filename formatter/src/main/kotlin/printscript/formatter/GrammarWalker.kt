@@ -6,6 +6,8 @@ import printscript.domain.SeqRule
 import printscript.domain.SeqStep
 import printscript.domain.TokenLexemes
 import printscript.domain.TokenStep
+import printscript.error.FormatError
+import printscript.error.UnrecognizedFormatNode
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 import printscript.util.flatMap
@@ -65,7 +67,7 @@ internal class GrammarWalker(
         when (step) {
             is TokenStep -> emitTokenStep(node, step, state, failFast, walk)
             is RuleRefStep -> emitRuleRef(node, step, state, failFast, walk)
-            else -> Result.Err(UnrecognizedNode("${node.name}/unknown-step", node.location))
+            else -> Result.Err(UnrecognizedFormatNode("${node.name}/unknown-step", node.location))
         }
 
     private fun emitTokenStep(
@@ -90,7 +92,7 @@ internal class GrammarWalker(
     ): Result<WalkState, FormatError> {
         val child =
             node.childOrNull(type)
-                ?: return Result.Err(UnrecognizedNode(node.name, node.location))
+                ?: return Result.Err(UnrecognizedFormatNode(node.name, node.location))
         return walk.emit(child, node.name, state, failFast)
     }
 
@@ -103,7 +105,7 @@ internal class GrammarWalker(
     ): Result<WalkState, FormatError> {
         val lexeme =
             lexemes.lexemeFor(type)
-                ?: return Result.Err(UnrecognizedNode("${node.name}/$type", node.location))
+                ?: return Result.Err(UnrecognizedFormatNode("${node.name}/$type", node.location))
         return walk.emitSynthetic(type, lexeme, node.name, state, failFast)
     }
 
@@ -116,7 +118,7 @@ internal class GrammarWalker(
     ): Result<WalkState, FormatError> {
         val child =
             node.childOrNull(step.name)
-                ?: return Result.Err(UnrecognizedNode(node.name, node.location))
+                ?: return Result.Err(UnrecognizedFormatNode(node.name, node.location))
         return walk.emit(child, node.name, state, failFast)
     }
 }

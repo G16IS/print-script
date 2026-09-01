@@ -66,7 +66,7 @@ fun interpretCode(
     grammar: Grammar,
     typeSystem: TypeSystemConfig,
     path: String
-): SyntaxProgram
+): Report<SyntaxProgram, TypeError>
 ```
 
 Pasos:
@@ -75,9 +75,9 @@ Pasos:
 2. `DefaultLexerFactory.create(codeReader, langConfig)`
 3. `DefaultParserFactory.create(grammar)`
 4. `while (lexer.peek(null).type != "EOF")` → `parser.parseNextStatement(lexer, program)`
-5. `DefaultTypeCheckerFactory.create(typeSystem).check(program)`
-6. Si el `Report` no es ok → `error("El chequeo de tipos falló:…")` con mensaje y `line:col`
-7. Si no, devuelve el `SyntaxProgram`
+5. `DefaultTypeCheckerFactory.create(typeSystem).check(program)` — ese `Report` es el valor de retorno
+
+`TypeError` acá es el data class de `:type-checker`, no el sealed de `common`.
 
 Las tres configs llegan **ya construidas**. Application no lee JSON en el caso de uso (sí `ParseExample` en tests).
 
@@ -92,18 +92,18 @@ No hay `Main.kt` ni CLI (`args[0]`, flags de versión, etc.).
 No type-chequean: application parsea con `ParseProgram` y formatea; el type-checker no entra en este camino (el formatter no lo pide ni lo sabe). `LoadFormatter` lee JSON `formatter-language.json` + `formatter-user-defaults.json` + YAML `.printscript/formatter.yml` si existe, y le pasa al formatter configs ya parseadas.
 
 ```kotlin
-fun formatCode(langConfig, grammar, path, userYamlPath = USER_YAML_PATH): String
-fun checkFormat(langConfig, grammar, path, userYamlPath = USER_YAML_PATH) // tira si falla
+fun formatCode(...): Result<String, FormatError>
+fun checkFormat(...): Report<Unit, FormatError>
 ```
 
-`formatCode` formatea el árbol. Con las rules v1: `1+2;` → `1 + 2;\n`.
+`formatCode` formatea el árbol. Con las rules v1: `1+2;` → `"1 + 2;\n"`.
 
-`checkFormat` llama `Formatter.check` (mismatches puntuales, con `line:col`). Si el `Report` no es ok → `error("El chequeo de formato falló:…")` con la lista, igual que `interpretCode`. Normaliza `\r\n`; no hace `trimEnd` (el newline tras `;` es parte del contrato).
+`checkFormat` llama `Formatter.check` (mismatches puntuales, con `line:col`). Normaliza `\r\n`; no hace `trimEnd` (el newline tras `;` es parte del contrato).
 
 Tests:
 
-- `FormatCodeTest` — `unformatted_expression.ps` (`1+2;`) → `"1 + 2;\n"`
-- `CheckFormatTest` — `1+2;` y `let x:number=1;` tiran con mismatches; `1 + 2;` y `let x : number = 1;` pasan
+- `FormatCodeTest` — `unformatted_expression.ps` (`1+2;`) → `Ok("1 + 2;\n")`
+- `CheckFormatTest` — `1+2;` y `let x:number=1;` no son ok; `1 + 2;` y `let x : number = 1;` sí
 
 ---
 
@@ -123,7 +123,7 @@ Tests:
 - `declarations_and_prints.ps` — dos `let` + dos `println`
 - `binary_expression.ps` — `1 + 2 * 3` (el `*` queda dentro del `term` derecho)
 - `string_literal.ps` — value `"\"hola\""` (comillas incluidas)
-- `type_mismatch.ps` / `undeclared_variable.ps` / `redeclaration.ps` — `interpretCode` tira `IllegalStateException` con el mensaje de tipo
+- `type_mismatch.ps` / `undeclared_variable.ps` / `redeclaration.ps` — el `Report` no es ok; el mensaje de tipo está en `errors`
 
 DSL:
 

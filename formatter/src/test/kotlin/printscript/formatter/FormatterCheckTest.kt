@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.ast.Location
 import printscript.domain.TokenLexemes
+import printscript.error.WhitespaceMismatch
 import printscript.formatter.support.addition
 import printscript.formatter.support.leaf
 import printscript.formatter.support.number

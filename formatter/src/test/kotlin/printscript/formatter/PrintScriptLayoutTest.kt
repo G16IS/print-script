@@ -6,6 +6,7 @@ import printscript.ast.Location
 import printscript.domain.FormatRuleSpec
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.TokenLexemes
+import printscript.error.FormatError
 import printscript.formatter.support.addition
 import printscript.formatter.support.leaf
 import printscript.formatter.support.number
