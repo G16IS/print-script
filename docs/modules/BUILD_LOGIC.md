@@ -76,7 +76,10 @@ En la raíz del repo (cableado, no es este módulo):
 ```
 settings.gradle.kts                pluginManagement { includeBuild("build-logic") }
 build.gradle.kts                   aplica printscript.quality a cada subproyecto
+config/detekt/detekt.yml           override de reglas (buildUponDefaultConfig)
 ```
+
+`detekt.yml` se resuelve con `project.rootDir` del proyecto que aplica el plugin (el monorepo), no el included build. Hoy el override es mínimo: `ForbiddenComment` sigue activo para `FIXME:` y `STOPSHIP:`; no lista `TODO:`.
 
 ---
 

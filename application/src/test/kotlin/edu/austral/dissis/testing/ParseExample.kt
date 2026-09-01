@@ -8,6 +8,8 @@ import printscript.domain.TypeSystemConfig
 import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.infrastructure.reader.JSONTypeSystemConfigReader
 import printscript.syntax.SyntaxProgram
+import printscript.typechecker.TypeError
+import printscript.util.Report
 import usecases.InterpretCode.interpretCode
 
 object ParseExample {
@@ -19,7 +21,8 @@ object ParseExample {
     private val typeSystem: TypeSystemConfig =
         JSONTypeSystemConfigReader.read(stream("type-system.config.json"))
 
-    fun parse(example: String): SyntaxProgram = interpretCode(language, grammar, typeSystem, file("examples/$example"))
+    fun parse(example: String): Report<SyntaxProgram, TypeError> =
+        interpretCode(language, grammar, typeSystem, file("examples/$example"))
 
     private fun stream(name: String): InputStream =
         requireNotNull(loader().getResourceAsStream(name)) { "Missing resource $name" }

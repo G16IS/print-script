@@ -39,7 +39,7 @@ abstract class InstallGitHooks @Inject constructor(
 
         val hooksName = hooksDirectoryName.get()
         val hooksDir = root.resolve(hooksName)
-        
+
         if (!hooksDir.isDirectory) {
             throw GradleException("Hooks directory $hooksDir does not exist")
         }

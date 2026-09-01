@@ -1,0 +1,35 @@
+package printscript.formatter
+
+import printscript.domain.FormatterLanguageConfig
+import printscript.domain.FormatterRulesConfig
+import printscript.domain.Grammar
+import printscript.domain.TokenLexemes
+import printscript.error.FormatError
+import printscript.formatter.config.FormatRuleLoader
+import printscript.formatter.factories.FormatRuleFactories
+import printscript.formatter.rules.FormatRule
+import printscript.util.Result
+import printscript.util.map
+
+object DefaultFormatterFactory {
+    fun create(
+        rules: List<FormatRule>,
+        grammar: Grammar,
+        lexemes: TokenLexemes,
+    ): Formatter =
+        DefaultFormatter(
+            DefaultRuleRegistry(rules),
+            GrammarWalker(grammar, lexemes),
+        )
+
+    fun createFromConfig(
+        language: FormatterLanguageConfig,
+        user: FormatterRulesConfig = FormatterRulesConfig(),
+        defaults: FormatterRulesConfig = FormatterRulesConfig(),
+        grammar: Grammar,
+        lexemes: TokenLexemes,
+    ): Result<Formatter, FormatError> =
+        FormatRuleLoader(FormatRuleFactories.defaults())
+            .load(language, user, defaults)
+            .map { create(it, grammar, lexemes) }
+}

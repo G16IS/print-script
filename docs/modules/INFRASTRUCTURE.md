@@ -1,17 +1,17 @@
 # Módulo `infrastructure`
 
-Dependencias: `common` + `kotlinx-serialization-json`. Es el único módulo con el plugin `kotlin-serialization`.
+Dependencias: `common` + `kotlinx-serialization-json` + `kaml` (YAML). Es el único módulo con el plugin `kotlin-serialization`.
 
-I/O concreto: leer configs JSON y leer código desde archivo. El dominio en `common` permanece ignoto de JSON.
+I/O concreto: leer configs JSON/YAML y leer código desde archivo. El dominio en `common` permanece ignoto de JSON.
 
 ---
 
 ## Cuándo tocarlo
 
-- Forma del JSON / un serializer nuevo
+- Forma del JSON o YAML / un serializer nuevo
 - Validación post-load de `LanguageConfig`
 - Otra fuente de caracteres (`CodeReader` para stdin, string, etc.)
-- **No** para la semántica de una regla: eso es `common` + `parser`/`lexer`/`type-checker`
+- **No** para la semántica de una regla: eso es `common` + `parser`/`lexer`/`type-checker`/`formatter`
 
 ---
 
@@ -24,6 +24,9 @@ infrastructure/src/main/
       JSONLanguageConfigReader.kt
       JSONGrammarConfigReader.kt
       JSONTypeSystemConfigReader.kt
+      JSONFormatterLanguageConfigReader.kt
+      JSONFormatterRulesConfigReader.kt
+      YAMLFormatterRulesConfigReader.kt
       FileCodeReader.kt
     serializer/config/
       JsonCodecs.kt              asJsonDecoder / asJsonEncoder
@@ -40,13 +43,17 @@ infrastructure/src/main/
       TypeSystemConfigSerializer.kt
       OperationSerializer.kt
       NodeConfigSerializer.kt
+      FormatterRulesConfigSerializer.kt
+      FormatterLanguageConfigSerializer.kt
   resources/
     language.config.json
     grammar.config.json
     type-system.config.json
+    formatter-language.json
+    formatter-user-defaults.json
 ```
 
-Specs: [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](../configs/GRAMMAR_CONFIG.md), [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md).
+Specs: [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](../configs/GRAMMAR_CONFIG.md), [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md), [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
 
 ---
 
@@ -181,6 +188,10 @@ JSON, docs y tests coinciden: **primero gana**. Keywords antes que identifiers p
 - Rechaza start desconocido, ref colgante, shape desconocido
 
 `JSONTypeSystemConfigReaderTest`: resource canónico, `commutative: false`, rechaza tipos inexistentes.
+
+`FormatterLanguageConfigReaderTest`: resource `formatter-language.json` (`rules` + `userBindings`).
+
+`FormatterRulesConfigReaderTest`: YAML de usuario (`enabled` / `count`) + resource `formatter-user-defaults.json`. JSON y YAML de usuario comparten `FormatterRulesConfigSerializer`.
 
 No hay test de `JSONLanguageConfigReader` ni de `FileCodeReader`.
 

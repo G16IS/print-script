@@ -10,6 +10,7 @@ repositories {
 dependencies {
     implementation(project(":common"))
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kaml)
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
