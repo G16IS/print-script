@@ -12,6 +12,12 @@ import printscript.infrastructure.reader.FileCodeReader
 import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxProgram
 
+/**
+ * Parses PrintScript source with the real lexer/parser + grammar.config.json.
+ *
+ * Same rules and `order` as language.config.json. The lexer tries categories
+ * from first to last, so keywords beat identifiers.
+ */
 object LinterPsSupport {
     fun parse(code: String): SyntaxProgram {
         val file = File.createTempFile("printscript-linter-test", ".ps").apply { writeText(code) }
@@ -28,7 +34,7 @@ object LinterPsSupport {
 
     private fun language(): LanguageConfig =
         LanguageConfig(
-            order = listOf("identifiers", "literals", "operators", "types", "keywords"),
+            order = listOf("keywords", "types", "operators", "literals", "identifiers"),
             config =
                 mapOf(
                     "keywords" to keywords(),
@@ -40,10 +46,10 @@ object LinterPsSupport {
         )
 
     private fun grammar(): Grammar {
-//        val url = LinterPsSupport::class.java.getResource("/grammar.config.json")
-//        println("DEBUG grammar.config.json resolved from: $url")
-//        val stream = requireNotNull(url?.openStream()) { "Missing resource grammar.config.json" }
-        val stream = File("grammar.config.json").inputStream()
+        val stream =
+            requireNotNull(LinterPsSupport::class.java.getResourceAsStream("/grammar.config.json")) {
+                "Missing resource grammar.config.json"
+            }
         return JSONGrammarConfigReader.read(stream)
     }
 
