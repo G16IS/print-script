@@ -38,10 +38,9 @@ object LinterPsSupport {
         )
 
     private fun grammar(): Grammar {
-        val stream =
-            requireNotNull(LinterPsSupport::class.java.getResourceAsStream("/grammar.config.json")) {
-                "Missing resource grammar.config.json"
-            }
+        val url = LinterPsSupport::class.java.getResource("/grammar.config.json")
+        println("DEBUG grammar.config.json resolved from: $url")
+        val stream = requireNotNull(url?.openStream()) { "Missing resource grammar.config.json" }
         return JSONGrammarConfigReader.read(stream)
     }
 
