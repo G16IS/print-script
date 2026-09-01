@@ -28,6 +28,16 @@ data class FormatterLanguageConfig(
             require(binding.param == UserRuleBinding.PARAM_ENABLED || binding.param == UserRuleBinding.PARAM_COUNT) {
                 "Binding '${binding.userType}' param must be 'enabled' or 'count'"
             }
+            when (binding.param) {
+                UserRuleBinding.PARAM_ENABLED ->
+                    require(binding.defaultCount == null) {
+                        "Binding '${binding.userType}' uses param 'enabled' and must not define defaultCount"
+                    }
+                UserRuleBinding.PARAM_COUNT ->
+                    require(binding.defaultEnabled == null) {
+                        "Binding '${binding.userType}' uses param 'count' and must not define defaultEnabled"
+                    }
+            }
         }
     }
 }
