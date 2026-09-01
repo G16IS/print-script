@@ -27,7 +27,7 @@ application/src/test/
     usecases/InterpretCodeTest.kt
     testing/
       ParseExample.kt              carga grammar + type-system JSON + LanguageConfig de test
-      PrintScriptLanguage.kt       LanguageConfig con order invertido
+      PrintScriptLanguage.kt       LanguageConfig (mismo order que el JSON)
       ast/
         AstBuilder.kt              DSL node("variable") { … }
         AstSpec.kt
@@ -84,7 +84,7 @@ No hay `Main.kt` ni CLI (`args[0]`, flags de versión, etc.).
 - Type-system: resource `type-system.config.json`
 - Path: resource `examples/foo.ps` resuelto a `File` absoluto
 
-`PrintScriptLanguage` duplica las reglas de `language.config.json` con el `order` invertido. Comentario explícito: el resolver trata la **última** categoría como máxima prioridad. Si agregás un token, actualizá JSON **y** esta clase **y** `MockLexerFactory` del lexer.
+`PrintScriptLanguage` duplica las reglas de `language.config.json` con el mismo `order` (keywords primero). Si agregás un token, actualizá JSON **y** esta clase **y** el `PrintScriptLanguage` del lexer (y `PsSupport` del interpreter).
 
 `InterpretCodeTest` aserta la **forma** del árbol, no locations:
 
@@ -163,5 +163,5 @@ Archivo en `resources/examples/` + test en `InterpretCodeTest` con el DSL. Prefe
 ## Invariantes
 
 - Application no reimplementa reglas de token ni de gramática.
-- El `LanguageConfig` que usás en runtime tiene que tener el `order` que el **lexer real** espera (último = más prioritario), no el del markdown.
+- El `LanguageConfig` que usás en runtime tiene que tener el `order` que el **lexer real** espera (primero = más prioritario), igual que `language.config.json`.
 - `interpretCode` asume que hay statements hasta EOF. Un archivo vacío (solo whitespace) hace `peek` → `EOF` y devuelve `SyntaxProgram.empty()` sin llamar al parser. Un archivo con basura al inicio tira desde lexer o parser.
