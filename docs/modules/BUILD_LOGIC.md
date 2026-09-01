@@ -2,7 +2,7 @@
 
 Included build (`pluginManagement { includeBuild("build-logic") }`). No es un `include(...)` del pipeline y **no** depende de `common`. Los módulos Kotlin del repo no dependen de este como library: consumen el convention plugin `printscript.quality`.
 
-Calidad de **este** código Kotlin (estilo + análisis estático). No es el linter/formatter de PrintScript (esos viven —vacíos— en [LINTER.md](LINTER.md) / [FORMATTER.md](FORMATTER.md)).
+Calidad de **este** código Kotlin (estilo + análisis estático). No es el linter/formatter de PrintScript (esos viven en [LINTER.md](LINTER.md) / [FORMATTER.md](FORMATTER.md)).
 
 ---
 
@@ -69,6 +69,7 @@ build-logic/
   src/main/kotlin/
     printscript.quality.gradle.kts convention plugin
     printscript/InstallGitHooks.kt tarea installGitHooks
+    printscript/PrintScriptExec.kt JavaExec de ps-run / ps-lint / …
 ```
 
 En la raíz del repo (cableado, no es este módulo):

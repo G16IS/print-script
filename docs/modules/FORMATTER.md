@@ -47,7 +47,7 @@ Siempre crear por la factory. La impl es `DefaultFormatter` + `DefaultRuleRegist
 
 `FormatError` es sealed en `common` (`printscript.error`, `message` + `location`). `UnrecognizedFormatNode` (no `UnrecognizedNode`: ese nombre ya lo usan type/runtime).
 
-El módulo **no lee archivos**. Application carga JSON/YAML y pasa `FormatterLanguageConfig` + `FormatterRulesConfig` ya parseadas.
+El módulo **no lee archivos**. Infrastructure carga JSON/YAML; `LoadFormatter` (application) arma el `Formatter` con configs ya parseadas.
 
 ---
 

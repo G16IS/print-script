@@ -1,10 +1,10 @@
 # Módulo `application`
 
-Dependencias: `common`, `lexer`, `parser`, `type-checker`, `formatter`, `infrastructure`.
+Dependencias: `common`, `lexer`, `parser`, `type-checker`, `interpreter`, `formatter`, `linter`. **No** depende de `:infrastructure` (I/O se inyecta: `CodeReader` + configs ya parseadas). Tests: `testImplementation` de infrastructure.
 
-Capa de orquestación: arma readers + lexer + parser + type-checker / formatter y expone los casos de uso. No debería contener algoritmos de matching, gramática, tipos ni whitespace.
+Capa de orquestación: arma lexer + parser + type-checker / interpreter / formatter / linter y expone los casos de uso. No debería contener algoritmos de matching, gramática, tipos ni whitespace.
 
-Paquete de producción: `usecases`. Tests: `edu.austral.dissis`. El resto del repo es `printscript`. No depende de `:interpreter`.
+Paquete de producción: `usecases`. Tests: `edu.austral.dissis`. El resto del repo es `printscript`.
 
 ---
 
@@ -22,14 +22,17 @@ Paquete de producción: `usecases`. Tests: `edu.austral.dissis`. El resto del re
 ```
 application/src/main/kotlin/
   usecases/InterpretCode.kt       lex + parse + type-check
-  usecases/ParseProgram.kt        lex + parse (interno)
+  usecases/ExecuteCode.kt         type-check + interpreter → SideEffect
+  usecases/ParseProgram.kt        lex + parse (interno; recibe CodeReader)
   usecases/FormatCode.kt          formatCode(...)
   usecases/CheckFormat.kt         checkFormat(...) — `Formatter.check`, lista mismatches
-  usecases/LoadFormatter.kt       JSON de lenguaje + defaults + YAML (interno; paths viven acá)
+  usecases/LintProgram.kt         lint sobre el árbol parseado
+  usecases/LoadFormatter.kt       arma Formatter desde configs ya parseadas
 
 application/src/test/
   kotlin/edu/austral/dissis/
     usecases/InterpretCodeTest.kt
+    usecases/ExecuteCodeTest.kt
     usecases/FormatCodeTest.kt
     usecases/CheckFormatTest.kt
     testing/
@@ -65,40 +68,40 @@ fun interpretCode(
     langConfig: LanguageConfig,
     grammar: Grammar,
     typeSystem: TypeSystemConfig,
-    path: String
+    reader: CodeReader,
+    onStatement: () -> Unit = {},
 ): Report<SyntaxProgram, TypeError>
 ```
 
 Pasos:
 
-1. `FileCodeReader(path)` — path de filesystem
-2. `DefaultLexerFactory.create(codeReader, langConfig)`
-3. `DefaultParserFactory.create(grammar)`
-4. `while (lexer.peek(null).type != "EOF")` → `parser.parseNextStatement(lexer, program)`
-5. `DefaultTypeCheckerFactory.create(typeSystem).check(program)` — ese `Report` es el valor de retorno
+1. `ParseProgram.parse(langConfig, grammar, reader, onStatement)` — lexer + parser hasta EOF
+2. `DefaultTypeCheckerFactory.create(typeSystem).check(program)` — ese `Report` es el valor de retorno
 
 `TypeError` acá es el data class de `:type-checker`, no el sealed de `common`.
 
 Las tres configs llegan **ya construidas**. Application no lee JSON en el caso de uso (sí `ParseExample` en tests).
 
-No hay ejecución de `println`. “Interpret” acá = lex + parse + type-check. El módulo `:interpreter` existe y sabe emitir `PrintEffect`; no está en las deps de este módulo.
+No hay ejecución de `println` en este caso de uso. “Interpret” acá = lex + parse + type-check. La ejecución está en `ExecuteCode` (CLI `run`).
 
-No hay `Main.kt` ni CLI (`args[0]`, flags de versión, etc.).
+No hay `Main.kt` acá: el CLI es `:cli` + `infrastructure/Main.kt`.
 
 ---
 
 ## Casos de uso: `formatCode` / `checkFormat`
 
-No type-chequean: application parsea con `ParseProgram` y formatea; el type-checker no entra en este camino (el formatter no lo pide ni lo sabe). `LoadFormatter` lee JSON `formatter-language.json` + `formatter-user-defaults.json` + YAML `.printscript/formatter.yml` si existe, y le pasa al formatter configs ya parseadas.
+No type-chequean: application parsea con `ParseProgram` y formatea; el type-checker no entra en este camino (el formatter no lo pide ni lo sabe). `LoadFormatter` **no** lee archivos: recibe configs ya parseadas (JSON/YAML los lee infrastructure).
 
 ```kotlin
 fun formatCode(...): Result<String, FormatError>
 fun checkFormat(...): Report<Unit, FormatError>
 ```
 
+`formatCode` / `checkFormat` reciben un `Formatter` ya construido (`LoadFormatter.load` con configs parseadas) y un `CodeReader`. No leen JSON ni YAML.
+
 `formatCode` formatea el árbol. Con las rules v1: `1+2;` → `"1 + 2;\n"`.
 
-`checkFormat` llama `Formatter.check` (mismatches puntuales, con `line:col`). Normaliza `\r\n`; no hace `trimEnd` (el newline tras `;` es parte del contrato).
+`checkFormat` llama `Formatter.check` (mismatches puntuales, con `line:col`). Normaliza `\r\n`; no hace `trimEnd` (el newline tras `;` es parte del contrato). Recibe el `source` aparte (el caller lee el archivo).
 
 Tests:
 
@@ -176,11 +179,11 @@ Son el contrato de integración del lenguaje v1. Si cambiás la gramática de fo
 
 ### CLI
 
-Crear `Main.kt`: cargar configs (resources o paths), `interpretCode`, imprimir el árbol o errores. `FileCodeReader` no cierra el file; para un one-shot está bien.
+Ver [CLI.md](CLI.md). Los handlers se cablean en `PrintScriptRuntime` (infrastructure), no acá.
 
-### Cablear interpreter
+### Execute / interpreter
 
-Ver [INTERPRETER.md](INTERPRETER.md). El type-checker ya corre sobre `SyntaxProgram` después del parser. Falta: `implementation(project(":interpreter"))` y, si el report es ok, `DefaultInterpreterFactory.create().interpret(InterpreterContext(), program)`.
+`ExecuteCode.execute(...)` parsea, type-chequea y, si el report es ok, `DefaultInterpreterFactory.create().interpret(InterpreterContext(), program)`. Si hay errores de tipo no interpreta. Ver [INTERPRETER.md](INTERPRETER.md).
 
 ### Nuevo caso de uso
 
@@ -195,6 +198,6 @@ Archivo en `resources/examples/` + test en `InterpretCodeTest` con el DSL. Prefe
 ## Invariantes
 
 - Application no reimplementa reglas de token ni de gramática.
-- El formatter no lee archivos: `LoadFormatter` le inyecta configs ya parseadas. Paths de JSON/YAML viven en application.
+- El formatter no lee archivos: `LoadFormatter` le inyecta configs ya parseadas. Paths de JSON/YAML viven en infrastructure (`PrintScriptRuntime`).
 - El `LanguageConfig` que usás en runtime tiene que tener el `order` que el **lexer real** espera (último = más prioritario), no el del markdown.
 - `interpretCode` asume que hay statements hasta EOF. Un archivo vacío (solo whitespace) hace `peek` → `EOF` y devuelve `SyntaxProgram.empty()` sin llamar al parser. Un archivo con basura al inicio tira desde lexer o parser.

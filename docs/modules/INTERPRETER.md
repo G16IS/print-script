@@ -4,7 +4,7 @@ Dependencias: `common`. Tests también tiran de `lexer`, `parser` e `infrastruct
 
 Ejecuta un `SyntaxProgram` ya parseado y produce efectos observables (`SideEffect`) tejiendo un `InterpreterContext` inmutable en el camino. No hace análisis sintáctico ni de tipos: asume que el programa viene del parser (y eventualmente validado por el type-checker).
 
-**No está cableado** en `application`: `interpretCode` corta en el type-checker y `application` no depende de este módulo. Los tests de integración del interpreter hacen lex+parse (sin type-check) y después `interpret`.
+**Está cableado** en `ExecuteCode` (CLI `run`). `interpretCode` sigue cortando en el type-checker. Los tests de integración del interpreter hacen lex+parse (sin type-check) y después `interpret`.
 
 Mismo principio que lexer y parser: agregar una construcción nueva no toca el motor de dispatch, solo registra un `StatementExecutor`, `ExpressionEvaluator` o `BinaryOperationRule` nuevo. La tabla de operadores **sí** está hardcodeada (`DefaultTypeConfiguration`); no lee `type-system.config.json`.
 

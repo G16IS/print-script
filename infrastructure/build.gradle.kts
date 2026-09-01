@@ -1,14 +1,23 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
+    application
 }
 
 repositories {
     mavenCentral()
 }
 
+application {
+    mainClass.set("printscript.infrastructure.MainKt")
+}
+
 dependencies {
     implementation(project(":common"))
+    implementation(project(":cli"))
+    implementation(project(":application"))
+    implementation(project(":formatter"))
+    implementation(project(":type-checker"))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kaml)
 

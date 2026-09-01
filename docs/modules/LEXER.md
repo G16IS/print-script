@@ -90,7 +90,7 @@ Evalúa **todas** las reglas de **todas** las categorías. No corta en la primer
 
 `partial` es obligatorio (lo valida `JSONLanguageConfigReader`).
 
-Strings: matcher `^"[^"]*"` , partial `^"` (JSON de resources) o `^"[^"]*$` (tests). Números: matcher `^[0-9]+(\.[0-9]+)?` ; partial `^[0-9]` (JSON, parte `1.5`) o `^[0-9]+(\.[0-9]*)?$` (tests). IDs: `^[a-zA-Z_][a-zA-Z0-9_]*` / `^[a-zA-Z_]`.
+Strings: matcher `^"[^"]*"` , partial `^"[^"]*$` (JSON de resources y tests de application). Números: matcher `^[0-9]+(\.[0-9]+)?` ; partial `^[0-9]` (JSON, parte `1.5`) o `^[0-9]+(\.[0-9]*)?$` (tests del lexer). IDs: `^[a-zA-Z_][a-zA-Z0-9_]*` / `^[a-zA-Z_]`.
 
 Se recompila el `Regex` en cada evaluación. No hay cache.
 

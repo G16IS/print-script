@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    `java-library`
 }
 
 repositories {
@@ -8,14 +9,7 @@ repositories {
 
 dependencies {
     implementation(project(":common"))
-    implementation(project(":lexer"))
-    implementation(project(":parser"))
-    implementation(project(":type-checker"))
-    implementation(project(":interpreter"))
-    implementation(project(":linter"))
-    implementation(project(":formatter"))
-
-    testImplementation(project(":infrastructure"))
+    api(libs.clikt)
 
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")

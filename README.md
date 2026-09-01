@@ -29,7 +29,7 @@
 
 PrintScript es el lenguaje de script de la materia. Este repo es el compilador/intérprete del **grupo 16**: leés un programa, lo desarmás en piezas, armás el árbol y (más adelante) lo validás y lo ejecutás.
 
-Hoy el camino de `interpretCode` llega hasta el **type-checker**. El formatter está cableado en `FormatCode` / `CheckFormat` (core: espacios alrededor de operadores). El intérprete existe como módulo y no está cableado. El linter no existe.
+Hoy `interpretCode` llega hasta el **type-checker**. La ejecución (`println`) vive en `ExecuteCode` y se dispara con el CLI `run`. El formatter está en `FormatCode` / `CheckFormat`. El linter está en `LintProgram`.
 
 ```printscript
 let pepe: string = "Hello, World!";
@@ -52,9 +52,7 @@ flowchart LR
     A["archivo .ps"] --> B["Lexer"]
     B --> C["Parser"]
     C --> D["Type checker"]
-    D -.-> E["Interpreter"]
-
-    style E stroke-dasharray: 5 5
+    D --> E["Interpreter"]
 ```
 
 | Etapa | Qué hace | Estado |
@@ -62,9 +60,9 @@ flowchart LR
 | **Lexer** | Lee el archivo carácter a carácter y lo corta en tokens (`let`, un identificador, un `42`, un `+`…) | Listo |
 | **Parser** | Arma el árbol de sintaxis statement por statement, respetando precedencia (`*` / `/` ganan a `+` / `-`) | Listo |
 | **Type checker** | Chequea tipos, redeclaraciones y variables que no existen | Listo |
-| **Interpreter** | Ejecuta el programa (`println`, expresiones, más adelante control de flujo) | Módulo listo, no cableado |
+| **Interpreter** | Ejecuta el programa (`println`, expresiones) | Cableado en `ExecuteCode` (CLI `run`) |
 | **Formatter** | Pretty-print / check de whitespace sobre el árbol | Cableado en `FormatCode` / `CheckFormat` |
-| **Linter** | Estilo / análisis estático | A futuro |
+| **Linter** | Estilo / análisis estático | Cableado en `LintProgram` |
 
 Dos ideas que recorren todo el proyecto:
 
@@ -110,7 +108,8 @@ Monorepo Gradle. Cada carpeta es una pieza con un rol chico:
 - **`common`** — el vocabulario: tokens, gramática, árbol, type-system, posiciones. Nadie habla con nadie sin pasar por acá.
 - **`infrastructure`** — lee los JSON y el archivo fuente. Es la única pieza que sabe de disco y de serialización.
 - **`lexer` / `parser` / `type-checker`** — motores genéricos. No conocen `let` ni `println` a palo; conocen reglas y kinds de la config.
-- **`application`** — arma el pipeline y lo corre contra un path. `interpretCode` lexea, parsea y type-chequea. Todavía no ejecuta.
+- **`application`** — arma el pipeline. `interpretCode` lexea, parsea y type-chequea; `ExecuteCode` además interpreta.
+- **`cli`** — Clikt: `run` / `lint` / `check` / `format` / `typecheck`.
 - **`build-logic`** — calidad del *código Kotlin* (ktlint + detekt). No es el linter de PrintScript.
 
 El detalle de cada módulo, invariantes y recetas de extensión está en [`docs/CONTEXT.md`](docs/CONTEXT.md).
@@ -125,6 +124,12 @@ Hace falta **JDK 21**.
 ./gradlew test          # todos los módulos
 ./gradlew ktlintCheck   # estilo (lo mismo que el badge Format)
 ./gradlew detekt        # análisis estático (lo mismo que el badge Lint)
+
+./gradlew ps-run examples/hello.ps
+./gradlew ps-lint examples/hello.ps
+./gradlew ps-check examples/hello.ps
+./gradlew ps-format examples/hello.ps
+./gradlew ps-typecheck examples/hello.ps
 ```
 
 CI corre esas tres cosas en cada push / PR a `main`: [tests](.github/workflows/tests.yml), [lint](.github/workflows/lint.yml) y [format](.github/workflows/format.yml).
