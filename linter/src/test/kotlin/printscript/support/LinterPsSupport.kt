@@ -1,5 +1,6 @@
 package printscript.support
 
+import java.io.File
 import printscript.DefaultLexerFactory
 import printscript.DefaultParserFactory
 import printscript.domain.ExactRule
@@ -7,13 +8,14 @@ import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.RegexRule
 import printscript.domain.TokenRule
+import printscript.infrastructure.reader.FileCodeReader
 import printscript.infrastructure.reader.JSONGrammarConfigReader
-import printscript.infrastructure.reader.StringCodeReader
 import printscript.syntax.SyntaxProgram
 
 object LinterPsSupport {
     fun parse(code: String): SyntaxProgram {
-        val codeReader = StringCodeReader(code)
+        val file = File.createTempFile("printscript-linter-test", ".ps").apply { writeText(code) }
+        val codeReader = FileCodeReader(file.absolutePath)
         val lexer = DefaultLexerFactory.create(codeReader, language())
         val parser = DefaultParserFactory.create(grammar())
 
@@ -38,9 +40,10 @@ object LinterPsSupport {
         )
 
     private fun grammar(): Grammar {
-        val url = LinterPsSupport::class.java.getResource("/grammar.config.json")
-        println("DEBUG grammar.config.json resolved from: $url")
-        val stream = requireNotNull(url?.openStream()) { "Missing resource grammar.config.json" }
+//        val url = LinterPsSupport::class.java.getResource("/grammar.config.json")
+//        println("DEBUG grammar.config.json resolved from: $url")
+//        val stream = requireNotNull(url?.openStream()) { "Missing resource grammar.config.json" }
+        val stream = File("grammar.config.json").inputStream()
         return JSONGrammarConfigReader.read(stream)
     }
 
