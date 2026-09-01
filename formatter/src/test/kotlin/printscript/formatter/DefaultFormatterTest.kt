@@ -11,6 +11,7 @@ import printscript.error.MissingLexeme
 import printscript.error.UnrecognizedFormatNode
 import printscript.formatter.support.addition
 import printscript.formatter.support.expression
+import printscript.formatter.support.leaf
 import printscript.formatter.support.number
 import printscript.formatter.support.plus
 import printscript.formatter.support.program
@@ -114,6 +115,21 @@ class DefaultFormatterTest {
         val node = SyntaxNode(name = "mystery", location = Location.empty())
 
         val result = withRule.format(program(node))
+
+        assertTrue(result is Result.Err)
+        assertTrue((result as Result.Err).error is UnrecognizedFormatNode)
+    }
+
+    @Test
+    fun `format fails fast on a missing seq child`() {
+        val statement =
+            SyntaxNode(
+                name = "variable",
+                children = listOf(leaf("ID", "x", 1)),
+                location = Location.empty(),
+            )
+
+        val result = withRule.format(program(statement))
 
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is UnrecognizedFormatNode)

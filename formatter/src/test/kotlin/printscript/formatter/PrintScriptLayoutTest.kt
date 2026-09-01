@@ -1,6 +1,7 @@
 package printscript.formatter
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.ast.Location
 import printscript.domain.FormatRuleSpec
@@ -41,19 +42,14 @@ class PrintScriptLayoutTest {
 
     @Test
     fun `formats a declaration with default spaces and newline after semicolon`() {
-        val statement =
-            SyntaxNode(
-                name = "variable",
-                children =
-                    listOf(
-                        leaf("ID", "x", 1),
-                        leaf("TYPE", "number", 1),
-                        wrap("expression", wrap("term", number("1", 1))),
-                    ),
-                location = Location.empty(),
-            )
+        assertEquals("let x : number = 1;\n", ok(formatter.format(program(declaration()))))
+    }
 
-        assertEquals("let x : number = 1;\n", ok(formatter.format(program(statement))))
+    @Test
+    fun `formatted declaration passes check`() {
+        val source = ok(formatter.format(program(declaration())))
+
+        assertTrue(formatter.check(program(declaration()), source).isOk)
     }
 
     @Test
@@ -115,8 +111,23 @@ class PrintScriptLayoutTest {
                 location = Location.empty(),
             )
 
-        assertEquals("1 + 2;\n\nprintln(1);\n", ok(formatter.format(program(first, print))))
+        val source = "1 + 2;\n\nprintln(1);\n"
+
+        assertEquals(source, ok(formatter.format(program(first, print))))
+        assertTrue(formatter.check(program(first, print), source).isOk)
     }
+
+    private fun declaration(): SyntaxNode =
+        SyntaxNode(
+            name = "variable",
+            children =
+                listOf(
+                    leaf("ID", "x", 1),
+                    leaf("TYPE", "number", 1),
+                    wrap("expression", wrap("term", number("1", 1))),
+                ),
+            location = Location.empty(),
+        )
 
     private fun formatterFromLanguage(user: FormatterRulesConfig = FormatterRulesConfig()): Formatter {
         val language = JSONFormatterLanguageConfigReader.read(languageResource())

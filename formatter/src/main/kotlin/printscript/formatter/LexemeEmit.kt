@@ -15,7 +15,7 @@ internal fun emitLexemePiece(
     state: WalkState,
     failFast: Boolean,
 ): Result<WalkState, FormatError> {
-    val expected = expectedWhitespace(registry, state.last, tokenType, lexeme, parentName)
+    val expected = expectedWhitespace(registry, state, tokenType, lexeme, parentName)
     val source = state.source
 
     if (source == null) {
@@ -68,11 +68,19 @@ internal fun emitLexemePiece(
 
 internal fun expectedWhitespace(
     registry: RuleRegistry,
+    state: WalkState,
+    tokenType: String,
+    lexeme: String,
+    parentName: String?,
+): String = expectedGap(registry, state.last, tokenType, lexeme, parentName).render(state.indentLevel)
+
+private fun expectedGap(
+    registry: RuleRegistry,
     previous: Emitted?,
     tokenType: String,
     lexeme: String,
     parentName: String?,
-): String {
+): Gap {
     val afterPrevious =
         previous?.let { emitted ->
             registry.whitespaceFor(
@@ -83,7 +91,7 @@ internal fun expectedWhitespace(
                     parentNodeName = emitted.parentNodeName,
                 ),
             )
-        } ?: ""
+        } ?: Gap.EMPTY
 
     val beforeCurrent =
         registry.whitespaceFor(

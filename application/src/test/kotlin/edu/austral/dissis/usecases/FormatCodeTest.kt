@@ -14,4 +14,12 @@ class FormatCodeTest {
         assertTrue(formatted is Result.Ok)
         assertEquals("1 + 2;\n", (formatted as Result.Ok).value)
     }
+
+    @Test
+    fun `formats an unformatted declaration file`() {
+        val formatted = FormatExample.format("unformatted_declaration.ps")
+
+        assertTrue(formatted is Result.Ok)
+        assertEquals("let x : number = 1;\n", (formatted as Result.Ok).value)
+    }
 }

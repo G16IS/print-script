@@ -11,11 +11,12 @@ class RuleRegistryTest {
         val registry = DefaultRuleRegistry(emptyList())
         val point = FormatPoint(PointKind.BEFORE_TOKEN, tokenType = "OPERATOR")
 
-        assertEquals("", registry.whitespaceFor(point))
+        assertEquals(Gap.EMPTY, registry.whitespaceFor(point))
+        assertEquals("", registry.whitespaceFor(point).render(0))
     }
 
     @Test
-    fun `combines newlines then at most one space`() {
+    fun `newlines win over intra-line space on the same point`() {
         val extra =
             object : FormatRule {
                 override fun applies(point: FormatPoint) = point.tokenType == "OPERATOR"
@@ -27,8 +28,10 @@ class RuleRegistryTest {
             }
         val registry = DefaultRuleRegistry(listOf(spaceAroundOperator(), extra))
         val point = FormatPoint(PointKind.AFTER_TOKEN, tokenType = "OPERATOR", tokenValue = "+")
+        val gap = registry.whitespaceFor(point)
 
-        assertEquals("\n ", registry.whitespaceFor(point))
+        assertEquals(Gap(newlines = 1, spaces = 1), gap)
+        assertEquals("\n", gap.render(0))
     }
 
     @Test
@@ -45,6 +48,7 @@ class RuleRegistryTest {
         val registry = DefaultRuleRegistry(listOf(spaceAroundOperator(), doubleSpace))
         val point = FormatPoint(PointKind.AFTER_TOKEN, tokenType = "OPERATOR", tokenValue = "+")
 
-        assertEquals(" ", registry.whitespaceFor(point))
+        assertEquals(Gap(spaces = 1), registry.whitespaceFor(point))
+        assertEquals(" ", registry.whitespaceFor(point).render(0))
     }
 }

@@ -1,10 +1,12 @@
 package printscript.formatter
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.ast.Location
 import printscript.domain.TokenLexemes
+import printscript.error.UnrecognizedFormatNode
 import printscript.error.WhitespaceMismatch
 import printscript.formatter.support.addition
 import printscript.formatter.support.leaf
@@ -126,6 +128,21 @@ class FormatterCheckTest {
         val report = printScript.check(program(spacedDeclaration()), "let x : number = 1;\n")
 
         assertTrue(report.isOk)
+    }
+
+    @Test
+    fun `check accumulates a missing seq child instead of failing fast`() {
+        val incomplete =
+            SyntaxNode(
+                name = "variable",
+                children = listOf(leaf("ID", "x", 5)),
+                location = Location.empty(),
+            )
+        val report = printScript.check(program(incomplete), "let x : number = 1;\n")
+
+        assertFalse(report.isOk)
+        assertTrue(report.errors.any { it is UnrecognizedFormatNode })
+        assertTrue(report.errors.size > 1)
     }
 
     private fun compactDeclaration(): SyntaxNode =

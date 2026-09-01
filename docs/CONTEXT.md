@@ -267,7 +267,7 @@ Ver [modules/LINTER.md](modules/LINTER.md).
 
 ### `formatter` — pretty-print
 
-Módulo Gradle `:formatter`. Recibe configs ya parseadas + `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). No lee archivos. Strategy: `addChar(point, char)` + registry (newlines + máx. un espacio; el cap no es una rule). Rules de lenguaje (operadores, `;`+newline, `let`+espacio) y de usuario (`:` / `=` / newlines antes de `println`, con defaults). Reconstruye `let` / `:` / `=` / `;` / parens. Application: `FormatCode` / `CheckFormat` (carga JSON/YAML).
+Módulo Gradle `:formatter`. Recibe configs ya parseadas + `SyntaxProgram` y produce texto canónico (`format` → `Result`) o un `Report` de mismatches (`check`). No lee archivos. Strategy: `addChar(point, char)` → `Gap` (newlines se suman entre AFTER+BEFORE, máx. un espacio **por hueco**; el cap no es una rule). `WalkState.indentLevel` entra en `Gap.render` (v1 = 0). `GrammarWalker` consume hijos de un `SeqRule` en orden, no por nombre. Rules de lenguaje (operadores, `;`+newline, `let`+espacio) y de usuario (`:` / `=` / newlines antes de `println`, con defaults). Reconstruye `let` / `:` / `=` / `;` / parens. Application: `FormatCode` / `CheckFormat` (carga JSON/YAML).
 
 Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 
@@ -439,6 +439,7 @@ Módulo existente. Nuevo *kind* → entrada en `NodeKind` + `PrintScriptMapping`
 1. Si entra en space/newline: `rules` o `userBindings` en `formatter-language.json`. El YAML de usuario sigue siendo `type` + `enabled`/`count`.
 2. Si no: `FormatRule` + `FormatRuleFactory` en `:formatter`.
 3. Tests de `format` y `check`. Detalle: [modules/FORMATTER.md](modules/FORMATTER.md), [configs/FORMATTER_CONFIG.md](configs/FORMATTER_CONFIG.md).
+4. Bloques / `if`: no hace falta otro combiner. Gramática + `newline-after`/`newline-before` en el JSON, y en `emitSyntheticToken` subir/bajar `WalkState.indentLevel` alrededor de `{` `}`. Receta en [modules/FORMATTER.md](modules/FORMATTER.md).
 
 ### Linter
 
@@ -454,10 +455,10 @@ Módulo a futuro. Docs vacíos: [modules/LINTER.md](modules/LINTER.md).
 | `parser` | Cada handler, gramática PrintScript completa (precedencia, parens, errores), `Grammar` validation, `SyntaxNode` |
 | `type-checker` | Scope, resolver (literales, binarios, permutación), `TypeChecker` (match/mismatch/redeclare), `check` vs `checkStrict` |
 | `interpreter` | contexto (scope/shadow/assign), evaluators (literales/binarios/calls/div-cero), executors, integración lex+parse+interpret con `SideEffect` |
-| `formatter` | `format`/`check` de `1+2`, registry, loader (bindings + defaults JSON / type desconocido / `count` inválido), JSON real |
+| `formatter` | `format`/`check` de `1+2`, gap/indent render, walker con dos hijos del mismo nombre, loader (bindings + defaults JSON / type desconocido / `count` inválido), JSON real |
 | `infrastructure` | `JSONGrammarConfigReader` y `JSONTypeSystemConfigReader` contra el resource real + JSON de `repeat`; readers JSON de lenguaje y YAML de usuario del formatter |
 | `common` | `Result`/`Report`, `TypeSystemConfig` / `FormatterLanguageConfig` (validación), variantes de `TypeError` / `FormatError` |
-| `application` | `.ps` end-to-end lex+parse+type-check (`Report`); format/check de `1+2;` vs `1 + 2;` (`Result`/`Report`) |
+| `application` | `.ps` end-to-end lex+parse+type-check (`Report`); format/check de `1+2;` y `let x:number=1;` (`Result`/`Report`) |
 
 Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.yml` corre `test` de todos los módulos; `lint.yml` corre `detekt`; `format.yml` corre `ktlintCheck`.
 
@@ -488,7 +489,7 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.y
 | Ejecutar el programa | INTERPRETER | ya existe `:interpreter`; cablear en `application/InterpretCode.kt` |
 | Nueva construcción a ejecutar | INTERPRETER | `NodeKind` + executor/evaluator + mapping |
 | Reglas de estilo | LINTER | módulo a futuro |
-| Pretty-print | FORMATTER | indent de bloques cuando existan `if` / `{` |
+| Pretty-print / bloques | FORMATTER | gramática de `if`/`{` + bump de `indentLevel` en `emitSyntheticToken` (el render ya existe) |
 | Lint/format del Kotlin del repo | BUILD_LOGIC | `build-logic` / `printscript.quality` |
 | CLI / correr un archivo | application | crear `Main.kt`, llamar `interpretCode` (y el interpreter si querés output) |
 | Leer un `.ps` de otro lado (stdin, string) | common `CodeReader` + infrastructure | nueva impl de `CodeReader` |

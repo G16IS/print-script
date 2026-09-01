@@ -102,7 +102,7 @@ fun checkFormat(...): Report<Unit, FormatError>
 
 Tests:
 
-- `FormatCodeTest` — `unformatted_expression.ps` (`1+2;`) → `Ok("1 + 2;\n")`
+- `FormatCodeTest` — `unformatted_expression.ps` (`1+2;`) → `Ok("1 + 2;\n")`; `unformatted_declaration.ps` (`let x:number=1;`) → `Ok("let x : number = 1;\n")`
 - `CheckFormatTest` — `1+2;` y `let x:number=1;` no son ok; `1 + 2;` y `let x : number = 1;` sí
 
 ---

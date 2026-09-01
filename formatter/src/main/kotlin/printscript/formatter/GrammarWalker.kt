@@ -11,15 +11,14 @@ import printscript.error.UnrecognizedFormatNode
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 import printscript.util.flatMap
+import printscript.util.map
 
 /**
  * Drives formatter emission from grammar `SeqRule`s.
  *
- * For each SyntaxNode whose grammar rule is a SeqRule,
- * walks the steps:
- * - TokenStep(capture=true)  → emit the captured child node
- * - TokenStep(capture=false) → emit a synthetic token (lexeme from TokenLexemes)
- * - RuleRefStep              → emit the referenced child node
+ * Children are consumed in order (captured tokens and rule-refs). Uncaptured
+ * tokens are synthetic and do not advance the cursor, so two rule-refs with
+ * the same name (then/else) emit as distinct children.
  *
  * Returns null for non-SeqRule nodes (OrRule, LeftRule, AtomRule, RepeatRule),
  * which fall through to the generic emitChildren path.
@@ -48,77 +47,98 @@ internal class GrammarWalker(
         failFast: Boolean,
         walk: NodeWalk,
     ): Result<WalkState, FormatError> {
-        val start: Result<WalkState, FormatError> = Result.Ok(state)
+        val start: Result<SeqWalk, FormatError> = Result.Ok(SeqWalk(state, 0))
 
-        return rule.steps.fold(start) { acc, step ->
-            acc.flatMap { current ->
-                emitStep(node, step, current, failFast, walk)
+        return rule.steps
+            .fold(start) { acc, step ->
+                acc.flatMap { current ->
+                    emitStep(node, step, current, failFast, walk)
+                }
+            }.flatMap { done ->
+                if (done.childIndex == node.children.size) {
+                    Result.Ok(done.state)
+                } else {
+                    failWalk(
+                        UnrecognizedFormatNode(node.name, node.location),
+                        done.state,
+                        failFast,
+                    )
+                }
             }
-        }
     }
 
     private fun emitStep(
         node: SyntaxNode,
         step: SeqStep,
-        state: WalkState,
+        current: SeqWalk,
         failFast: Boolean,
         walk: NodeWalk,
-    ): Result<WalkState, FormatError> =
+    ): Result<SeqWalk, FormatError> =
         when (step) {
-            is TokenStep -> emitTokenStep(node, step, state, failFast, walk)
-            is RuleRefStep -> emitRuleRef(node, step, state, failFast, walk)
-            else -> Result.Err(UnrecognizedFormatNode("${node.name}/unknown-step", node.location))
+            is TokenStep -> emitTokenStep(node, step, current, failFast, walk)
+            is RuleRefStep -> consumeChild(node, current, failFast, walk)
+            else ->
+                failWalk(
+                    UnrecognizedFormatNode("${node.name}/unknown-step", node.location),
+                    current.state,
+                    failFast,
+                ).map { SeqWalk(it, current.childIndex) }
         }
 
     private fun emitTokenStep(
         node: SyntaxNode,
         step: TokenStep,
-        state: WalkState,
+        current: SeqWalk,
         failFast: Boolean,
         walk: NodeWalk,
-    ): Result<WalkState, FormatError> =
+    ): Result<SeqWalk, FormatError> =
         if (step.capture) {
-            emitCapturedToken(node, step.type, state, failFast, walk)
+            consumeChild(node, current, failFast, walk)
         } else {
-            emitSyntheticToken(node, step.type, state, failFast, walk)
+            emitSyntheticToken(node, step.type, current, failFast, walk)
         }
 
-    private fun emitCapturedToken(
+    private fun consumeChild(
         node: SyntaxNode,
-        type: String,
-        state: WalkState,
+        current: SeqWalk,
         failFast: Boolean,
         walk: NodeWalk,
-    ): Result<WalkState, FormatError> {
+    ): Result<SeqWalk, FormatError> {
         val child =
-            node.childOrNull(type)
-                ?: return Result.Err(UnrecognizedFormatNode(node.name, node.location))
-        return walk.emit(child, node.name, state, failFast)
+            node.children.getOrNull(current.childIndex)
+                ?: return failWalk(
+                    UnrecognizedFormatNode(node.name, node.location),
+                    current.state,
+                    failFast,
+                ).map { SeqWalk(it, current.childIndex) }
+
+        return walk.emit(child, node.name, current.state, failFast).map { emitted ->
+            SeqWalk(emitted, current.childIndex + 1)
+        }
     }
 
     private fun emitSyntheticToken(
         node: SyntaxNode,
         type: String,
-        state: WalkState,
+        current: SeqWalk,
         failFast: Boolean,
         walk: NodeWalk,
-    ): Result<WalkState, FormatError> {
+    ): Result<SeqWalk, FormatError> {
         val lexeme =
             lexemes.lexemeFor(type)
-                ?: return Result.Err(UnrecognizedFormatNode("${node.name}/$type", node.location))
-        return walk.emitSynthetic(type, lexeme, node.name, state, failFast)
-    }
+                ?: return failWalk(
+                    UnrecognizedFormatNode("${node.name}/$type", node.location),
+                    current.state,
+                    failFast,
+                ).map { SeqWalk(it, current.childIndex) }
 
-    private fun emitRuleRef(
-        node: SyntaxNode,
-        step: RuleRefStep,
-        state: WalkState,
-        failFast: Boolean,
-        walk: NodeWalk,
-    ): Result<WalkState, FormatError> {
-        val child =
-            node.childOrNull(step.name)
-                ?: return Result.Err(UnrecognizedFormatNode(node.name, node.location))
-        return walk.emit(child, node.name, state, failFast)
+        return walk.emitSynthetic(type, lexeme, node.name, current.state, failFast).map { emitted ->
+            SeqWalk(emitted, current.childIndex)
+        }
     }
 }
+
+private data class SeqWalk(
+    val state: WalkState,
+    val childIndex: Int,
+)

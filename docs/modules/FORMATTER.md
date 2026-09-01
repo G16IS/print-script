@@ -12,7 +12,8 @@ Pretty-printer dirigido por rules. JSON de lenguaje (rules fijas + bindings) + J
 
 - Nueva rule de estilo que entre en space/newline → binding o rule en `formatter-language.json`
 - Nuevo *kind* de whitespace → `FormatRule` + `FormatRuleFactory` + JSON
-- Cambiar el walk / `FormatPoint` / `GrammarWalker`
+- Cambiar el walk / `FormatPoint` / `GrammarWalker` / `Gap`
+- Indent de bloques: `WalkState.indentLevel` alrededor de `{` `}` (ver receta abajo)
 - Política de errores de `format` (`Result`) o `check` (`Report`)
 - **No** para tokens/gramática del lenguaje
 - **No** para type-check: este módulo formatea el `SyntaxProgram` que le pasen; si hay que type-chequear antes, lo decide application
@@ -42,7 +43,7 @@ object DefaultFormatterFactory {
 Siempre crear por la factory. La impl es `DefaultFormatter` + `DefaultRuleRegistry`.
 
 - `format` recorre el árbol, emite lexemas capturados e inyecta whitespace de las rules. Fail-fast en errores estructurales (`MissingLexeme`, `UnrecognizedFormatNode`).
-- `check` usa el **source original** (el AST no tiene trivia). Recorre los mismos tokens que `format` (capturados y sintéticos). Un cursor busca cada lexema en el source y compara el hueco vs lo esperado. **No** usa `token.location.start` para el offset: el lexer deja esa posición *después* del primer carácter. Acumula todos los `WhitespaceMismatch` (también si lo esperado es `""` y hay extra, y el trailing). No corta en el primero.
+- `check` usa el **source original** (el AST no tiene trivia). Recorre los mismos tokens que `format` (capturados y sintéticos). Un cursor busca cada lexema en el source y compara el hueco vs lo esperado. **No** usa `token.location.start` para el offset: el lexer deja esa posición *después* del primer carácter. Acumula todos los `WhitespaceMismatch` (también si lo esperado es `""` y hay extra, y el trailing) y los estructurales del seq (`UnrecognizedFormatNode`). No corta en el primero.
 
 `FormatError` es sealed en `common` (`printscript.error`, `message` + `location`). `UnrecognizedFormatNode` (no `UnrecognizedNode`: ese nombre ya lo usan type/runtime).
 
@@ -64,13 +65,13 @@ interface FormatRuleFactory {
 }
 ```
 
-El walker imprime lexemas. Las rules no devuelven un `String` libre: el registry pregunta `addChar(point, ' ')` y `addChar(point, '\n')` y **combina** (máximo de newlines, como mucho un espacio). El cap de un espacio es invariante del combiner, no una rule (la consigna no lo configura). Si nadie aplica → `""`.
+El walker imprime lexemas. Las rules no devuelven un `String` libre: el registry pregunta `addChar(point, ' ')` y `addChar(point, '\n')` y arma un `Gap` (newlines + como mucho un espacio). El cap de un espacio es invariante del combiner, no una rule (la consigna no lo configura). Si nadie aplica → `Gap.EMPTY`.
 
-El core es **inmutable**: `WalkState` es un `data class` (`output`, `errors`, `last`). `emit` / `FormatRuleLoader.instantiate` son `fold` + `copy`; no hay `StringBuilder` ni listas mutables.
+El hueco entre dos tokens es `AFTER` del anterior **más** `BEFORE` del actual (`Gap.plus`: newlines se suman, spaces se cappean a 1). Así `space-after LET` + `space-before ID` no produce dos espacios. Si el gap tiene newlines, no se emite el espacio intra-línea: el indent ocupa ese lugar. `Gap.render(indentLevel)` aplica `indentLevel * 4` espacios **después** de los newlines; en v1 el nivel es 0 y el render es identidad (`"\n"`). Al terminar el programa se emite el `AFTER` del último token (newline tras `;`).
 
-El hueco entre dos tokens es `AFTER` del anterior + `BEFORE` del actual. Al terminar el programa se emite el `AFTER` del último token (newline tras `;`).
+El core es **inmutable**: `WalkState` es un `data class` (`output`, `errors`, `last`, `indentLevel`). `emit` / `FormatRuleLoader.instantiate` son `fold` + `copy`.
 
-Puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens): `GrammarWalker` la reinyecta leyendo `SeqRule` + `TokenLexemes` (lexemas exactos de un solo matcher). Nodos que no son `SeqRule` (`Or`, `Left`, `Atom`, `Repeat`) caen al walk genérico de hijos.
+Puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens): `GrammarWalker` la reinyecta leyendo `SeqRule` + `TokenLexemes` (lexemas exactos de un solo matcher). Los hijos del nodo se consumen **en orden** (capturas y rule-refs); los sintéticos no avanzan el cursor. Dos rule-refs con el mismo nombre (then/else) no se pisan. Nodos que no son `SeqRule` (`Or`, `Left`, `Atom`, `Repeat`) caen al walk genérico de hijos. `check` respeta `failFast=false` también en errores estructurales del seq (`UnrecognizedFormatNode`).
 
 ### Rules
 
@@ -118,12 +119,13 @@ formatter/src/main/kotlin/printscript/formatter/
   LexemeEmit.kt                 emite lexema (format) o compara hueco (check)
   DefaultFormatterFactory.kt
   FormatPoint.kt
+  Gap.kt                        newlines + spaces; plus por hueco; render(indentLevel)
   WhitespaceChars.kt            SPACE / NEWLINE
-  RuleRegistry.kt               combina addChar: newlines + como mucho un espacio
+  RuleRegistry.kt               addChar → Gap (interno)
   SourceGaps.kt                 offset / position CharPosition ↔ source (para check)
-  WalkState.kt
+  WalkState.kt                  incluye indentLevel (v1 = 0)
   NodeWalk.kt
-  GrammarWalker.kt              SeqRule → tokens capturados / sintéticos / rule-refs
+  GrammarWalker.kt              SeqRule: cursor de hijos + sintéticos; failFast
   rules/                        TokenSpaceRule + TokenNewlineRule
   factories/
     FormatRuleFactory.kt        SpaceRuleFactory + NewlineRuleFactory
@@ -142,11 +144,13 @@ formatter/src/main/kotlin/printscript/formatter/
 
 | Clase | Qué cubre |
 |---|---|
-| `DefaultFormatterTest` | `1+2` → `1 + 2`; sin rules → `1+2`; `expression-stmt` + `;`; errores estructurales |
-| `PrintScriptLayoutTest` | `let x : number = 1;\n`; colon sin espacios; `println` con newline extra |
-| `FormatterCheckTest` | mismatches alrededor de `+`; `;` sintético; trailing; `let` sin espacios; extra líder |
+| `DefaultFormatterTest` | `1+2` → `1 + 2`; sin rules → `1+2`; `expression-stmt` + `;`; errores estructurales; seq incompleto fail-fast |
+| `PrintScriptLayoutTest` | `let x : number = 1;\n`; colon sin espacios; `println` con newline extra; round-trip format→check |
+| `FormatterCheckTest` | mismatches alrededor de `+`; `;` sintético; trailing; `let` sin espacios; extra líder; seq incompleto acumula |
+| `GrammarWalkerTest` | dos hijos con el mismo nombre de regla en orden; space AFTER+BEFORE → un espacio |
+| `GapTest` | plus (spaces cap 1, newlines suman); `render(0)` vs `render(1)` |
 | `FormatRuleLoaderTest` | JSON de lenguaje; defaults JSON; fallback del binding; type desconocido; `count` inválido |
-| `TokenSpaceRuleTest` / `TokenNewlineRuleTest` / `RuleRegistryTest` | `addChar`, println vs otro call, combinación newline+space |
+| `TokenSpaceRuleTest` / `TokenNewlineRuleTest` / `RuleRegistryTest` | `addChar`, println vs otro call, newline gana al espacio en el mismo punto |
 
 Infrastructure: `FormatterLanguageConfigReaderTest` (resource) + `FormatterRulesConfigReaderTest` (YAML + defaults JSON).
 
@@ -157,3 +161,16 @@ Infrastructure: `FormatterLanguageConfigReaderTest` (resource) + `FormatterRules
 1. Si entra en space/newline: `rules` o `userBindings` en `formatter-language.json`. El YAML de usuario no cambia de forma (`type` + un value).
 2. Si no: `FormatRule` + `FormatRuleFactory` en `FormatRuleFactories.defaults()`.
 3. Tests de `format` / `check`. La puntuación que el parser no deja en el árbol la reinyecta `GrammarWalker`.
+
+### Bloques indentados / `if` (cuando existan)
+
+No hay `IndentRule`. El indent vive en `WalkState.indentLevel` y se aplica en `Gap.render`. El día que haya braces:
+
+1. Gramática: `block` = `seq[ LEFT_BRACE, { rule: statements }, RIGHT_BRACE ]`, `statements` = `repeat statement`. `Repeat` ya cae a `emitChildren` (orden). El `Seq` reinyecta `{` `}`.
+2. JSON de formatter: `newline-after` + `LEFT_BRACE`, `newline-before` + `RIGHT_BRACE` (kinds que ya existen).
+3. En `GrammarWalker.emitSyntheticToken`:
+   - antes de emitir `RIGHT_BRACE`: `indentLevel - 1`
+   - después de emitir `LEFT_BRACE`: `indentLevel + 1`
+4. Tests de un bloque. Then/else con el mismo nombre de regla ya anda por el cursor de hijos.
+
+Un `if` sin braces (indentar el statement suelto) es el mismo `indentLevel` alrededor de ese hijo, no otro combiner. `INDENT_WIDTH` es 4 y no se configura.

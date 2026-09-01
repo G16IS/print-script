@@ -17,19 +17,21 @@ internal data class WalkState(
     val last: Emitted? = null,
     val source: String? = null,
     val cursor: Int = 0,
+    val indentLevel: Int = 0,
 )
 
 internal fun WalkState.withTrailingAfter(registry: RuleRegistry): WalkState {
     val last = last ?: return this
     val trailing =
-        registry.whitespaceFor(
-            FormatPoint(
-                kind = PointKind.AFTER_TOKEN,
-                tokenType = last.tokenType,
-                tokenValue = last.tokenValue,
-                parentNodeName = last.parentNodeName,
-            ),
-        )
+        registry
+            .whitespaceFor(
+                FormatPoint(
+                    kind = PointKind.AFTER_TOKEN,
+                    tokenType = last.tokenType,
+                    tokenValue = last.tokenValue,
+                    parentNodeName = last.parentNodeName,
+                ),
+            ).render(indentLevel)
     val source = source
     val actual = source?.let { if (cursor <= it.length) it.substring(cursor) else "" }
 

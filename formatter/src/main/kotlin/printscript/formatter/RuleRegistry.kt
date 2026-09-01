@@ -2,18 +2,18 @@ package printscript.formatter
 
 import printscript.formatter.rules.FormatRule
 
-interface RuleRegistry {
-    fun whitespaceFor(point: FormatPoint): String
+internal interface RuleRegistry {
+    fun whitespaceFor(point: FormatPoint): Gap
 }
 
-class DefaultRuleRegistry(
+internal class DefaultRuleRegistry(
     private val rules: List<FormatRule>,
 ) : RuleRegistry {
-    override fun whitespaceFor(point: FormatPoint): String {
+    override fun whitespaceFor(point: FormatPoint): Gap {
         val applicable = rules.filter { it.applies(point) }
 
         if (applicable.isEmpty()) {
-            return ""
+            return Gap.EMPTY
         }
 
         val newlines =
@@ -26,7 +26,6 @@ class DefaultRuleRegistry(
                 .maxOf { it.addChar(point, WhitespaceChars.SPACE) }
                 .coerceIn(0, 1)
 
-        return WhitespaceChars.NEWLINE.toString().repeat(newlines) +
-            WhitespaceChars.SPACE.toString().repeat(spaces)
+        return Gap(newlines = newlines, spaces = spaces)
     }
 }
