@@ -1,16 +1,17 @@
 # Módulo `application`
 
-Dependencias: `common`, `lexer`, `parser`, `type-checker`, `infrastructure`.
+Dependencias: `common`, `lexer`, `parser`, `type-checker`, `formatter`, `infrastructure`.
 
-Capa de orquestación: arma readers + lexer + parser + type-checker y expone el caso de uso. No debería contener algoritmos de matching, gramática ni de tipos.
+Capa de orquestación: arma readers + lexer + parser + type-checker / formatter y expone los casos de uso. No debería contener algoritmos de matching, gramática, tipos ni whitespace.
 
-Paquete de producción: `usecases` (`InterpretCode`). Tests: `edu.austral.dissis`. El resto del repo es `printscript`. No depende de `:interpreter`.
+Paquete de producción: `usecases`. Tests: `edu.austral.dissis`. El resto del repo es `printscript`. No depende de `:interpreter`.
 
 ---
 
 ## Cuándo tocarlo
 
 - Cablear CLI, interpreter o linter
+- Casos de uso de format / format-check
 - Tests de integración contra archivos `.ps`
 - **No** para cambiar precedencia o keywords — JSON + lexer/parser
 
@@ -20,13 +21,20 @@ Paquete de producción: `usecases` (`InterpretCode`). Tests: `edu.austral.dissis
 
 ```
 application/src/main/kotlin/
-  usecases/InterpretCode.kt       interpretCode(...)
+  usecases/InterpretCode.kt       lex + parse + type-check
+  usecases/ParseProgram.kt        lex + parse (interno)
+  usecases/FormatCode.kt          formatCode(...)
+  usecases/CheckFormat.kt         checkFormat(...) — `Formatter.check`, lista mismatches
+  usecases/LoadFormatter.kt       JSON de lenguaje + defaults + YAML (interno; paths viven acá)
 
 application/src/test/
   kotlin/edu/austral/dissis/
     usecases/InterpretCodeTest.kt
+    usecases/FormatCodeTest.kt
+    usecases/CheckFormatTest.kt
     testing/
       ParseExample.kt              carga grammar + type-system JSON + LanguageConfig de test
+      FormatExample.kt             grammar + LanguageConfig para format/check
       PrintScriptLanguage.kt       LanguageConfig (mismo order que el JSON)
       ast/
         AstBuilder.kt              DSL node("variable") { … }
@@ -40,6 +48,10 @@ application/src/test/
     type_mismatch.ps
     undeclared_variable.ps
     redeclaration.ps
+    unformatted_expression.ps
+    formatted_expression.ps
+    unformatted_declaration.ps
+    formatted_declaration.ps
 ```
 
 `grammar.config.json` y `type-system.config.json` de test salen del **classpath de infrastructure**. Los `.ps` sí son de application.
@@ -54,7 +66,7 @@ fun interpretCode(
     grammar: Grammar,
     typeSystem: TypeSystemConfig,
     path: String
-): SyntaxProgram
+): Report<SyntaxProgram, TypeError>
 ```
 
 Pasos:
@@ -63,15 +75,35 @@ Pasos:
 2. `DefaultLexerFactory.create(codeReader, langConfig)`
 3. `DefaultParserFactory.create(grammar)`
 4. `while (lexer.peek(null).type != "EOF")` → `parser.parseNextStatement(lexer, program)`
-5. `DefaultTypeCheckerFactory.create(typeSystem).check(program)`
-6. Si el `Report` no es ok → `error("El chequeo de tipos falló:…")` con mensaje y `line:col`
-7. Si no, devuelve el `SyntaxProgram`
+5. `DefaultTypeCheckerFactory.create(typeSystem).check(program)` — ese `Report` es el valor de retorno
+
+`TypeError` acá es el data class de `:type-checker`, no el sealed de `common`.
 
 Las tres configs llegan **ya construidas**. Application no lee JSON en el caso de uso (sí `ParseExample` en tests).
 
 No hay ejecución de `println`. “Interpret” acá = lex + parse + type-check. El módulo `:interpreter` existe y sabe emitir `PrintEffect`; no está en las deps de este módulo.
 
 No hay `Main.kt` ni CLI (`args[0]`, flags de versión, etc.).
+
+---
+
+## Casos de uso: `formatCode` / `checkFormat`
+
+No type-chequean: application parsea con `ParseProgram` y formatea; el type-checker no entra en este camino (el formatter no lo pide ni lo sabe). `LoadFormatter` lee JSON `formatter-language.json` + `formatter-user-defaults.json` + YAML `.printscript/formatter.yml` si existe, y le pasa al formatter configs ya parseadas.
+
+```kotlin
+fun formatCode(...): Result<String, FormatError>
+fun checkFormat(...): Report<Unit, FormatError>
+```
+
+`formatCode` formatea el árbol. Con las rules v1: `1+2;` → `"1 + 2;\n"`.
+
+`checkFormat` llama `Formatter.check` (mismatches puntuales, con `line:col`). Normaliza `\r\n`; no hace `trimEnd` (el newline tras `;` es parte del contrato).
+
+Tests:
+
+- `FormatCodeTest` — `unformatted_expression.ps` (`1+2;`) → `Ok("1 + 2;\n")`; `unformatted_declaration.ps` (`let x:number=1;`) → `Ok("let x : number = 1;\n")`
+- `CheckFormatTest` — `1+2;` y `let x:number=1;` no son ok; `1 + 2;` y `let x : number = 1;` sí
 
 ---
 
@@ -91,7 +123,7 @@ No hay `Main.kt` ni CLI (`args[0]`, flags de versión, etc.).
 - `declarations_and_prints.ps` — dos `let` + dos `println`
 - `binary_expression.ps` — `1 + 2 * 3` (el `*` queda dentro del `term` derecho)
 - `string_literal.ps` — value `"\"hola\""` (comillas incluidas)
-- `type_mismatch.ps` / `undeclared_variable.ps` / `redeclaration.ps` — `interpretCode` tira `IllegalStateException` con el mensaje de tipo
+- `type_mismatch.ps` / `undeclared_variable.ps` / `redeclaration.ps` — el `Report` no es ok; el mensaje de tipo está en `errors`
 
 DSL:
 
@@ -163,5 +195,6 @@ Archivo en `resources/examples/` + test en `InterpretCodeTest` con el DSL. Prefe
 ## Invariantes
 
 - Application no reimplementa reglas de token ni de gramática.
-- El `LanguageConfig` que usás en runtime tiene que tener el `order` que el **lexer real** espera (primero = más prioritario), igual que `language.config.json`.
+- El formatter no lee archivos: `LoadFormatter` le inyecta configs ya parseadas. Paths de JSON/YAML viven en application.
+- El `LanguageConfig` que usás en runtime tiene que tener el `order` que el **lexer real** espera (último = más prioritario), no el del markdown.
 - `interpretCode` asume que hay statements hasta EOF. Un archivo vacío (solo whitespace) hace `peek` → `EOF` y devuelve `SyntaxProgram.empty()` sin llamar al parser. Un archivo con basura al inicio tira desde lexer o parser.

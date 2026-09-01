@@ -12,8 +12,8 @@ Si un tipo lo necesitan dos módulos, vive acá. Si un tipo es detalle de matchi
 
 - Nueva forma de regla de gramática o de token (`GrammarRule`, `TokenRule`, `SeqStep`)
 - Cambiar la forma de `SyntaxNode` / `Token` / `Location`
-- Nuevo puerto (`CodeReader`, config readers)
-- Forma de `TypeSystemConfig` / `Result` / `Report`
+- Nuevo puerto (`CodeReader`, config readers, `FormatterRulesConfigReader`, `FormatterLanguageConfigReader`)
+- Forma de `TypeSystemConfig` / `FormatterLanguageConfig` / `Result` / `Report`
 - **No** para serializers, matching de regex, ni el walk de tipos (eso es `:type-checker`)
 
 ---
@@ -32,14 +32,18 @@ common/src/main/kotlin/printscript/
     SeqStep.kt            TokenStep / RuleRefStep
     OperatorSpec.kt       token type + valores de operador (para LeftRule)
     TypeSystemConfig.kt   types, literals, operations, nodes — valida refs de tipos
+    FormatterRulesConfig.kt  YAML de usuario (type + enabled/count)
+    FormatterLanguageConfig.kt  JSON de lenguaje: rules fijas + userBindings
   syntax/
     SyntaxNode.kt         árbol genérico de salida del parser
     SyntaxProgram.kt      lista de statements + location
   ast/
     Location.kt           start/end CharPosition
   error/
+    Error.kt              sealed raíz
     TypeError.kt          sealed con variantes (el checker usa otro TypeError, ver TYPE_CHECKER.md)
     RuntimeError.kt       sealed del interpreter (DivisionByZero, InvalidLiteral, …)
+    FormatError.kt        sealed del formatter (MissingLexeme, UnrecognizedFormatNode, WhitespaceMismatch, …)
   SideEffect.kt           PrintEffect — output observable del interpreter
   reader/
     CodeReader.kt         puerto: read / peek / currentPosition
@@ -47,6 +51,8 @@ common/src/main/kotlin/printscript/
     LanguageConfigReader.kt
     GrammarConfigReader.kt
     TypeSystemConfigReader.kt
+    FormatterRulesConfigReader.kt
+    FormatterLanguageConfigReader.kt
   util/
     Result.kt             Result.Ok/Err + Report + map/flatMap/fold/isOk
 ```
@@ -94,6 +100,14 @@ data class LanguageConfig(
 ```
 
 `order` significa “primero gana”. `RuleDrawResolver` (lexer) usa `order.indexOf(category)` y se queda con el **mínimo**. Ver [LEXER.md](LEXER.md).
+
+### `FormatterRulesConfig`
+
+Lista de `{ type, enabled?, count? }` — forma del YAML de usuario (consigna). Serializer en `infrastructure`. Ver [FORMATTER.md](FORMATTER.md) y [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
+
+### `FormatterLanguageConfig`
+
+JSON de lenguaje: `rules` (type genérico + `token` / `value` / `previous`) y `userBindings` (`userType` del YAML → implementación). `userType` duplicado o `param` inválido → `IllegalArgumentException`. Ver [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
 
 ---
 

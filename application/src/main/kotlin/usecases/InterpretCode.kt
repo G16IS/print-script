@@ -1,16 +1,12 @@
 package usecases
 
-import printscript.DefaultLexerFactory
-import printscript.DefaultParserFactory
-import printscript.Lexer
-import printscript.Parser
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
-import printscript.infrastructure.reader.FileCodeReader
 import printscript.syntax.SyntaxProgram
 import printscript.typechecker.DefaultTypeCheckerFactory
 import printscript.typechecker.TypeError
+import printscript.util.Report
 
 object InterpretCode {
     fun interpretCode(
@@ -18,33 +14,14 @@ object InterpretCode {
         grammar: Grammar,
         typeSystem: TypeSystemConfig,
         path: String,
-    ): SyntaxProgram {
-        val codeReader = FileCodeReader(path)
-
-        val lexer: Lexer = DefaultLexerFactory.create(codeReader, langConfig)
-        val parser: Parser = DefaultParserFactory.create(grammar)
-
-        var program: SyntaxProgram = SyntaxProgram.empty()
-
-        while (lexer.peek(null).type != "EOF") {
-            program = parser.parseNextStatement(lexer, program)
-        }
+    ): Report<SyntaxProgram, TypeError> {
+        val program = ParseProgram.parse(langConfig, grammar, path)
 
         val report = DefaultTypeCheckerFactory.create(typeSystem).check(program)
 
-        if (!report.isOk) {
-            failTypeCheck(report.errors)
-        }
+        // TODO: Interpret the program here
+        // TODO: Return a Result with the interpretation or an error if the interpretation fails
 
-        return program
-    }
-
-    private fun failTypeCheck(errors: List<TypeError>): Nothing {
-        val messages =
-            errors.joinToString("\n") { typeError ->
-                val position = typeError.location.start
-                "  - ${typeError.message} @ ${position.line}:${position.col}"
-            }
-        error("El chequeo de tipos falló:\n$messages")
+        return report
     }
 }

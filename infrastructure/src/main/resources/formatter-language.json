@@ -1,0 +1,39 @@
+{
+  "rules": [
+    { "type": "space-around", "token": "OPERATOR" },
+    { "type": "newline-after", "token": "SEMICOLON" },
+    { "type": "space-after", "token": "LET" }
+  ],
+  "userBindings": [
+    {
+      "userType": "space-before-colon",
+      "type": "space-before",
+      "token": "COLON",
+      "param": "enabled",
+      "default": true
+    },
+    {
+      "userType": "space-after-colon",
+      "type": "space-after",
+      "token": "COLON",
+      "param": "enabled",
+      "default": true
+    },
+    {
+      "userType": "space-around-assign",
+      "type": "space-around",
+      "token": "ASSIGN",
+      "param": "enabled",
+      "default": true
+    },
+    {
+      "userType": "newlines-before-println",
+      "type": "newline-before",
+      "token": "CALL",
+      "value": "println",
+      "previous": "SEMICOLON",
+      "param": "count",
+      "default": 1
+    }
+  ]
+}

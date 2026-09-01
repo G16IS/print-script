@@ -2,7 +2,7 @@ package printscript.error
 
 import printscript.ast.Location
 
-sealed interface TypeError {
+sealed interface TypeError : Error {
     val message: String
     val location: Location
 }
