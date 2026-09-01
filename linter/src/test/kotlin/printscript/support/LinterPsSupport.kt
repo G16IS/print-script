@@ -1,0 +1,83 @@
+package printscript.support
+
+import java.io.File
+import printscript.DefaultLexerFactory
+import printscript.DefaultParserFactory
+import printscript.domain.ExactRule
+import printscript.domain.Grammar
+import printscript.domain.LanguageConfig
+import printscript.domain.RegexRule
+import printscript.domain.TokenRule
+import printscript.infrastructure.reader.FileCodeReader
+import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.syntax.SyntaxProgram
+
+/**
+ * Parses PrintScript source with the real lexer/parser + grammar.config.json.
+ *
+ * Same rules and `order` as language.config.json. The lexer tries categories
+ * from first to last, so keywords beat identifiers.
+ */
+object LinterPsSupport {
+    fun parse(code: String): SyntaxProgram {
+        val file = File.createTempFile("printscript-linter-test", ".ps").apply { writeText(code) }
+        val codeReader = FileCodeReader(file.absolutePath)
+        val lexer = DefaultLexerFactory.create(codeReader, language())
+        val parser = DefaultParserFactory.create(grammar())
+
+        var program = SyntaxProgram.empty()
+        while (lexer.peek(null).type != "EOF") {
+            program = parser.parseNextStatement(lexer, program)
+        }
+        return program
+    }
+
+    private fun language(): LanguageConfig =
+        LanguageConfig(
+            order = listOf("keywords", "types", "operators", "literals", "identifiers"),
+            config =
+                mapOf(
+                    "keywords" to keywords(),
+                    "types" to types(),
+                    "operators" to operators(),
+                    "literals" to literals(),
+                    "identifiers" to identifiers(),
+                ),
+        )
+
+    private fun grammar(): Grammar {
+        val stream =
+            requireNotNull(LinterPsSupport::class.java.getResourceAsStream("/grammar.config.json")) {
+                "Missing resource grammar.config.json"
+            }
+        return JSONGrammarConfigReader.read(stream)
+    }
+
+    private fun keywords(): List<TokenRule> =
+        listOf(
+            ExactRule(listOf("let"), "LET", false),
+            ExactRule(listOf("println"), "CALL", true),
+        )
+
+    private fun types(): List<TokenRule> = listOf(ExactRule(listOf("string", "number"), "TYPE", true))
+
+    private fun operators(): List<TokenRule> =
+        listOf(
+            ExactRule(listOf(":"), "COLON", false),
+            ExactRule(listOf("="), "ASSIGN", false),
+            ExactRule(listOf(";"), "SEMICOLON", false),
+            ExactRule(listOf("("), "LEFT_PAREN", false),
+            ExactRule(listOf(")"), "RIGHT_PAREN", false),
+            ExactRule(listOf(","), "COMMA", false),
+            ExactRule(listOf("+", "-", "*", "/"), "OPERATOR", true),
+        )
+
+    private fun literals(): List<TokenRule> =
+        listOf(
+            RegexRule(listOf("^\"[^\"]*\""), "STRING_LITERAL", true, "^\"[^\"]*$"),
+            RegexRule(listOf("^[0-9]+(\\.[0-9]+)?"), "NUMBER_LITERAL", true, "^[0-9]+(\\.[0-9]*)?$"),
+        )
+
+    private fun identifiers(): List<TokenRule> =
+        listOf(RegexRule(listOf("^[a-zA-Z_][a-zA-Z0-9_]*"), "ID", true, "^[a-zA-Z_]"))
+}

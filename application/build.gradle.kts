@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":lexer"))
     implementation(project(":parser"))
     implementation(project(":type-checker"))
+    implementation(project(":linter"))
     implementation(project(":formatter"))
 
     testImplementation(kotlin("test"))
