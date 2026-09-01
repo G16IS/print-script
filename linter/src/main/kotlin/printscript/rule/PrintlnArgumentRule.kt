@@ -35,8 +35,8 @@ class PrintlnArgumentRule(
 
     private fun unwrap(node: SyntaxNode): SyntaxNode {
         if (node.name == "group") {
-            val inner = node.childOrNull("expression")
-            if (inner != null) return unwrap(inner)
+            val innerValue = node.childOrNull("expression")
+            if (innerValue != null) return unwrap(innerValue)
         }
         return if (node.children.size == 1) unwrap(node.children.first()) else node
     }
