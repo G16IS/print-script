@@ -1,5 +1,6 @@
 package printscript.cli
 
+import com.github.ajalt.clikt.testing.test
 import java.nio.file.Files
 import java.nio.file.Path
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,7 +22,7 @@ class PrintScriptCliTest {
                 """.trimIndent(),
             )
 
-        val result = PrintScriptCli.create().capture(arrayOf("run", file))
+        val result = cli("run", file)
 
         assertEquals(0, result.statusCode)
         assertEquals("Hello, World!\n", result.stdout)
@@ -36,7 +37,7 @@ class PrintScriptCliTest {
                 """.trimIndent(),
             )
 
-        val result = PrintScriptCli.create().capture(arrayOf("typecheck", file))
+        val result = cli("typecheck", file)
 
         assertEquals(1, result.statusCode)
         assertTrue(result.stderr.contains("Se esperaba number"))
@@ -46,7 +47,7 @@ class PrintScriptCliTest {
     fun `format pretty-prints an expression`() {
         val file = sourceFile("1+2;")
 
-        val result = PrintScriptCli.create().capture(arrayOf("format", file))
+        val result = cli("format", file)
 
         assertEquals(0, result.statusCode)
         assertEquals("1 + 2;\n", result.stdout)
@@ -56,7 +57,7 @@ class PrintScriptCliTest {
     fun `check fails on unformatted source`() {
         val file = sourceFile("1+2;")
 
-        val result = PrintScriptCli.create().capture(arrayOf("check", file))
+        val result = cli("check", file)
 
         assertEquals(1, result.statusCode)
         assertTrue(result.stderr.isNotBlank())
@@ -66,7 +67,7 @@ class PrintScriptCliTest {
     fun `parse failure prints ERROR`() {
         val file = sourceFile("let")
 
-        val result = PrintScriptCli.create().capture(arrayOf("run", file))
+        val result = cli("run", file)
 
         assertEquals(1, result.statusCode)
         assertTrue(result.stderr.contains("ERROR"))
@@ -76,7 +77,7 @@ class PrintScriptCliTest {
     fun `unsupported language version prints ERROR`() {
         val file = sourceFile("1+2;")
 
-        val result = PrintScriptCli.create().capture(arrayOf("--version", "2.0", "run", file))
+        val result = cli("--version", "2.0", "run", file)
 
         assertEquals(1, result.statusCode)
         assertTrue(result.stderr.contains("ERROR"))
@@ -84,10 +85,12 @@ class PrintScriptCliTest {
 
     @Test
     fun `missing subcommand prints help`() {
-        val result = PrintScriptCli.create().capture(arrayOf())
+        val result = cli()
 
         assertTrue(result.stdout.contains("Usage") || result.stderr.contains("Usage"))
     }
+
+    private fun cli(vararg args: String) = PrintScriptCli.create().test(*args)
 
     private fun sourceFile(contents: String): String {
         val file = tempDir.resolve("sample.ps")

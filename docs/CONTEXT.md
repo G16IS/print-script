@@ -172,7 +172,7 @@ Dependencias extra de **test**:
 - `formatter` testImplementation `infrastructure` (carga `formatter-language.json`)
 - `interpreter` testImplementation `lexer`, `parser`, `infrastructure` (lex+parse+interpret)
 - `application` tests usan `JSONGrammarConfigReader` + `JSONTypeSystemConfigReader` + `FileCodeReader` + un `LanguageConfig` armado en código (`PrintScriptLanguage`), no el JSON del lexer tal cual
-- `cli` tests arman un `.ps` temporal y llaman `PrintScriptCli.create().capture(...)` (pipeline real)
+- `cli` tests arman un `.ps` temporal y llaman `PrintScriptCli.create().test(...)` (pipeline real)
 - `infrastructure` tests cubren readers JSON/YAML contra resources
 
 Toolchain: `kotlin.jvmToolchain(21)`. Version catalog: `gradle/libs.versions.toml`.

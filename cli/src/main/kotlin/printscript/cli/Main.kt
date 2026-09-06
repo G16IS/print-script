@@ -1,5 +1,7 @@
 package printscript.cli
 
+import com.github.ajalt.clikt.core.main
+
 fun main(args: Array<String>) {
-    PrintScriptCli.create().runCli(args)
+    PrintScriptCli.create().main(args)
 }

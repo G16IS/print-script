@@ -15,8 +15,8 @@ object LoadFormatter {
         grammar: Grammar,
         langConfig: LanguageConfig,
         language: FormatterLanguageConfig,
-        user: FormatterRulesConfig = FormatterRulesConfig(),
-        defaults: FormatterRulesConfig = FormatterRulesConfig(),
+        user: FormatterRulesConfig,
+        defaults: FormatterRulesConfig,
     ): Result<Formatter, FormatError> {
         val lexemes = TokenLexemes.from(langConfig)
 

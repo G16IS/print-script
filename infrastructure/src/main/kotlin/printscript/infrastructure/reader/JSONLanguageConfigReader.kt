@@ -10,14 +10,6 @@ import printscript.domain.RegexRule
 import printscript.infrastructure.serializer.config.LanguageConfigSerializer
 import printscript.reader.LanguageConfigReader
 
-/**
- * Carga y deserializa archivos `language.config.json`.
- *
- * Uso:
- * ```
- * val config = LanguageConfigLoader.load(Path.of("language.config.json"))
- * ```
- */
 object JSONLanguageConfigReader : LanguageConfigReader {
     private val json =
         Json {

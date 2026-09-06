@@ -3,11 +3,9 @@ package printscript.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.ProgramResult
-import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.testing.test
 import printscript.cli.command.CheckCommand
 import printscript.cli.command.FormatCommand
 import printscript.cli.command.LintCommand
@@ -37,28 +35,17 @@ class PrintScriptCli(
         }
     }
 
-    fun runCli(args: Array<String>) {
-        main(args)
-    }
-
-    fun capture(args: Array<String>): CliExecution {
-        val result = test(*args)
-        return CliExecution(
-            statusCode = result.statusCode,
-            stdout = result.stdout,
-            stderr = result.stderr,
-        )
-    }
-
     companion object {
-        fun create(configs: PrintScriptConfigs = PrintScriptConfigs.load()) =
-            PrintScriptCli(
+        fun create(): PrintScriptCli {
+            val configs = PrintScriptConfigs.load()
+            return PrintScriptCli(
                 RunCommand(configs.lang, configs.grammar, configs.typeSystem),
                 LintCommand(configs.lang, configs.grammar, configs.linterConfig),
                 CheckCommand(configs.lang, configs.grammar, configs.formatter),
                 FormatCommand(configs.lang, configs.grammar, configs.formatter),
                 TypeCheckCommand(configs.lang, configs.grammar, configs.typeSystem),
             )
+        }
 
         private const val DEFAULT_VERSION = "1.0"
     }

@@ -19,7 +19,7 @@ import printscript.infrastructure.reader.YAMLFormatterRulesConfigReader
 import printscript.util.fold
 import usecases.LoadFormatter
 
-class PrintScriptConfigs(
+internal class PrintScriptConfigs(
     val lang: LanguageConfig,
     val grammar: Grammar,
     val typeSystem: TypeSystemConfig,
@@ -27,9 +27,9 @@ class PrintScriptConfigs(
     val formatter: Formatter,
 ) {
     companion object {
-        const val USER_YAML_PATH = ".printscript/formatter.yml"
+        private const val USER_YAML_PATH = ".printscript/formatter.yml"
 
-        fun load(userYamlPath: Path = Path.of(USER_YAML_PATH)): PrintScriptConfigs {
+        fun load(): PrintScriptConfigs {
             val lang = JSONLanguageConfigReader.read(resource("language.config.json"))
             val grammar = JSONGrammarConfigReader.read(resource("grammar.config.json"))
             return PrintScriptConfigs(
@@ -37,32 +37,33 @@ class PrintScriptConfigs(
                 grammar = grammar,
                 typeSystem = JSONTypeSystemConfigReader.read(resource("type-system.config.json")),
                 linterConfig = JSONLinterConfigReader.read(resource("linter.config.json")),
-                formatter = loadFormatter(lang, grammar, userYamlPath),
+                formatter = loadFormatter(lang, grammar),
             )
         }
 
         private fun loadFormatter(
             lang: LanguageConfig,
             grammar: Grammar,
-            userYamlPath: Path,
         ) = LoadFormatter
             .load(
                 grammar,
                 lang,
                 JSONFormatterLanguageConfigReader.read(resource("formatter-language.json")),
-                userRules(userYamlPath),
+                userRules(),
                 JSONFormatterRulesConfigReader.read(resource("formatter-user-defaults.json")),
             ).fold(
                 onOk = { it },
                 onErr = { error("Could not load formatter: ${it.message}") },
             )
 
-        private fun userRules(userYamlPath: Path) =
-            if (Files.exists(userYamlPath)) {
+        private fun userRules(): FormatterRulesConfig {
+            val userYamlPath = Path.of(USER_YAML_PATH)
+            return if (Files.exists(userYamlPath)) {
                 YAMLFormatterRulesConfigReader.read(userYamlPath)
             } else {
                 FormatterRulesConfig()
             }
+        }
 
         private fun resource(name: String): InputStream =
             requireNotNull(JSONLanguageConfigReader::class.java.classLoader.getResourceAsStream(name)) {

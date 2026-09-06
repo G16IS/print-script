@@ -1,6 +1,6 @@
 # Módulo `cli`
 
-Dependencias: `common` + Clikt 5.1.0 (`api`) + `:application` (use cases) + `:infrastructure` (readers JSON/YAML + `FileCodeReader`) + `:formatter` / `:type-checker` (tipos de presentación). Plugin `application` (`mainClass = printscript.cli.MainKt`).
+Dependencias: `common` + Clikt 5.1.0 + `:application` (use cases) + `:infrastructure` (readers JSON/YAML + `FileCodeReader`) + `:formatter` / `:type-checker` (tipos de presentación). Plugin `application` (`mainClass = printscript.cli.MainKt`).
 
 Composition root: carga las configs, llama a los use cases, imprime el resultado. No reimplementa lex/parse/format/lint.
 
@@ -27,10 +27,8 @@ abstract class SourceFileCommand(
 
 class PrintScriptCli(vararg commands: CliktCommand) : CliktCommand(name = "printscript") {
     companion object {
-        fun create(configs: PrintScriptConfigs = PrintScriptConfigs.load()): PrintScriptCli
+        fun create(): PrintScriptCli
     }
-    fun runCli(args: Array<String>)
-    fun capture(args: Array<String>): CliExecution
 }
 ```
 
@@ -44,14 +42,13 @@ Cada comando de producción llama al use case y pasa el resultado por `presentRu
 
 ```
 cli/src/main/kotlin/printscript/cli/
-  Main.kt                        entrypoint: PrintScriptCli.create().runCli(args)
+  Main.kt                        entrypoint: PrintScriptCli.create().main(args)
   PrintScriptCli.kt              root + --version + create()
   PrintScriptConfigs.kt          bag + load() (readers + LoadFormatter)
   SourceFileCommand.kt           argumento `file` + emit
   Present.kt                     Result/Report → CommandResult
   ErrorFormatting.kt             mensaje + (line:col-line:col)
   CommandResult.kt               presentación: Ok / Output / Failed
-  CliExecution.kt                status + stdout + stderr
   command/
     RunCommand.kt                ExecuteCode → List<SideEffect>
     LintCommand.kt               LintProgram → Report
@@ -92,4 +89,4 @@ Desde la raíz del repo:
 
 ## Tests
 
-`PrintScriptCliTest` arma un `.ps` temporal y llama `PrintScriptCli.create().capture(...)`: cubre `run` / `typecheck` / `format` / `check`, parse inválido → `ERROR`, `--version 2.0` → `ERROR`, y help si no hay subcomando.
+`PrintScriptCliTest` arma un `.ps` temporal y corre `PrintScriptCli.create()` con Clikt `test(*args)`: cubre `run` / `typecheck` / `format` / `check`, parse inválido → `ERROR`, `--version 2.0` → `ERROR`, y help si no hay subcomando.
