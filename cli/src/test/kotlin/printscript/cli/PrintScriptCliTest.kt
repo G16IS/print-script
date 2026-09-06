@@ -61,11 +61,28 @@ class PrintScriptCliTest {
         assertTrue(result.stdout.contains("Usage") || result.stderr.contains("Usage"))
     }
 
+    @Test
+    fun `extra file command is registered without changing the root`() {
+        val result =
+            PrintScriptCli(
+                FileCliCommand("analyze", "Analyze a PrintScript file") { CommandResult.Ok },
+            ).capture(arrayOf("analyze", "foo.ps"))
+
+        assertEquals(0, result.statusCode)
+        assertEquals("OK\n", result.stdout)
+    }
+
     private fun cli(
         run: FileCommand = FileCommand { CommandResult.Ok },
         lint: FileCommand = FileCommand { CommandResult.Ok },
         check: FileCommand = FileCommand { CommandResult.Ok },
         format: FileCommand = FileCommand { CommandResult.Ok },
         typecheck: FileCommand = FileCommand { CommandResult.Ok },
-    ) = PrintScriptCli(run, lint, check, format, typecheck)
+    ) = PrintScriptCli(
+        FileCliCommand("run", "Execute a PrintScript file", printOk = false, run),
+        FileCliCommand("lint", "Lint a PrintScript file", command = lint),
+        FileCliCommand("check", "Check that a PrintScript file matches the formatter", command = check),
+        FileCliCommand("format", "Format a PrintScript file and print it to stdout", printOk = false, format),
+        FileCliCommand("typecheck", "Type-check a PrintScript file", command = typecheck),
+    )
 }

@@ -5,7 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import printscript.PrintEffect
 import printscript.cli.CommandResult
-import printscript.cli.FileCommand
+import printscript.cli.FileCliCommand
 import printscript.cli.PrintScriptCli
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.Grammar
@@ -41,11 +41,21 @@ object PrintScriptRuntime {
         val formatter = loadFormatter(lang, grammar)
 
         return PrintScriptCli(
-            run = FileCommand { path -> catching { execute(path, lang, grammar, typeSystem) } },
-            lint = FileCommand { path -> catching { lint(path, lang, grammar, linterConfig) } },
-            check = FileCommand { path -> catching { check(path, lang, grammar, formatter) } },
-            format = FileCommand { path -> catching { format(path, lang, grammar, formatter) } },
-            typecheck = FileCommand { path -> catching { typecheck(path, lang, grammar, typeSystem) } },
+            FileCliCommand("run", "Execute a PrintScript file", printOk = false) { path ->
+                catching { execute(path, lang, grammar, typeSystem) }
+            },
+            FileCliCommand("lint", "Lint a PrintScript file") { path ->
+                catching { lint(path, lang, grammar, linterConfig) }
+            },
+            FileCliCommand("check", "Check that a PrintScript file matches the formatter") { path ->
+                catching { check(path, lang, grammar, formatter) }
+            },
+            FileCliCommand("format", "Format a PrintScript file and print it to stdout", printOk = false) { path ->
+                catching { format(path, lang, grammar, formatter) }
+            },
+            FileCliCommand("typecheck", "Type-check a PrintScript file") { path ->
+                catching { typecheck(path, lang, grammar, typeSystem) }
+            },
         )
     }
 

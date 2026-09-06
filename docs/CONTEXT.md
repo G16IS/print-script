@@ -459,7 +459,7 @@ Módulo existente, cableado en `LintProgram`. Detalle: [modules/LINTER.md](modul
 
 ### CLI
 
-Nuevo subcomando: clase en `cli/.../command/` + handler en `PrintScriptRuntime`. No hace falta una task Gradle extra: Clikt + `./gradlew :infrastructure:run --args="…"`. Detalle: [modules/CLI.md](modules/CLI.md).
+Nuevo subcomando: `FileCliCommand(...)` en `PrintScriptRuntime` (o un `CliktCommand` + `emit` si tiene flags extra). No hace falta una task Gradle extra: Clikt + `./gradlew :infrastructure:run --args="…"`. Detalle: [modules/CLI.md](modules/CLI.md).
 
 ---
 
@@ -509,5 +509,5 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.y
 | Pretty-print / bloques | FORMATTER | gramática de `if`/`{` + bump de `indentLevel` en `emitSyntheticToken` (el render ya existe) |
 | Lint/format del Kotlin del repo | BUILD_LOGIC | `build-logic` / `printscript.quality` |
 | CLI / correr un archivo | CLI + INFRASTRUCTURE | `./gradlew ps-run examples/hello.ps` |
-| Nuevo subcomando | CLI + INFRASTRUCTURE | `CliktCommand` + handler en `PrintScriptRuntime` |
+| Nuevo subcomando | CLI + INFRASTRUCTURE | `FileCliCommand` (o `CliktCommand` + `emit`) en `PrintScriptRuntime` |
 | Leer un `.ps` de otro lado (stdin, string) | common `CodeReader` + infrastructure | nueva impl de `CodeReader` |

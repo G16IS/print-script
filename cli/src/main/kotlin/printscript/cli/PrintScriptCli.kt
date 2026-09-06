@@ -8,18 +8,9 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.testing.test
-import printscript.cli.command.CheckCommand
-import printscript.cli.command.FormatCommand
-import printscript.cli.command.LintCommand
-import printscript.cli.command.RunCommand
-import printscript.cli.command.TypeCheckCommand
 
 class PrintScriptCli(
-    run: FileCommand,
-    lint: FileCommand,
-    check: FileCommand,
-    format: FileCommand,
-    typecheck: FileCommand,
+    vararg commands: CliktCommand,
 ) : CliktCommand(name = "printscript") {
     private val version by option(
         "--version",
@@ -27,13 +18,7 @@ class PrintScriptCli(
     ).default(DEFAULT_VERSION)
 
     init {
-        subcommands(
-            RunCommand(run),
-            LintCommand(lint),
-            CheckCommand(check),
-            FormatCommand(format),
-            TypeCheckCommand(typecheck),
-        )
+        subcommands(*commands)
     }
 
     override val printHelpOnEmptyArgs: Boolean = true

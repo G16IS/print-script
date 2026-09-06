@@ -2,16 +2,16 @@
 
 Dependencias: `common` + Clikt 5.1.0 (`api`, para que `:infrastructure` vea `CliktCommand`). No depende de `:application` ni de `:infrastructure`.
 
-Fachada de línea de comandos: parsea args y despacha a handlers inyectados (`FileCommand`). No orquesta el pipeline, no lee JSON, no conoce lexer/parser. El composition root vive en `:infrastructure` (`PrintScriptRuntime` + `Main.kt`).
+Fachada de línea de comandos: parsea args y despacha a handlers. No orquesta el pipeline, no lee JSON, no conoce lexer/parser. El composition root vive en `:infrastructure` (`PrintScriptRuntime` + `Main.kt`).
 
 ---
 
 ## Cuándo tocarlo
 
-- Nuevo subcomando o flag de Clikt
-- Cambiar `CommandResult` / cómo se imprime OK vs output vs errores
+- Nuevo flag compartido en el root (`--version`) o cómo se imprime `CommandResult`
 - Tests de parsing de args (handlers fake)
-- **No** para cablear un caso de uso: eso es `PrintScriptRuntime` en infrastructure
+- **No** para agregar un subcomando de archivo: eso es un `FileCliCommand(...)` en `PrintScriptRuntime`
+- **No** para un subcomando con flags propios: `CliktCommand` + `emit` en infra (o acá si el comando no es de archivo)
 - **No** para la semántica de format/lint/run: esos son los use cases de application
 
 ---
@@ -29,19 +29,26 @@ sealed interface CommandResult {
     data class Failed(val messages: List<String>) : CommandResult
 }
 
+class FileCliCommand(
+    name: String,
+    helpText: String,
+    printOk: Boolean = true,
+    command: FileCommand,
+) : CliktCommand(name)
+
+fun CliktCommand.emit(result: CommandResult, printOk: Boolean = true)
+
 class PrintScriptCli(
-    run: FileCommand,
-    lint: FileCommand,
-    check: FileCommand,
-    format: FileCommand,
-    typecheck: FileCommand,
+    vararg commands: CliktCommand,
 ) : CliktCommand(name = "printscript") {
     fun runCli(args: Array<String>)
     fun capture(args: Array<String>): CliExecution
 }
 ```
 
-Cada subcomando es un `CliktCommand` (Command pattern) que recibe un `FileCommand`. El root solo registra hijos y valida `--version` (default `1.0`; otra cosa → `ERROR` y exit 1).
+El root solo registra hijos y valida `--version` (default `1.0`; otra cosa → `ERROR` y exit 1). Cada subcomando es un `CliktCommand` que arma `:infrastructure`.
+
+Si el comando es `archivo → CommandResult`, usá `FileCliCommand`. Si necesita flags extra (`--config`, etc.), escribí un `CliktCommand` y llamá `emit`.
 
 `runCli` llama a `CliktCommand.main` (extension de Clikt 5). `capture` es para tests (`command.test(...)`).
 
@@ -52,21 +59,17 @@ Cada subcomando es un `CliktCommand` (Command pattern) que recibe un `FileComman
 ```
 cli/src/main/kotlin/printscript/cli/
   PrintScriptCli.kt              root + --version + subcommands
-  FileCommand.kt                 fun interface del handler
+  FileCliCommand.kt              argumento `file` + emit(CommandResult)
+  FileCommand.kt                 fun interface del handler de archivo
   CommandResult.kt               Ok / Output / Failed
   CliExecution.kt                status + stdout + stderr (tests / runtime)
-  command/
-    FileCliCommand.kt            argumento `file`, echo, ProgramResult(1)
-    RunCommand.kt
-    LintCommand.kt
-    CheckCommand.kt
-    FormatCommand.kt
-    TypeCheckCommand.kt
 ```
 
 ---
 
 ## Subcomandos
+
+Los registra `PrintScriptRuntime`, no este módulo.
 
 | Comando | Handler (lo inyecta infra) | Éxito |
 |---|---|---|
@@ -100,4 +103,4 @@ Clikt en sí no registra tasks. Las `ps-*` viven en el `build.gradle.kts` raíz 
 
 ## Tests
 
-`PrintScriptCliTest` usa `capture` con `FileCommand` fake: no pega al pipeline. Cubre output de `run`/`format`, `OK` de lint, Failed → stderr + exit 1, `--version 2.0` → `ERROR`, help si no hay subcomando.
+`PrintScriptCliTest` usa `capture` con `FileCommand` fake: no pega al pipeline. Cubre output de `run`/`format`, `OK` de lint, Failed → stderr + exit 1, `--version 2.0` → `ERROR`, help si no hay subcomando, y un subcomando extra sin tocar el root.
