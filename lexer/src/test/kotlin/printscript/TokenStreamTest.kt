@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import printscript.domain.ExactRule
 import printscript.domain.LanguageConfig
+import printscript.error.MultipleRulesWithSamePriority
 import printscript.error.UnexpectedEnfOfLine
 import printscript.error.UnexpectedToken
 import printscript.support.MockReader
@@ -204,7 +205,7 @@ class TokenStreamTest {
                     config = mapOf("operators" to listOf(assign, equals)),
                 )
             val error = lex("=x", config)
-            assertTrue(error is Result.Err && error.error is UnexpectedEnfOfLine)
+            assertTrue(error is Result.Err && error.error is MultipleRulesWithSamePriority)
             assertLex("==", config, tok("EQUALS"), tok("EOF"))
         }
     }

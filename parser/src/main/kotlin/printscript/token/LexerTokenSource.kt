@@ -1,7 +1,10 @@
 package printscript.token
 
+import java.rmi.UnexpectedException
 import printscript.Lexer
 import printscript.domain.Token
+import printscript.error.Error
+import printscript.util.Result
 
 class LexerTokenSource(
     private val lexer: Lexer,
@@ -32,7 +35,11 @@ class LexerTokenSource(
 
     private fun fillTo(target: Int) {
         while (buffer.lastIndex < target) {
-            buffer += lexer.nextToken()
+            val nextToken: Result<Token, Error> = lexer.nextToken()
+            when (nextToken) {
+                is Result.Err -> throw UnexpectedException("Could not read next token")
+                is Result.Ok -> buffer += nextToken.value
+            }
         }
     }
 

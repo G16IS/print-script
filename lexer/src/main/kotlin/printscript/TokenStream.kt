@@ -108,7 +108,11 @@ class TokenStream(
                     .filter { it.matchType != MatchType.INVALID }
                     .map { it.tokenRule },
             )
-        return TokenFactory.create(rule, Location(initialPos, finalPos), text)
+
+        when (rule) {
+            is Result.Err -> return rule
+            is Result.Ok -> return TokenFactory.create(rule.value, Location(initialPos, finalPos), text)
+        }
     }
 
     private fun areAllMatchResultsInvalid(matchResults: List<MatchResult>): Boolean =

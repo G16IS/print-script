@@ -1,14 +1,18 @@
 package printscript
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import printscript.domain.ExactRule
 import printscript.domain.LanguageConfig
 import printscript.domain.RegexRule
 import printscript.domain.TokenRule
+import printscript.error.MultipleRulesWithSamePriority
+import printscript.error.NoRulesProvided
+import printscript.error.RuleNotFound
 import printscript.support.PrintScriptLanguage
+import printscript.util.Result
 
 class RuleDrawResolverTest {
     private val let = ExactRule(listOf("let"), "LET", false)
@@ -49,12 +53,12 @@ class RuleDrawResolverTest {
     inner class UniqueMatch {
         @Test
         fun `returns the only matching exact rule`() {
-            assertEquals(let, resolver().resolve(listOf(let)))
+            assertEquals(Result.Ok(let), resolver().resolve(listOf(let)))
         }
 
         @Test
         fun `returns the only matching regex rule`() {
-            assertEquals(identifier, resolver().resolve(listOf(identifier)))
+            assertEquals(Result.Ok(identifier), resolver().resolve(listOf(identifier)))
         }
     }
 
@@ -62,38 +66,38 @@ class RuleDrawResolverTest {
     inner class FirstInOrderWins {
         @Test
         fun `prefers the category that appears first in order`() {
-            assertEquals(let, resolver().resolve(listOf(let, plus, identifier)))
+            assertEquals(Result.Ok(let), resolver().resolve(listOf(let, plus, identifier)))
         }
 
         @Test
         fun `prefers an earlier category over a later one`() {
-            assertEquals(let, resolver().resolve(listOf(let, plus)))
+            assertEquals(Result.Ok(let), resolver().resolve(listOf(let, plus)))
         }
 
         @Test
         fun `picks the highest priority even when lower categories appear first in the list`() {
-            assertEquals(let, resolver().resolve(listOf(identifier, number, let)))
+            assertEquals(Result.Ok(let), resolver().resolve(listOf(identifier, number, let)))
         }
 
         @Test
         fun `ignores extra rules from lower priority categories`() {
-            assertEquals(printlnRule, resolver().resolve(listOf(identifier, plus, printlnRule)))
+            assertEquals(Result.Ok(printlnRule), resolver().resolve(listOf(identifier, plus, printlnRule)))
         }
 
         @Test
         fun `a category missing from order is the lowest priority`() {
             val config = languageConfig(order = listOf("keywords", "operators"))
-            assertEquals(let, resolver(config).resolve(listOf(identifier, let)))
+            assertEquals(Result.Ok(let), resolver(config).resolve(listOf(identifier, let)))
         }
 
         @Test
         fun `list order of matching rules does not override category order`() {
             val keywordsFirst = languageConfig(order = listOf("keywords", "identifiers"))
-            assertEquals(let, resolver(keywordsFirst).resolve(listOf(identifier, let)))
-            assertEquals(let, resolver(keywordsFirst).resolve(listOf(let, identifier)))
+            assertEquals(Result.Ok(let), resolver(keywordsFirst).resolve(listOf(identifier, let)))
+            assertEquals(Result.Ok(let), resolver(keywordsFirst).resolve(listOf(let, identifier)))
 
             val identifiersFirst = languageConfig(order = listOf("identifiers", "keywords"))
-            assertEquals(identifier, resolver(identifiersFirst).resolve(listOf(let, identifier)))
+            assertEquals(Result.Ok(identifier), resolver(identifiersFirst).resolve(listOf(let, identifier)))
         }
     }
 
@@ -109,27 +113,27 @@ class RuleDrawResolverTest {
 
         @Test
         fun `keywords first - let beats identifier`() {
-            assertEquals(letRule, printScript.resolve(listOf(letRule, idRule)))
+            assertEquals(Result.Ok(letRule), printScript.resolve(listOf(letRule, idRule)))
         }
 
         @Test
         fun `reversed order - identifier beats let`() {
-            assertEquals(idRule, reversed.resolve(listOf(letRule, idRule)))
+            assertEquals(Result.Ok(idRule), reversed.resolve(listOf(letRule, idRule)))
         }
 
         @Test
         fun `types beat identifiers for string`() {
-            assertEquals(typeRule, printScript.resolve(listOf(typeRule, idRule)))
+            assertEquals(Result.Ok(typeRule), printScript.resolve(listOf(typeRule, idRule)))
         }
 
         @Test
         fun `operators beat identifiers`() {
-            assertEquals(plusRule, printScript.resolve(listOf(plusRule, idRule)))
+            assertEquals(Result.Ok(plusRule), printScript.resolve(listOf(plusRule, idRule)))
         }
 
         @Test
         fun `keywords beat types`() {
-            assertEquals(letRule, printScript.resolve(listOf(letRule, typeRule)))
+            assertEquals(Result.Ok(letRule), printScript.resolve(listOf(letRule, typeRule)))
         }
     }
 
@@ -138,54 +142,37 @@ class RuleDrawResolverTest {
         @Test
         fun `empty matching list`() {
             val exception =
-                assertThrows<IllegalArgumentException> {
-                    resolver().resolve(emptyList())
-                }
-            assertEquals("No matching rules provided", exception.message)
+                resolver().resolve(emptyList())
+            assertTrue(exception is Result.Err && exception.error is NoRulesProvided)
         }
 
         @Test
         fun `two rules in the highest category`() {
             val exception =
-                assertThrows<IllegalArgumentException> {
-                    resolver().resolve(listOf(let, printlnRule))
-                }
-            assertEquals(
-                "Multiple rules found with the same priority: ${listOf(let, printlnRule)}",
-                exception.message,
-            )
+                resolver().resolve(listOf(let, printlnRule))
+            assertTrue(exception is Result.Err && exception.error is MultipleRulesWithSamePriority)
         }
 
         @Test
         fun `highest category has more than one match among mixed rules`() {
-            val exception =
-                assertThrows<IllegalArgumentException> {
-                    resolver().resolve(listOf(let, printlnRule, plus))
-                }
-            assertEquals(
-                "Multiple rules found with the same priority: ${listOf(let, printlnRule)}",
-                exception.message,
-            )
+            val exception = resolver().resolve(listOf(let, printlnRule, plus))
+
+            assertTrue(exception is Result.Err && exception.error is MultipleRulesWithSamePriority)
         }
 
         @Test
         fun `rule not present in the language config`() {
             val unknown = ExactRule(listOf("unknown"), "UNKNOWN", false)
-            val exception =
-                assertThrows<IllegalStateException> {
-                    resolver().resolve(listOf(unknown))
-                }
-            assertEquals("Rule $unknown not found in config", exception.message)
+            val exception = resolver().resolve(listOf(unknown))
+            assertTrue(exception is Result.Err && exception.error is RuleNotFound)
         }
 
         @Test
         fun `one of several rules is not present in the language config`() {
             val unknown = ExactRule(listOf("unknown"), "UNKNOWN", false)
             val exception =
-                assertThrows<IllegalStateException> {
-                    resolver().resolve(listOf(let, unknown))
-                }
-            assertEquals("Rule $unknown not found in config", exception.message)
+                resolver().resolve(listOf(let, unknown))
+            assertTrue(exception is Result.Err && exception.error is RuleNotFound)
         }
     }
 }

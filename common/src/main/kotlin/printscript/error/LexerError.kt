@@ -1,6 +1,8 @@
 package printscript.error
 
 import printscript.ast.Location
+import printscript.domain.TokenRule
+import printscript.reader.CharPosition
 
 sealed interface LexerError : Error {
     val message: String
@@ -24,4 +26,27 @@ data class UnexpectedEnfOfLine(
                 "${location.start.line} col " +
                 "${location.start.col} " +
                 "while reading token $wasReadingToken"
+}
+
+data class MultipleRulesWithSamePriority(
+    override val location: Location = Location(CharPosition(0, 0), CharPosition(0, 0)),
+    val rules: List<TokenRule>,
+) : LexerError {
+    override val message: String
+        get() = "Multiple rules found with the same priority: $rules"
+}
+
+data class NoRulesProvided(
+    override val location: Location = Location(CharPosition(0, 0), CharPosition(0, 0)),
+) : LexerError {
+    override val message: String
+        get() = "No matching rules provided"
+}
+
+data class RuleNotFound(
+    override val location: Location = Location(CharPosition(0, 0), CharPosition(0, 0)),
+    val rule: TokenRule,
+) : LexerError {
+    override val message: String
+        get() = "Rule $rule not found in config"
 }
