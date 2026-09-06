@@ -472,7 +472,7 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.y
 - `DefaultParser` cachea el `TokenSource` por identidad del `Lexer`: no reutilices un parser con **otro** lexer sin un parser nuevo (o el bind se queda corto si es el mismo objeto).
 - Locations: `FileCodeReader` arranca en `(1,1)`; el `MockReader` de tests del lexer arranca línea `0`. No compares locations entre esos dos mundos.
 - No aplanes `expression`/`term` de un solo hijo: el interpreter y los tests de application dependen del wrap de `LeftRule`.
-- `DefaultInterpreter` exige en construcción que todo `NodeKind` del mapping tenga executor **o** evaluator; duplicados de kind explotan igual.
+- `DefaultInterpreter` no lanza en construcción. Kind mapeado sin executor ni evaluator → `Result.Err(UnresolvableExpression)` al interpretar; duplicados de kind se quedan con el último handler.
 
 ---
 

@@ -7,8 +7,10 @@ import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
 import printscript.node.NodeKind
+import printscript.node.tokenValue
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
+import printscript.util.map
 
 class StringLiteralEvaluator : ExpressionEvaluator {
     override val kind = NodeKind.STRING_LITERAL
@@ -17,13 +19,10 @@ class StringLiteralEvaluator : ExpressionEvaluator {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<EvalResult, RuntimeError> {
-        val raw = node.value()
-        return Result.Ok(
-            EvalResult
-                .pure(StringValue(raw.removeSurrounding(QUOTE))),
-        )
-    }
+    ): Result<EvalResult, RuntimeError> =
+        node.tokenValue().map { raw ->
+            EvalResult.pure(StringValue(raw.removeSurrounding(QUOTE)))
+        }
 
     private companion object {
         const val QUOTE = "\""

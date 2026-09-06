@@ -9,6 +9,7 @@ import printscript.error.InvalidOperands
 import printscript.error.NoNodeKindForNode
 import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
+import printscript.error.UnrecognizedNode
 import printscript.error.UnresolvableExpression
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionSolver
@@ -22,12 +23,14 @@ import printscript.expression.literal.StringLiteralEvaluator
 import printscript.node.NodeKind
 import printscript.node.NodeKindResolver
 import printscript.node.PrintScriptMapping
+import printscript.support.TEST_LOCATION
 import printscript.support.binary
 import printscript.support.call
 import printscript.support.identifierNode
 import printscript.support.node
 import printscript.support.numberNode
 import printscript.support.stringNode
+import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
 class ExpressionSolverTest {
@@ -169,6 +172,33 @@ class ExpressionSolverTest {
         val unknown = node("if", numberNode("1"))
 
         assertTrue(err(solver.solve(unknown, InterpreterContext())) is NoNodeKindForNode)
+    }
+
+    @Test
+    fun `number node without token value fails with UnrecognizedNode`() {
+        val bare = SyntaxNode("number", token = null, location = TEST_LOCATION)
+
+        assertTrue(err(solver.solve(bare, InterpreterContext())) is UnrecognizedNode)
+    }
+
+    @Test
+    fun `identifier node without token value fails with UnrecognizedNode`() {
+        val bare = SyntaxNode("identifier", token = null, location = TEST_LOCATION)
+
+        assertTrue(err(solver.solve(bare, InterpreterContext())) is UnrecognizedNode)
+    }
+
+    @Test
+    fun `binary operator without token value fails with UnrecognizedNode`() {
+        val expression =
+            node(
+                "expression",
+                numberNode("1"),
+                SyntaxNode("OPERATOR", token = null, location = TEST_LOCATION),
+                numberNode("2"),
+            )
+
+        assertTrue(err(solver.solve(expression, InterpreterContext())) is UnrecognizedNode)
     }
 
     @Test

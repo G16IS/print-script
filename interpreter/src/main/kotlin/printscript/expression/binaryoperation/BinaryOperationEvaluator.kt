@@ -13,6 +13,8 @@ import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
 import printscript.node.NodeKind
+import printscript.node.childAt
+import printscript.node.tokenValue
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 import printscript.util.flatMap
@@ -34,16 +36,22 @@ class BinaryOperationEvaluator(
         solver: ExpressionSolver,
     ): Result<EvalResult, RuntimeError> =
         when (node.children.size) {
-            UNARY_CHILDREN -> solver.solve(node.children[ONLY_CHILD_INDEX], context)
-            CHILDREN_WITH_OPERATOR -> {
-                val operator = node.children[OPERATOR_INDEX].value()
-                solver.solve(node.children[LEFT_INDEX], context).flatMap { left ->
-                    solver.solve(node.children[RIGHT_INDEX], context).flatMap { right ->
-                        apply(operator, left, right, node)
+            UNARY_CHILDREN ->
+                node.childAt(ONLY_CHILD_INDEX).flatMap { solver.solve(it, context) }
+            CHILDREN_WITH_OPERATOR ->
+                node.childAt(OPERATOR_INDEX).flatMap { opNode ->
+                    opNode.tokenValue().flatMap { operator ->
+                        node.childAt(LEFT_INDEX).flatMap { leftNode ->
+                            node.childAt(RIGHT_INDEX).flatMap { rightNode ->
+                                solver.solve(leftNode, context).flatMap { left ->
+                                    solver.solve(rightNode, context).flatMap { right ->
+                                        apply(operator, left, right, node)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-            }
-
             else -> Result.Err(UnrecognizedNode(node.name, node.location))
         }
 
@@ -58,19 +66,18 @@ class BinaryOperationEvaluator(
                 Result
                     .Err(DivisionByZero(node.location))
 
-            else ->
-                typeConfiguration
-                    .resolveBinaryOperation(operator, left.value::class, right.value::class)
-                    ?.let { rule ->
-                        Result.Ok(
-                            EvalResult.combine(
-                                left,
-                                right,
-                                rule.apply(left.value, right.value),
-                            ),
-                        )
-                    }
-                    ?: Result.Err(
+            else -> {
+                val rule =
+                    typeConfiguration.resolveBinaryOperation(
+                        operator,
+                        left.value::class,
+                        right.value::class,
+                    )
+                val computed = rule?.apply(left.value, right.value)
+                if (computed != null) {
+                    Result.Ok(EvalResult.combine(left, right, computed))
+                } else {
+                    Result.Err(
                         InvalidOperands(
                             operator,
                             displayName(left.value),
@@ -78,6 +85,8 @@ class BinaryOperationEvaluator(
                             node.location,
                         ),
                     )
+                }
+            }
         }
 
     private fun dividesByZero(

@@ -34,7 +34,7 @@ object DefaultInterpreterFactory {
 }
 ```
 
-Errores: **Result end-to-end**. `interpret`, `solve`, `evaluate` y `execute` devuelven `Result<_, RuntimeError>` usando los helpers de `common/util/Result.kt` (`map` / `flatMap` / `fold`). Fail-fast: el primer error corta la ejecución y sube. `RuntimeError` vive en `common`; algunas variantes también son `TypeError` (`UndeclaredIdentifier`, `InvalidOperands`, `UnrecognizedNode`).
+Errores: **Result end-to-end, sin excepciones**. `interpret`, `solve`, `evaluate` y `execute` devuelven `Result<_, RuntimeError>` usando los helpers de `common/util/Result.kt` (`map` / `flatMap` / `fold`). Fail-fast: el primer error corta la ejecución y sube. Wiring incompleto o nodo malformado también es `Err` (`UnresolvableExpression` / `UnrecognizedNode`), no un `check` en el constructor. `RuntimeError` vive en `common`; algunas variantes también son `TypeError` (`UndeclaredIdentifier`, `InvalidOperands`, `UnrecognizedNode`).
 
 ---
 
@@ -50,6 +50,7 @@ interpreter/src/main/kotlin/printscript/
   node/
     NodeKind.kt                   vocabulario cerrado del intérprete
     NodeKindResolver.kt           nombre de regla -> NodeKind (Result)
+    NodeAccess.kt                 tokenValue / childAt (Result; no llama value()/child())
     PrintScriptMapping.kt         mapping default grammar.config.json v1
   statement/
     StatementExecutor.kt          kind + execute(node, context, solver): Result<StatementResult, _>
@@ -81,7 +82,7 @@ interpreter/src/main/kotlin/printscript/
 Dos niveles, mismo patrón:
 
 1. `NodeKindResolver` traduce `node.name` (nombre de regla de la gramática) a `NodeKind` vía un `Map<String, NodeKind>`.
-2. `DefaultInterpreter` y `ExpressionSolver` despachan por `Map<NodeKind, _>`; duplicados explotan en construcción.
+2. `DefaultInterpreter` y `ExpressionSolver` despachan por `Map<NodeKind, _>`. Un kind duplicado se queda con el último handler (`associateBy`). Un kind mapeado sin executor/evaluator → `Result.Err(UnresolvableExpression)` en `interpret` / `solve`. Los constructores no validan ni lanzan.
 
 Mapping default (`PrintScriptMapping`):
 
@@ -96,7 +97,7 @@ Mapping default (`PrintScriptMapping`):
 | `call` | `CALL` |
 | `group` | `GROUP` |
 
-`DefaultInterpreter` valida en construcción que todo kind mapeado esté cubierto por un executor **o** un evaluator.
+El interpreter no llama `SyntaxNode.value()` / `child()` / `find()` (tiran desde `common`). Token y children van por `tokenValue()` / `childAt()` → `UnrecognizedNode` si faltan.
 
 ---
 
@@ -135,7 +136,7 @@ Igual que el resto del pipeline: nombres = reglas. Ojo con:
 |---|---|
 | `InterpreterContextTest` | scopes, shadowing, assign con rebuild de cadena, assign no declarada |
 | `ExpressionSolverTest` | literales (incluye strip de comillas), identificador, binarios, unario, div-cero, operandos inválidos, calls anidados, errores de dispatch |
-| `DefaultInterpreterTest` | threading de contexto, redeclaración, orden de efectos, fail-fast, validaciones de construcción |
+| `DefaultInterpreterTest` | threading de contexto, redeclaración, orden de efectos, fail-fast, last-wins si hay executor duplicado, kind sin handler → `UnresolvableExpression` |
 | `InterpreterIntegrationTest` | `.ps` real lex→parse→interpret con asserts sobre `List<SideEffect>` |
 
 Correr: `./gradlew :interpreter:test`.

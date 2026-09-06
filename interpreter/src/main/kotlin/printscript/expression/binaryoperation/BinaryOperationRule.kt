@@ -8,5 +8,5 @@ data class BinaryOperationRule(
     val leftType: KClass<out RuntimeValue>,
     val rightType: KClass<out RuntimeValue>,
     val resultType: KClass<out RuntimeValue>,
-    val apply: (RuntimeValue, RuntimeValue) -> RuntimeValue,
+    val apply: (RuntimeValue, RuntimeValue) -> RuntimeValue?,
 )

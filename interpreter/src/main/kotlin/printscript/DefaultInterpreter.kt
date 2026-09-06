@@ -1,6 +1,7 @@
 package printscript
 
 import printscript.error.RuntimeError
+import printscript.error.UnresolvableExpression
 import printscript.expression.ExpressionSolver
 import printscript.node.NodeKind
 import printscript.node.NodeKindResolver
@@ -17,19 +18,7 @@ class DefaultInterpreter(
     statementExecutors: List<StatementExecutor>,
 ) : Interpreter {
     private val executorsByKind: Map<NodeKind, StatementExecutor> =
-        statementExecutors.associateBy { it.kind }.also { byKind ->
-            check(byKind.size == statementExecutors.size) {
-                "Hay más de un StatementExecutor registrado para el mismo NodeKind"
-            }
-        }
-
-    init {
-        val covered = executorsByKind.keys + expressionSolver.handledKinds()
-        val missing = nodeKindResolver.mapping.values.toSet() - covered
-        check(missing.isEmpty()) {
-            "No hay StatementExecutor ni ExpressionEvaluator registrado para los NodeKind $missing"
-        }
-    }
+        statementExecutors.associateBy { it.kind }
 
     override fun interpret(
         context: InterpreterContext,
@@ -59,7 +48,10 @@ class DefaultInterpreter(
         context: InterpreterContext,
     ): Result<Pair<List<SideEffect>, InterpreterContext>, RuntimeError> =
         nodeKindResolver.resolve(statement).flatMap { kind ->
-            executorsByKind.getValue(kind).execute(statement, context, expressionSolver).map { outcome ->
+            val executor =
+                executorsByKind[kind]
+                    ?: return@flatMap Result.Err(UnresolvableExpression(statement.name, statement.location))
+            executor.execute(statement, context, expressionSolver).map { outcome ->
                 outcome.sideEffects to outcome.newContext
             }
         }

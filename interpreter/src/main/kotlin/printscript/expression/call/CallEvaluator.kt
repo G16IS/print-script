@@ -4,12 +4,13 @@ import printscript.InterpreterContext
 import printscript.PrintEffect
 import printscript.UnitValue
 import printscript.error.RuntimeError
-import printscript.error.UnrecognizedNode
 import printscript.error.UnresolvableCall
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
 import printscript.node.NodeKind
+import printscript.node.childAt
+import printscript.node.tokenValue
 import printscript.syntax.SyntaxNode
 import printscript.toPrintableString
 import printscript.util.Result
@@ -27,12 +28,13 @@ class CallEvaluator : ExpressionEvaluator {
         context: InterpreterContext,
         solver: ExpressionSolver,
     ): Result<EvalResult, RuntimeError> =
-        if (node.children.size < CHILDREN_COUNT) {
-            Result.Err(UnrecognizedNode(node.name, node.location))
-        } else {
-            val callee = node.children[CALLEE_INDEX].value()
-            solver.solve(node.children[ARGUMENT_INDEX], context).flatMap { result ->
-                dispatch(callee, result, node)
+        node.childAt(CALLEE_INDEX).flatMap { calleeNode ->
+            node.childAt(ARGUMENT_INDEX).flatMap { argumentNode ->
+                calleeNode.tokenValue().flatMap { callee ->
+                    solver.solve(argumentNode, context).flatMap { result ->
+                        dispatch(callee, result, node)
+                    }
+                }
             }
         }
 
@@ -53,7 +55,6 @@ class CallEvaluator : ExpressionEvaluator {
         }
 
     private companion object {
-        const val CHILDREN_COUNT = 2
         const val CALLEE_INDEX = 0
         const val ARGUMENT_INDEX = 1
         const val PRINTLN = "println"

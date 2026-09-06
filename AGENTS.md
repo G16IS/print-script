@@ -154,7 +154,7 @@ Application: `object`s (`InterpretCode`, `FormatCode`, `CheckFormat`, `LintProgr
 | Lexer | Lanza `IllegalArgumentException` (token inesperado) / `IllegalStateException` (EOF a mitad de token). Hay un `TODO-future` para `TerminalToken` en vez del `Token("EOF", …)` actual. |
 | Parser | Lanza `ParseException` (sintaxis). |
 | Type-checker | No lanza. `Report` / `Result` con **su propio** `printscript.typechecker.TypeError` (data class `message` + `location`), no el sealed de `common`. |
-| Interpreter | `Result.Err(RuntimeError)` end-to-end (`map` / `flatMap`). Fail-fast. Construcción inválida (executor duplicado / kind sin handler) lanza `IllegalStateException` vía `check`. |
+| Interpreter | `Result.Err(RuntimeError)` end-to-end (`map` / `flatMap`). Fail-fast. No lanza: wiring incompleto o nodo malformado también es `Err` (`UnresolvableExpression` / `UnrecognizedNode`). |
 | Formatter | `format` → `Result<String, FormatError>`; `check` → `Report<Unit, FormatError>`. |
 | Linter | Violaciones → `Report<SyntaxProgram, LintError>`. Config inválida en factory → `IllegalArgumentException` / `require`. |
 | `interpretCode` | Devuelve el `Report` del type-checker. **No interpreta.** Hay `TODO` explícitos en `InterpretCode.kt`. |
@@ -236,7 +236,7 @@ No hay tests de application para `LintProgram`.
 - No asumas `TokenType.IDENTIFIER`: el lexer emite `"ID"`.
 - No aplanes `expression`/`term` de un solo hijo.
 - `Grammar(...)` falla si `start` o una referencia no existen.
-- `DefaultInterpreter` exige en construcción que todo `NodeKind` del mapping tenga executor **o** evaluator.
+- `DefaultInterpreter` no lanza en construcción. Kind mapeado sin executor ni evaluator → `Result.Err(UnresolvableExpression)` al interpretar. Handler duplicado: last-wins.
 
 ## Docs
 

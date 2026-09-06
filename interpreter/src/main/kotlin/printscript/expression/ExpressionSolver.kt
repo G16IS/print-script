@@ -14,11 +14,7 @@ class ExpressionSolver(
     evaluators: List<ExpressionEvaluator>,
 ) {
     private val evaluatorsByKind: Map<NodeKind, ExpressionEvaluator> =
-        evaluators.associateBy { it.kind }.also { byKind ->
-            check(byKind.size == evaluators.size) {
-                "Hay más de un ExpressionEvaluator registrado para el mismo NodeKind"
-            }
-        }
+        evaluators.associateBy { it.kind }
 
     fun solve(
         node: SyntaxNode,
@@ -29,6 +25,4 @@ class ExpressionSolver(
                 ?.evaluate(node, context, this)
                 ?: Result.Err(UnresolvableExpression(node.name, node.location))
         }
-
-    fun handledKinds(): Set<NodeKind> = evaluatorsByKind.keys
 }

@@ -1,11 +1,11 @@
 package printscript
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
+import printscript.error.UnresolvableExpression
 import printscript.expression.ExpressionSolver
 import printscript.expression.GroupEvaluator
 import printscript.expression.binaryoperation.BinaryOperationEvaluator
@@ -94,20 +94,32 @@ class DefaultInterpreterTest {
     }
 
     @Test
-    fun `registering two executors for the same kind fails fast`() {
-        assertThrows(IllegalStateException::class.java) {
+    fun `registering two executors for the same kind uses the last one`() {
+        val interpreter =
             DefaultInterpreter(
                 NodeKindResolver(PrintScriptMapping.mapping),
                 solver(),
-                listOf(VariableDeclarationExecutor(), VariableDeclarationExecutor()),
+                listOf(
+                    VariableDeclarationExecutor(),
+                    VariableDeclarationExecutor(),
+                    ExpressionStatementExecutor(),
+                ),
             )
-        }
+        val program =
+            listOf(
+                declaration("x", numberNode("1")),
+                expressionStatement(call(identifierNode("x"))),
+            )
+
+        val effects = ok(interpreter.executeBlock(program, InterpreterContext()))
+
+        assertEquals(listOf(PrintEffect("1")), effects)
     }
 
     @Test
-    fun `mapping a kind covered by no executor and no evaluator fails at construction`() {
+    fun `mapped kind without executor or evaluator fails with UnresolvableExpression`() {
         val resolver = NodeKindResolver(PrintScriptMapping.mapping)
-        val solverWithoutCallEvaluators =
+        val solverWithoutCall =
             ExpressionSolver(
                 resolver,
                 listOf(
@@ -118,14 +130,21 @@ class DefaultInterpreterTest {
                     BinaryOperationEvaluator(DefaultTypeConfiguration()),
                 ),
             )
-
-        assertThrows(IllegalStateException::class.java) {
+        val interpreter =
             DefaultInterpreter(
                 resolver,
-                solverWithoutCallEvaluators,
+                solverWithoutCall,
                 listOf(VariableDeclarationExecutor(), ExpressionStatementExecutor()),
             )
-        }
+
+        val result =
+            interpreter.executeBlock(
+                listOf(expressionStatement(call(numberNode("1")))),
+                InterpreterContext(),
+            )
+
+        assertTrue(result is Result.Err)
+        assertTrue((result as Result.Err).error is UnresolvableExpression)
     }
 
     private fun declaration(
