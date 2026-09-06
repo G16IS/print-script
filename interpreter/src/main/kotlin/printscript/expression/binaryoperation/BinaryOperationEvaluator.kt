@@ -12,7 +12,7 @@ import printscript.error.UnrecognizedNode
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
-import printscript.node.NodeKind
+import printscript.node.AstNames
 import printscript.node.childAt
 import printscript.node.firstChild
 import printscript.node.tokenValue
@@ -25,7 +25,7 @@ import printscript.zip
 class BinaryOperationEvaluator(
     private val typeConfiguration: TypeConfiguration,
 ) : ExpressionEvaluator {
-    override val kind = NodeKind.BINARY_OP
+    override val nodeNames = setOf(AstNames.EXPRESSION, AstNames.TERM)
 
     override fun evaluate(
         node: SyntaxNode,
@@ -114,9 +114,11 @@ class BinaryOperationEvaluator(
     private companion object {
         const val UNARY_CHILDREN = 1
         const val CHILDREN_WITH_OPERATOR = 3
+
         const val LEFT_INDEX = 0
         const val OPERATOR_INDEX = 1
         const val RIGHT_INDEX = 2
+
         const val DIVISION = "/"
         const val ZERO_DIVISOR = 0.0
     }

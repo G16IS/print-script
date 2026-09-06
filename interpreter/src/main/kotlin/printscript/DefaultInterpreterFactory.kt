@@ -11,22 +11,15 @@ import printscript.expression.call.PrintlnHandler
 import printscript.expression.literal.IdentifierEvaluator
 import printscript.expression.literal.NumberLiteralEvaluator
 import printscript.expression.literal.StringLiteralEvaluator
-import printscript.node.NodeKind
-import printscript.node.NodeKindResolver
-import printscript.node.PrintScriptMapping
 import printscript.statement.ExpressionStatementExecutor
 import printscript.statement.StatementExecutor
 import printscript.statement.VariableDeclarationExecutor
 
 object DefaultInterpreterFactory {
-    fun create(
-        mapping: Map<String, NodeKind> = PrintScriptMapping.mapping,
-        typeConfiguration: TypeConfiguration = DefaultTypeConfiguration,
-    ): DefaultInterpreter {
-        val nodeKindResolver = NodeKindResolver(mapping)
-        val expressionSolver =
-            DefaultExpressionSolver(nodeKindResolver, defaultEvaluators(typeConfiguration))
-        return DefaultInterpreter(nodeKindResolver, expressionSolver, defaultStatementExecutors())
+    fun create(typeConfiguration: TypeConfiguration = DefaultTypeConfiguration): DefaultInterpreter {
+        val expressionSolver = DefaultExpressionSolver(defaultEvaluators(typeConfiguration))
+
+        return DefaultInterpreter(expressionSolver, defaultStatementExecutors())
     }
 
     internal fun defaultEvaluators(

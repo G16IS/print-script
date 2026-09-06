@@ -9,9 +9,7 @@ import printscript.error.UnrecognizedNode
 import printscript.error.UnresolvableExpression
 import printscript.expression.DefaultExpressionSolver
 import printscript.expression.ExpressionSolver
-import printscript.node.NodeKind
-import printscript.node.NodeKindResolver
-import printscript.node.PrintScriptMapping
+import printscript.node.AstNames
 import printscript.statement.ExpressionStatementExecutor
 import printscript.statement.StatementExecutor
 import printscript.statement.StatementResult
@@ -103,10 +101,9 @@ class DefaultInterpreterTest {
     }
 
     @Test
-    fun `registering two executors for the same kind uses the last one`() {
+    fun `registering two executors for the same node name uses the last one`() {
         val interpreter =
             DefaultInterpreter(
-                NodeKindResolver(PrintScriptMapping.mapping),
                 solver(),
                 listOf(
                     FailingDeclarationExecutor,
@@ -130,16 +127,13 @@ class DefaultInterpreterTest {
     }
 
     @Test
-    fun `mapped kind without executor or evaluator fails with UnresolvableExpression`() {
-        val resolver = NodeKindResolver(PrintScriptMapping.mapping)
+    fun `call without evaluator fails with UnresolvableExpression`() {
         val solverWithoutCall =
             DefaultExpressionSolver(
-                resolver,
-                DefaultInterpreterFactory.defaultEvaluators().filterNot { it.kind == NodeKind.CALL },
+                DefaultInterpreterFactory.defaultEvaluators().filterNot { AstNames.CALL in it.nodeNames },
             )
         val interpreter =
             DefaultInterpreter(
-                resolver,
                 solverWithoutCall,
                 DefaultInterpreterFactory.defaultStatementExecutors(),
             )
@@ -167,14 +161,10 @@ class DefaultInterpreterTest {
     private fun expressionStatement(expression: SyntaxNode): SyntaxNode =
         node("expression-stmt", node("expression", expression))
 
-    private fun solver(): ExpressionSolver =
-        DefaultExpressionSolver(
-            NodeKindResolver(PrintScriptMapping.mapping),
-            DefaultInterpreterFactory.defaultEvaluators(),
-        )
+    private fun solver(): ExpressionSolver = DefaultExpressionSolver(DefaultInterpreterFactory.defaultEvaluators())
 
     private object FailingDeclarationExecutor : StatementExecutor {
-        override val kind = NodeKind.VARIABLE_DECLARATION
+        override val nodeNames = setOf(AstNames.VARIABLE)
 
         override fun execute(
             node: SyntaxNode,

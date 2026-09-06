@@ -12,11 +12,10 @@ Mismo principio que lexer y parser: agregar una construcción nueva no toca el m
 
 ## Cuándo tocarlo
 
-- Nueva statement/expresión del lenguaje → executor/evaluator nuevo + entrada en `NodeKind`
+- Nueva statement/expresión del lenguaje → executor/evaluator con `nodeNames` = nombres de regla del JSON + registro en la factory
 - Nuevo call (`readInput`, etc.) → `CallHandler` + registro en la factory
 - Nuevas combinaciones de tipos para operadores → regla en `DefaultTypeConfiguration`
 - Política de errores de runtime o formato de output
-- **No** para nombres de reglas: el mapping nombre→`NodeKind` es configuración (`PrintScriptMapping`)
 
 ---
 
@@ -29,7 +28,6 @@ interface Interpreter {
 
 object DefaultInterpreterFactory {
     fun create(
-        mapping: Map<String, NodeKind> = PrintScriptMapping.mapping,
         typeConfiguration: TypeConfiguration = DefaultTypeConfiguration,
     ): DefaultInterpreter
 }
@@ -47,27 +45,25 @@ Errores: **Result end-to-end, sin excepciones**. `interpret`, `solve`, `evaluate
 interpreter/src/main/kotlin/printscript/
   Interpreter.kt                  interface: solo interpret
   DefaultInterpreter.kt           delega en BlockExecutor
-  DefaultInterpreterFactory.kt    arma resolver + solver + executors
+  DefaultInterpreterFactory.kt    arma solver + executors
   InterpreterContext.kt           entorno inmutable copy-on-write
   RuntimeValue.kt                 NumberValue | StringValue | UnitValue
   ResultExt.kt                    zip interno (lookups puros, no solve)
   node/
-    NodeKind.kt                   vocabulario cerrado
-    NodeKindResolver.kt           nombre de regla -> NodeKind (Result)
     NodeAccess.kt                 tokenValue / childAt / firstChild / namedChild
-    AstNames.kt                   "ID", "expression"
-    PrintScriptMapping.kt         mapping default grammar.config.json v1
+    AstNames.kt                   nombres de regla/captura de grammar.config.json
+    NodeHandlers.kt               associateByNodeNames (last-wins)
   statement/
     BlockExecutor.kt              fun interface del fold de statements
-    DefaultBlockExecutor.kt       dispatch + threading de StatementResult
-    StatementExecutor.kt          kind + execute(node, context, solver)
+    DefaultBlockExecutor.kt       dispatch por node.name + threading de StatementResult
+    StatementExecutor.kt          nodeNames + execute(node, context, solver)
     StatementResult.kt            sideEffects + newContext
     VariableDeclarationExecutor.kt   let x: T = expr;  (object)
     ExpressionStatementExecutor.kt   <expr>;           (object)
   expression/
-    ExpressionEvaluator.kt        kind + evaluate(..., solver)
+    ExpressionEvaluator.kt        nodeNames + evaluate(..., solver)
     ExpressionSolver.kt           interface solve(...)
-    DefaultExpressionSolver.kt    dispatch por Map<NodeKind, Evaluator>
+    DefaultExpressionSolver.kt    dispatch por node.name
     EvalResult.kt                 value + sideEffects
     GroupEvaluator.kt             passthrough de ( expr )  (object)
     literal/
@@ -89,23 +85,22 @@ interpreter/src/main/kotlin/printscript/
 
 ## Dispatch
 
-Dos niveles:
+Un nivel: `node.name` es el nombre de regla de `grammar.config.json`. `DefaultBlockExecutor` y `DefaultExpressionSolver` indexan handlers por `nodeNames`. Nombre sin handler → `UnresolvableExpression`. Call desconocido → `UnresolvableCall`.
 
-1. `NodeKindResolver` traduce `node.name` a `NodeKind`.
-2. `DefaultBlockExecutor` y `DefaultExpressionSolver` despachan por `Map<NodeKind, _>`. Kind mapeado sin handler → `UnresolvableExpression`. Call desconocido → `UnresolvableCall`.
+Un evaluator puede declarar más de un nombre (`BinaryOperationEvaluator` cubre `expression` y `term`, la misma forma de `LeftRule`). Nombre duplicado: last-wins.
 
-Mapping default (`PrintScriptMapping`):
+Handlers default (`AstNames`):
 
-| Regla (grammar.config.json) | NodeKind |
+| Regla | Handler |
 |---|---|
-| `variable` | `VARIABLE_DECLARATION` |
-| `expression-stmt` | `EXPRESSION_STMT` |
-| `expression`, `term` | `BINARY_OP` |
-| `number` | `NUMBER_LITERAL` |
-| `string` | `STRING_LITERAL` |
-| `identifier` | `IDENTIFIER` |
-| `call` | `CALL` |
-| `group` | `GROUP` |
+| `variable` | `VariableDeclarationExecutor` |
+| `expression-stmt` | `ExpressionStatementExecutor` |
+| `expression`, `term` | `BinaryOperationEvaluator` |
+| `number` | `NumberLiteralEvaluator` |
+| `string` | `StringLiteralEvaluator` |
+| `identifier` | `IdentifierEvaluator` |
+| `call` | `CallEvaluator` |
+| `group` | `GroupEvaluator` |
 
 El interpreter no llama `SyntaxNode.value()` / `child()` / `find()`. Token y children van por `tokenValue()` / `childAt()` / `firstChild()` / `namedChild()` → `UnrecognizedNode` si faltan.
 
@@ -146,7 +141,7 @@ Los evaluators evitan pirámides: un `when` raso de dispatch y helpers con nombr
 |---|---|
 | `InterpreterContextTest` | scopes, shadowing, assign con rebuild de cadena, assign no declarada |
 | `ExpressionSolverTest` | literales (comillas, Infinity/NaN), identificador, binarios, unario, div-cero, operandos inválidos, calls anidados, callee desconocido, grupo vacío, errores de dispatch |
-| `DefaultInterpreterTest` | threading de contexto vía `interpret` + `program(...)`, redeclaración, orden de efectos, fail-fast, last-wins, kind sin handler |
+| `DefaultInterpreterTest` | threading de contexto vía `interpret` + `program(...)`, redeclaración, orden de efectos, fail-fast, last-wins, nombre sin handler |
 | `InterpreterIntegrationTest` | `.ps` real lex→parse→interpret |
 
 Helpers de test: `support/Results.kt` (`ok` / `err`), `support/Programs.kt` (`program(...)`).
@@ -161,10 +156,10 @@ Nota: los tests usan su propio `LanguageConfig` (`support/PsSupport`) con `parti
 
 ### Nueva expresión (ej. comparaciones)
 
-1. Entrada en `NodeKind` + `PrintScriptMapping`.
-2. `ExpressionEvaluator` nuevo (`object` si no tiene deps).
-3. Registrar en `DefaultInterpreterFactory.defaultEvaluators`.
-4. Si necesita tabla de tipos: reglas en `DefaultTypeConfiguration`.
+1. `ExpressionEvaluator` nuevo con `nodeNames` = el/los nombres de regla del JSON (`object` si no tiene deps).
+2. Registrar en `DefaultInterpreterFactory.defaultEvaluators`.
+3. Si necesita tabla de tipos: reglas en `DefaultTypeConfiguration`.
+4. No hay enum ni mapping aparte: el dispatch es `node.name`.
 
 ### Nuevo call (ej. `readInput`)
 

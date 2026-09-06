@@ -6,16 +6,11 @@ import org.junit.jupiter.api.Test
 import printscript.error.DivisionByZero
 import printscript.error.InvalidLiteral
 import printscript.error.InvalidOperands
-import printscript.error.NoNodeKindForNode
 import printscript.error.UndeclaredIdentifier
 import printscript.error.UnrecognizedNode
 import printscript.error.UnresolvableCall
 import printscript.error.UnresolvableExpression
 import printscript.expression.DefaultExpressionSolver
-import printscript.expression.literal.NumberLiteralEvaluator
-import printscript.node.NodeKind
-import printscript.node.NodeKindResolver
-import printscript.node.PrintScriptMapping
 import printscript.support.TEST_LOCATION
 import printscript.support.binary
 import printscript.support.call
@@ -29,11 +24,7 @@ import printscript.support.stringNode
 import printscript.syntax.SyntaxNode
 
 class ExpressionSolverTest {
-    private val solver =
-        DefaultExpressionSolver(
-            NodeKindResolver(PrintScriptMapping.mapping),
-            DefaultInterpreterFactory.defaultEvaluators(),
-        )
+    private val solver = DefaultExpressionSolver(DefaultInterpreterFactory.defaultEvaluators())
 
     @Test
     fun `number literal evaluates to NumberValue`() {
@@ -188,10 +179,10 @@ class ExpressionSolverTest {
     }
 
     @Test
-    fun `node name outside the mapping fails with NoNodeKindForNode`() {
+    fun `unknown node name fails with UnresolvableExpression`() {
         val unknown = node("if", numberNode("1"))
 
-        assertTrue(err(solver.solve(unknown, InterpreterContext())) is NoNodeKindForNode)
+        assertTrue(err(solver.solve(unknown, InterpreterContext())) is UnresolvableExpression)
     }
 
     @Test
@@ -219,20 +210,6 @@ class ExpressionSolverTest {
             )
 
         assertTrue(err(solver.solve(expression, InterpreterContext())) is UnrecognizedNode)
-    }
-
-    @Test
-    fun `mapped kind without evaluator fails with UnresolvableExpression`() {
-        val statementOnlyMapping = mapOf("weird" to NodeKind.VARIABLE_DECLARATION)
-        val noStatementEvaluators =
-            DefaultExpressionSolver(
-                NodeKindResolver(statementOnlyMapping),
-                listOf(NumberLiteralEvaluator),
-            )
-
-        val error = err(noStatementEvaluators.solve(node("weird", numberNode("1")), InterpreterContext()))
-
-        assertTrue(error is UnresolvableExpression)
     }
 
     private fun leafNumber(text: String) = leaf("number", "NUMBER_LITERAL", text)

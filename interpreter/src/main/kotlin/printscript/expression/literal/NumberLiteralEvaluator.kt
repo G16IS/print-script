@@ -7,14 +7,14 @@ import printscript.error.RuntimeError
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
-import printscript.node.NodeKind
+import printscript.node.AstNames
 import printscript.node.tokenValue
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 import printscript.util.flatMap
 
 object NumberLiteralEvaluator : ExpressionEvaluator {
-    override val kind = NodeKind.NUMBER_LITERAL
+    override val nodeNames = setOf(AstNames.NUMBER)
 
     override fun evaluate(
         node: SyntaxNode,

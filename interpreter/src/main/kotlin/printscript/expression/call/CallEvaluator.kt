@@ -6,7 +6,7 @@ import printscript.error.UnresolvableCall
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
-import printscript.node.NodeKind
+import printscript.node.AstNames
 import printscript.node.childAt
 import printscript.node.tokenValue
 import printscript.syntax.SyntaxNode
@@ -17,7 +17,7 @@ import printscript.zip
 class CallEvaluator(
     handlers: List<CallHandler> = listOf(PrintlnHandler),
 ) : ExpressionEvaluator {
-    override val kind = NodeKind.CALL
+    override val nodeNames = setOf(AstNames.CALL)
 
     private val handlersByCallee: Map<String, CallHandler> = handlers.associateBy { it.callee }
 

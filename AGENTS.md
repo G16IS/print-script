@@ -223,7 +223,7 @@ No hay tests de application para `LintProgram`.
 - **Locations.** `FileCodeReader` arranca en `(1,1)`. `MockReader` (tests del lexer) y `StringCodeReader` cuentan `(line = 0, col = index)`. No compares locations entre esos mundos.
 - **`DefaultParser` cachea el `TokenSource` por identidad del lexer.** No reutilices un parser con **otro** lexer sin crear un parser nuevo.
 - **`TokenRegistry` no lo usa `TokenStream`.** Leftover, igual que el enum `TokenType`.
-- **El interpreter hardcodea `"println"`** en `CallEvaluator` y los nombres de regla v1 en `PrintScriptMapping`. La tabla de ops **no** lee `type-system.config.json`.
+- **El interpreter despacha por `node.name`** (regla de `grammar.config.json`). `CallEvaluator` registra `CallHandler`s (`PrintlnHandler`). La tabla de ops **no** lee `type-system.config.json`.
 - **`repeat` en el parser está listo** y la gramática v1 no lo usa (pensado para bloques/`if`). `COMMA` se tokeniza y no se parsea.
 - **ktlint/detekt ≠ linter/formatter de PrintScript.** Lo primero es calidad del Kotlin (`printscript.quality`). Lo segundo son módulos del lenguaje.
 - **CI de lint/format solo corre en `main` y PRs a `main`.** `tests.yml` corre en cualquier push/PR.
@@ -236,7 +236,7 @@ No hay tests de application para `LintProgram`.
 - No asumas `TokenType.IDENTIFIER`: el lexer emite `"ID"`.
 - No aplanes `expression`/`term` de un solo hijo.
 - `Grammar(...)` falla si `start` o una referencia no existen.
-- `DefaultInterpreter` no lanza en construcción. Kind mapeado sin executor ni evaluator → `Result.Err(UnresolvableExpression)` al interpretar. Handler duplicado: last-wins.
+- `DefaultInterpreter` no lanza en construcción. `node.name` sin executor ni evaluator → `Result.Err(UnresolvableExpression)`. Handler duplicado: last-wins.
 
 ## Docs
 

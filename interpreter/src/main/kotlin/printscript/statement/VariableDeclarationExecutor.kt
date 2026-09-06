@@ -4,7 +4,6 @@ import printscript.InterpreterContext
 import printscript.error.RuntimeError
 import printscript.expression.ExpressionSolver
 import printscript.node.AstNames
-import printscript.node.NodeKind
 import printscript.node.namedChild
 import printscript.node.tokenValue
 import printscript.syntax.SyntaxNode
@@ -20,7 +19,7 @@ import printscript.zip
  * the type-checker's job. The interpreter trusts a validated program.
  */
 object VariableDeclarationExecutor : StatementExecutor {
-    override val kind = NodeKind.VARIABLE_DECLARATION
+    override val nodeNames = setOf(AstNames.VARIABLE)
 
     override fun execute(
         node: SyntaxNode,
