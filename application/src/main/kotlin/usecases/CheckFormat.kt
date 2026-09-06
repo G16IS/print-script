@@ -14,9 +14,8 @@ object CheckFormat {
         reader: CodeReader,
         source: String,
         formatter: Formatter,
-        onStatement: () -> Unit = {},
     ): Report<Unit, FormatError> {
-        val program = ParseProgram.parse(langConfig, grammar, reader, onStatement)
+        val program = ParseProgram.parse(langConfig, grammar, reader)
 
         return formatter.check(program, source.replace("\r\n", "\n"))
     }

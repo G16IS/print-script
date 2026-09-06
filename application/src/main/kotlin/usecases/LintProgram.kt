@@ -15,9 +15,8 @@ object LintProgram {
         grammar: Grammar,
         reader: CodeReader,
         linterConfig: LinterConfig,
-        onStatement: () -> Unit = {},
     ): Report<SyntaxProgram, LintError> {
-        val program = ParseProgram.parse(langConfig, grammar, reader, onStatement)
+        val program = ParseProgram.parse(langConfig, grammar, reader)
 
         return DefaultLinterFactory.create(linterConfig).lint(program)
     }

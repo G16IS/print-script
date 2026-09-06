@@ -12,7 +12,6 @@ internal object ParseProgram {
         langConfig: LanguageConfig,
         grammar: Grammar,
         reader: CodeReader,
-        onStatement: () -> Unit = {},
     ): SyntaxProgram {
         val lexer = DefaultLexerFactory.create(reader, langConfig)
         val parser = DefaultParserFactory.create(grammar)
@@ -21,7 +20,6 @@ internal object ParseProgram {
 
         while (lexer.peek(null).type != "EOF") {
             program = parser.parseNextStatement(lexer, program)
-            onStatement()
         }
 
         return program

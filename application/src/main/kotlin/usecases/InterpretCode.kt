@@ -15,9 +15,8 @@ object InterpretCode {
         grammar: Grammar,
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
-        onStatement: () -> Unit = {},
     ): Report<SyntaxProgram, TypeError> {
-        val program = ParseProgram.parse(langConfig, grammar, reader, onStatement)
+        val program = ParseProgram.parse(langConfig, grammar, reader)
 
         return DefaultTypeCheckerFactory.create(typeSystem).check(program)
     }

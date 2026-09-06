@@ -69,13 +69,12 @@ fun interpretCode(
     grammar: Grammar,
     typeSystem: TypeSystemConfig,
     reader: CodeReader,
-    onStatement: () -> Unit = {},
 ): Report<SyntaxProgram, TypeError>
 ```
 
 Pasos:
 
-1. `ParseProgram.parse(langConfig, grammar, reader, onStatement)` — lexer + parser hasta EOF
+1. `ParseProgram.parse(langConfig, grammar, reader)` — lexer + parser hasta EOF
 2. `DefaultTypeCheckerFactory.create(typeSystem).check(program)` — ese `Report` es el valor de retorno
 
 `TypeError` acá es el data class de `:type-checker`, no el sealed de `common`.

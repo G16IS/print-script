@@ -19,9 +19,8 @@ object ExecuteCode {
         grammar: Grammar,
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
-        onStatement: () -> Unit = {},
     ): Result<List<SideEffect>, ExecutionFailure> {
-        val program = ParseProgram.parse(langConfig, grammar, reader, onStatement)
+        val program = ParseProgram.parse(langConfig, grammar, reader)
         val report = DefaultTypeCheckerFactory.create(typeSystem).check(program)
 
         if (!report.isOk) {

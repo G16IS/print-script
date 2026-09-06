@@ -13,9 +13,8 @@ object FormatCode {
         grammar: Grammar,
         reader: CodeReader,
         formatter: Formatter,
-        onStatement: () -> Unit = {},
     ): Result<String, FormatError> {
-        val program = ParseProgram.parse(langConfig, grammar, reader, onStatement)
+        val program = ParseProgram.parse(langConfig, grammar, reader)
 
         return formatter.format(program)
     }
