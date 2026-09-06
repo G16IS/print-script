@@ -27,13 +27,13 @@ class TokenFactoryTest {
                 partial = "^[a-zA-Z_]",
             )
         val token = TokenFactory.create(rule, location, "pepe")
-        assertEquals(Optional.of("pepe"), token.value)
+        assertEquals(Optional.of("pepe"), token.value.value)
     }
 
     @Test
     fun `capture false leaves the value empty`() {
         val token = TokenFactory.create(ExactRule(listOf("let"), "LET", false), location, "let")
-        assertEquals(Optional.empty<String>(), token.value)
+        assertEquals(Optional.empty<String>(), token.value.value)
     }
 
     @Test
