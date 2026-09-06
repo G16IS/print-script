@@ -12,7 +12,7 @@ import printscript.syntax.SyntaxNode
 import printscript.util.Result
 import printscript.util.flatMap
 
-class IdentifierEvaluator : ExpressionEvaluator {
+object IdentifierEvaluator : ExpressionEvaluator {
     override val kind = NodeKind.IDENTIFIER
 
     override fun evaluate(

@@ -1,12 +1,13 @@
 package printscript
 
+import printscript.expression.DefaultExpressionSolver
 import printscript.expression.ExpressionEvaluator
-import printscript.expression.ExpressionSolver
 import printscript.expression.GroupEvaluator
 import printscript.expression.binaryoperation.BinaryOperationEvaluator
 import printscript.expression.binaryoperation.DefaultTypeConfiguration
 import printscript.expression.binaryoperation.TypeConfiguration
 import printscript.expression.call.CallEvaluator
+import printscript.expression.call.PrintlnHandler
 import printscript.expression.literal.IdentifierEvaluator
 import printscript.expression.literal.NumberLiteralEvaluator
 import printscript.expression.literal.StringLiteralEvaluator
@@ -20,27 +21,29 @@ import printscript.statement.VariableDeclarationExecutor
 object DefaultInterpreterFactory {
     fun create(
         mapping: Map<String, NodeKind> = PrintScriptMapping.mapping,
-        typeConfiguration: TypeConfiguration = DefaultTypeConfiguration(),
+        typeConfiguration: TypeConfiguration = DefaultTypeConfiguration,
     ): DefaultInterpreter {
         val nodeKindResolver = NodeKindResolver(mapping)
         val expressionSolver =
-            ExpressionSolver(nodeKindResolver, evaluators(typeConfiguration))
-        return DefaultInterpreter(nodeKindResolver, expressionSolver, statementExecutors())
+            DefaultExpressionSolver(nodeKindResolver, defaultEvaluators(typeConfiguration))
+        return DefaultInterpreter(nodeKindResolver, expressionSolver, defaultStatementExecutors())
     }
 
-    private fun evaluators(typeConfiguration: TypeConfiguration): List<ExpressionEvaluator> =
+    internal fun defaultEvaluators(
+        typeConfiguration: TypeConfiguration = DefaultTypeConfiguration,
+    ): List<ExpressionEvaluator> =
         listOf(
-            NumberLiteralEvaluator(),
-            StringLiteralEvaluator(),
-            IdentifierEvaluator(),
-            GroupEvaluator(),
+            NumberLiteralEvaluator,
+            StringLiteralEvaluator,
+            IdentifierEvaluator,
+            GroupEvaluator,
             BinaryOperationEvaluator(typeConfiguration),
-            CallEvaluator(),
+            CallEvaluator(listOf(PrintlnHandler)),
         )
 
-    private fun statementExecutors(): List<StatementExecutor> =
+    internal fun defaultStatementExecutors(): List<StatementExecutor> =
         listOf(
-            VariableDeclarationExecutor(),
-            ExpressionStatementExecutor(),
+            VariableDeclarationExecutor,
+            ExpressionStatementExecutor,
         )
 }

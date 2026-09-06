@@ -6,7 +6,7 @@ import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
 class NodeKindResolver(
-    val mapping: Map<String, NodeKind>,
+    private val mapping: Map<String, NodeKind>,
 ) {
     fun resolve(node: SyntaxNode): Result<NodeKind, RuntimeError> {
         val kind: NodeKind? = mapping[node.name]

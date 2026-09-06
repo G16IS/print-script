@@ -1,8 +1,6 @@
 package printscript.expression.call
 
 import printscript.InterpreterContext
-import printscript.PrintEffect
-import printscript.UnitValue
 import printscript.error.RuntimeError
 import printscript.error.UnresolvableCall
 import printscript.expression.EvalResult
@@ -12,51 +10,34 @@ import printscript.node.NodeKind
 import printscript.node.childAt
 import printscript.node.tokenValue
 import printscript.syntax.SyntaxNode
-import printscript.toPrintableString
 import printscript.util.Result
 import printscript.util.flatMap
+import printscript.zip
 
-/**
- * In this grammar a call is an expression (factor), so effects are produced
- * here and travel up wrapped in [EvalResult].
- */
-class CallEvaluator : ExpressionEvaluator {
+class CallEvaluator(
+    handlers: List<CallHandler> = listOf(PrintlnHandler),
+) : ExpressionEvaluator {
     override val kind = NodeKind.CALL
+
+    private val handlersByCallee: Map<String, CallHandler> = handlers.associateBy { it.callee }
 
     override fun evaluate(
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
     ): Result<EvalResult, RuntimeError> =
-        node.childAt(CALLEE_INDEX).flatMap { calleeNode ->
-            node.childAt(ARGUMENT_INDEX).flatMap { argumentNode ->
-                calleeNode.tokenValue().flatMap { callee ->
-                    solver.solve(argumentNode, context).flatMap { result ->
-                        dispatch(callee, result, node)
-                    }
-                }
+        calleeAndArgument(node).flatMap { (callee, argument) ->
+            solver.solve(argument, context).flatMap { result ->
+                handlersByCallee[callee]?.handle(result, node)
+                    ?: Result.Err(UnresolvableCall(callee, node.location))
             }
         }
 
-    private fun dispatch(
-        callee: String,
-        result: EvalResult,
-        node: SyntaxNode,
-    ): Result<EvalResult, RuntimeError> =
-        when (callee) {
-            PRINTLN ->
-                Result.Ok(
-                    EvalResult(
-                        value = UnitValue,
-                        sideEffects = result.sideEffects + PrintEffect(result.value.toPrintableString()),
-                    ),
-                )
-            else -> Result.Err(UnresolvableCall(callee, node.location))
-        }
+    private fun calleeAndArgument(node: SyntaxNode): Result<Pair<String, SyntaxNode>, RuntimeError> =
+        node.childAt(CALLEE_INDEX).flatMap { it.tokenValue() }.zip(node.childAt(ARGUMENT_INDEX))
 
     private companion object {
         const val CALLEE_INDEX = 0
         const val ARGUMENT_INDEX = 1
-        const val PRINTLN = "println"
     }
 }

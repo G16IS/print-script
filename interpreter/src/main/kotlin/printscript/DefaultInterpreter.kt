@@ -1,63 +1,25 @@
 package printscript
 
 import printscript.error.RuntimeError
-import printscript.error.UnresolvableExpression
 import printscript.expression.ExpressionSolver
-import printscript.node.NodeKind
 import printscript.node.NodeKindResolver
+import printscript.statement.BlockExecutor
+import printscript.statement.DefaultBlockExecutor
 import printscript.statement.StatementExecutor
-import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
 import printscript.util.Result
-import printscript.util.flatMap
-import printscript.util.map
 
 class DefaultInterpreter(
-    private val nodeKindResolver: NodeKindResolver,
-    private val expressionSolver: ExpressionSolver,
-    statementExecutors: List<StatementExecutor>,
+    private val blockExecutor: BlockExecutor,
 ) : Interpreter {
-    private val executorsByKind: Map<NodeKind, StatementExecutor> =
-        statementExecutors.associateBy { it.kind }
+    constructor(
+        nodeKindResolver: NodeKindResolver,
+        expressionSolver: ExpressionSolver,
+        statementExecutors: List<StatementExecutor>,
+    ) : this(DefaultBlockExecutor(nodeKindResolver, expressionSolver, statementExecutors))
 
     override fun interpret(
         context: InterpreterContext,
         program: SyntaxProgram,
-    ): Result<List<SideEffect>, RuntimeError> = executeBlock(program.statements, context)
-
-    fun executeBlock(
-        statements: List<SyntaxNode>,
-        context: InterpreterContext,
-    ): Result<List<SideEffect>, RuntimeError> {
-        val initialState: Result<BlockState, RuntimeError> =
-            Result
-                .Ok(BlockState(emptyList(), context))
-
-        return statements
-            .fold(initialState) { acc, statement ->
-                acc.flatMap { state ->
-                    executeSingle(statement, state.context).map { (effects, newContext) ->
-                        BlockState(state.effects + effects, newContext)
-                    }
-                }
-            }.map { it.effects }
-    }
-
-    private fun executeSingle(
-        statement: SyntaxNode,
-        context: InterpreterContext,
-    ): Result<Pair<List<SideEffect>, InterpreterContext>, RuntimeError> =
-        nodeKindResolver.resolve(statement).flatMap { kind ->
-            val executor =
-                executorsByKind[kind]
-                    ?: return@flatMap Result.Err(UnresolvableExpression(statement.name, statement.location))
-            executor.execute(statement, context, expressionSolver).map { outcome ->
-                outcome.sideEffects to outcome.newContext
-            }
-        }
-
-    private data class BlockState(
-        val effects: List<SideEffect>,
-        val context: InterpreterContext,
-    )
+    ): Result<List<SideEffect>, RuntimeError> = blockExecutor.execute(program.statements, context)
 }

@@ -22,3 +22,14 @@ internal fun SyntaxNode.childAt(index: Int): Result<SyntaxNode, RuntimeError> {
         Result.Err(UnrecognizedNode(name, location))
     }
 }
+
+internal fun SyntaxNode.firstChild(): Result<SyntaxNode, RuntimeError> = childAt(0)
+
+internal fun SyntaxNode.namedChild(name: String): Result<SyntaxNode, RuntimeError> {
+    val child = childOrNull(name)
+    return if (child != null) {
+        Result.Ok(child)
+    } else {
+        Result.Err(UnrecognizedNode(this.name, location))
+    }
+}

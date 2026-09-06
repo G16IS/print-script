@@ -13,7 +13,7 @@ import printscript.syntax.SyntaxNode
 import printscript.util.Result
 import printscript.util.flatMap
 
-class NumberLiteralEvaluator : ExpressionEvaluator {
+object NumberLiteralEvaluator : ExpressionEvaluator {
     override val kind = NodeKind.NUMBER_LITERAL
 
     override fun evaluate(
@@ -23,7 +23,7 @@ class NumberLiteralEvaluator : ExpressionEvaluator {
     ): Result<EvalResult, RuntimeError> =
         node.tokenValue().flatMap { text ->
             val number =
-                text.toDoubleOrNull()
+                text.toDoubleOrNull()?.takeIf { it.isFinite() }
                     ?: return@flatMap Result.Err(InvalidLiteral(text, node.location))
             Result.Ok(EvalResult.pure(NumberValue(number)))
         }

@@ -5,7 +5,7 @@ import printscript.NumberValue
 import printscript.RuntimeValue
 import printscript.StringValue
 
-class DefaultTypeConfiguration : TypeConfiguration {
+object DefaultTypeConfiguration : TypeConfiguration {
     private val rules: Map<Triple<String, KClass<out RuntimeValue>, KClass<out RuntimeValue>>, BinaryOperationRule> =
         buildRules().associateBy { Triple(it.operator, it.leftType, it.rightType) }
 
