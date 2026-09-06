@@ -3,7 +3,6 @@ package printscript.expression
 import printscript.InterpreterContext
 import printscript.error.RuntimeError
 import printscript.error.UnresolvableExpression
-import printscript.node.associateByNodeNames
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
@@ -11,7 +10,7 @@ class DefaultExpressionSolver(
     evaluators: List<ExpressionEvaluator>,
 ) : ExpressionSolver {
     private val evaluatorsByName: Map<String, ExpressionEvaluator> =
-        evaluators.associateByNodeNames { it.nodeNames }
+        evaluators.flatMap { evaluator -> evaluator.nodeNames.map { it to evaluator } }.toMap()
 
     override fun solve(
         node: SyntaxNode,

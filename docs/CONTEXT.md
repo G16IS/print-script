@@ -244,7 +244,7 @@ Ver [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md).
 
 Módulo Gradle `:interpreter` (`implementation` solo `common`). Recorre el `SyntaxProgram` y devuelve `Result<List<SideEffect>, RuntimeError>` (fail-fast, Result end-to-end). **No** está en el classpath de `application`: `interpretCode` no lo llama.
 
-Dispatch por `node.name` (el nombre de regla de `grammar.config.json`). `DefaultBlockExecutor` despacha statements; `DefaultExpressionSolver` despacha expresiones. Un handler declara `nodeNames`; no hay enum ni mapping aparte.
+Dispatch por `node.name` (el nombre de regla de `grammar.config.json`). `DefaultInterpreter` despacha statements; `DefaultExpressionSolver` despacha expresiones. Un handler declara `nodeNames`; no hay enum ni mapping aparte.
 
 `println` es una **expresión** (`factor → call`), no un statement. Los efectos viajan en `EvalResult(value, sideEffects)` y se combinan de hijos a padres. `PrintlnHandler` emite `PrintEffect`.
 

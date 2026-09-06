@@ -33,7 +33,7 @@ object DefaultInterpreterFactory {
 }
 ```
 
-`interpret` es la única entrada. El fold de statements vive en `BlockExecutor` (`DefaultBlockExecutor`); `DefaultInterpreter` solo delega.
+`interpret` es la única entrada. `DefaultInterpreter` implementa `BlockExecutor`: el fold de statements queda ahí para que un `if` futuro reciba la interface sin depender de la clase concreta.
 
 Errores: **Result end-to-end, sin excepciones**. `interpret`, `solve`, `evaluate` y `execute` devuelven `Result<_, RuntimeError>` (`map` / `flatMap` / `fold`). Fail-fast. Wiring incompleto o nodo malformado también es `Err` (`UnresolvableExpression` / `UnrecognizedNode`). Los constructores no validan ni lanzan. Handler duplicado: last-wins (`associateBy`).
 
@@ -44,7 +44,7 @@ Errores: **Result end-to-end, sin excepciones**. `interpret`, `solve`, `evaluate
 ```
 interpreter/src/main/kotlin/printscript/
   Interpreter.kt                  interface: solo interpret
-  DefaultInterpreter.kt           delega en BlockExecutor
+  DefaultInterpreter.kt           Interpreter + BlockExecutor: dispatch por node.name
   DefaultInterpreterFactory.kt    arma solver + executors
   InterpreterContext.kt           entorno inmutable copy-on-write
   RuntimeValue.kt                 NumberValue | StringValue | UnitValue
@@ -52,10 +52,8 @@ interpreter/src/main/kotlin/printscript/
   node/
     NodeAccess.kt                 tokenValue / childAt / firstChild / namedChild
     AstNames.kt                   nombres de regla/captura de grammar.config.json
-    NodeHandlers.kt               associateByNodeNames (last-wins)
   statement/
     BlockExecutor.kt              fun interface del fold de statements
-    DefaultBlockExecutor.kt       dispatch por node.name + threading de StatementResult
     StatementExecutor.kt          nodeNames + execute(node, context, solver)
     StatementResult.kt            sideEffects + newContext
     VariableDeclarationExecutor.kt   let x: T = expr;  (object)
@@ -85,7 +83,7 @@ interpreter/src/main/kotlin/printscript/
 
 ## Dispatch
 
-Un nivel: `node.name` es el nombre de regla de `grammar.config.json`. `DefaultBlockExecutor` y `DefaultExpressionSolver` indexan handlers por `nodeNames`. Nombre sin handler → `UnresolvableExpression`. Call desconocido → `UnresolvableCall`.
+Un nivel: `node.name` es el nombre de regla de `grammar.config.json`. `DefaultInterpreter` y `DefaultExpressionSolver` indexan handlers por `nodeNames`. Nombre sin handler → `UnresolvableExpression`. Call desconocido → `UnresolvableCall`.
 
 Un evaluator puede declarar más de un nombre (`BinaryOperationEvaluator` cubre `expression` y `term`, la misma forma de `LeftRule`). Nombre duplicado: last-wins.
 
@@ -118,7 +116,7 @@ Los evaluators evitan pirámides: un `when` raso de dispatch y helpers con nombr
 
 **Formato de números al imprimir:** enteros sin decimales (`7`); decimales tal cual (`1.5`). `toPrintableString()`.
 
-**Contexto.** `InterpreterContext` inmutable copy-on-write. `assignVariable` → `Result<InterpreterContext, RuntimeError>`. Los executors devuelven `StatementResult`; `DefaultBlockExecutor` teje el contexto.
+**Contexto.** `InterpreterContext` inmutable copy-on-write. `assignVariable` → `Result<InterpreterContext, RuntimeError>`. Los executors devuelven `StatementResult`; `DefaultInterpreter` teje el contexto.
 
 **División por cero:** guard en `apply` → `DivisionByZero`.
 
@@ -170,4 +168,4 @@ Nota: los tests usan su propio `LanguageConfig` (`support/PsSupport`) con `parti
 ### Nuevo statement (ej. asignaciones sueltas, if)
 
 1. `StatementExecutor` registrado en `defaultStatementExecutors`.
-2. Si el cuerpo repite statements (bloques), pasar el `BlockExecutor` a `execute` — el fold ya vive en `DefaultBlockExecutor` y no depende de `DefaultInterpreter`.
+2. Si el cuerpo repite statements (bloques), pasar el `BlockExecutor` a `execute` — el fold vive en `DefaultInterpreter` detrás de esa interface.

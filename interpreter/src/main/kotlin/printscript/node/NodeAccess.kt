@@ -14,22 +14,11 @@ internal fun SyntaxNode.tokenValue(): Result<String, RuntimeError> {
     }
 }
 
-internal fun SyntaxNode.childAt(index: Int): Result<SyntaxNode, RuntimeError> {
-    val child = children.getOrNull(index)
-    return if (child != null) {
-        Result.Ok(child)
-    } else {
-        Result.Err(UnrecognizedNode(name, location))
-    }
-}
+internal fun SyntaxNode.childAt(index: Int): Result<SyntaxNode, RuntimeError> = nodeOrErr(children.getOrNull(index))
 
 internal fun SyntaxNode.firstChild(): Result<SyntaxNode, RuntimeError> = childAt(0)
 
-internal fun SyntaxNode.namedChild(name: String): Result<SyntaxNode, RuntimeError> {
-    val child = childOrNull(name)
-    return if (child != null) {
-        Result.Ok(child)
-    } else {
-        Result.Err(UnrecognizedNode(this.name, location))
-    }
-}
+internal fun SyntaxNode.namedChild(name: String): Result<SyntaxNode, RuntimeError> = nodeOrErr(childOrNull(name))
+
+private fun SyntaxNode.nodeOrErr(child: SyntaxNode?): Result<SyntaxNode, RuntimeError> =
+    child?.let { Result.Ok(it) } ?: Result.Err(UnrecognizedNode(name, location))

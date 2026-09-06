@@ -15,14 +15,6 @@ data class UnresolvableExpression(
         get() = "No hay evaluator para nodo '$nodeName'"
 }
 
-data class NoNodeKindForNode(
-    val nodeName: String,
-    override val location: Location,
-) : RuntimeError {
-    override val message: String
-        get() = "El tipo de nodo '$nodeName' no está mapeado a ningún NodeKind. Revisá el config de mapping."
-}
-
 data class DivisionByZero(
     override val location: Location,
 ) : RuntimeError {

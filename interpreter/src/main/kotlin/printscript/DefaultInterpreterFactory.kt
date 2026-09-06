@@ -7,7 +7,6 @@ import printscript.expression.binaryoperation.BinaryOperationEvaluator
 import printscript.expression.binaryoperation.DefaultTypeConfiguration
 import printscript.expression.binaryoperation.TypeConfiguration
 import printscript.expression.call.CallEvaluator
-import printscript.expression.call.PrintlnHandler
 import printscript.expression.literal.IdentifierEvaluator
 import printscript.expression.literal.NumberLiteralEvaluator
 import printscript.expression.literal.StringLiteralEvaluator
@@ -31,7 +30,7 @@ object DefaultInterpreterFactory {
             IdentifierEvaluator,
             GroupEvaluator,
             BinaryOperationEvaluator(typeConfiguration),
-            CallEvaluator(listOf(PrintlnHandler)),
+            CallEvaluator(),
         )
 
     internal fun defaultStatementExecutors(): List<StatementExecutor> =
