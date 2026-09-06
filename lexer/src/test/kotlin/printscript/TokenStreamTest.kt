@@ -12,6 +12,7 @@ import printscript.support.PrintScriptLanguage
 import printscript.support.assertLex
 import printscript.support.assertLocation
 import printscript.support.assertTypes
+import printscript.support.castTokenResult
 import printscript.support.lex
 import printscript.support.lexer
 import printscript.support.tok
@@ -40,8 +41,8 @@ class TokenStreamTest {
         @Test
         fun `nextToken after EOF yields another EOF`() {
             val stream = lexer("")
-            assertEquals("EOF", stream.nextToken().type)
-            assertEquals("EOF", stream.nextToken().type)
+            assertEquals("EOF", castTokenResult(stream.nextToken()).type)
+            assertEquals("EOF", castTokenResult(stream.nextToken()).type)
         }
     }
 

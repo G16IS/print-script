@@ -6,7 +6,9 @@ import printscript.Lexer
 import printscript.ast.Location
 import printscript.domain.LanguageConfig
 import printscript.domain.Token
+import printscript.error.Error
 import printscript.reader.CharPosition
+import printscript.util.Result
 
 fun lexer(
     source: String,
@@ -100,3 +102,5 @@ private fun assertLexed(
         "values for `$source`",
     )
 }
+
+fun castTokenResult(tokenResult: Result<Token, Error>): Token = (tokenResult as Result.Ok<Token>).value
