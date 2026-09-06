@@ -159,7 +159,7 @@ type-checker    ← common
 interpreter     ← common
 formatter       ← common
 linter          ← common
-cli             ← common + clikt   (NO application, NO infrastructure)
+cli             ← common + clikt + application (comandos llaman use cases; I/O inyectado)
 infrastructure  ← common, cli, application, formatter, type-checker
                   (+ kotlinx.serialization-json + kaml)
 application     ← common, lexer, parser, type-checker, interpreter, formatter, linter
@@ -282,12 +282,12 @@ Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 
 ### `infrastructure` — I/O, serializers y runtime del CLI
 
-Único módulo con kotlinx.serialization. Composition root: `Main.kt` + `PrintScriptRuntime` cargan JSON, arman `FileCodeReader` y llaman a los use cases a través de `:cli`.
+Único módulo con kotlinx.serialization. El CLI de este módulo vive en `infrastructure/cli/`. Composition root: `PrintScriptRuntime` pide `ConfigFactory` + `List<CommandFactory>` (DIP). `DefaultConfigFactory` carga JSON/YAML a `PrintScriptConfigs`. Cada factory arma un comando de `:cli` con `FileSources` + `*Effects`. El comando llama al use case y devuelve el resultado; `cli/Effects.kt` ejecuta los efectos (prints, OK, errores).
 
 - `JSONLanguageConfigReader` / `JSONGrammarConfigReader` / `JSONTypeSystemConfigReader` / `JSONFormatterLanguageConfigReader` / `JSONFormatterRulesConfigReader` / `YAMLFormatterRulesConfigReader` / `JSONLinterConfigReader` implementan los ports de `common`
 - Serializers **surrogate** en `serializer/config`: el dominio no lleva `@Serializable`. `LanguageConfigSerializer` + `TokenRuleSerializer` (discrimina `type: exact|regex`)
 - Discriminación de `GrammarRule` por **clave JSON** (`or`, `seq`, `left`, `atom`, `repeat`), no por campo `type`
-- Plugin `application`, `mainClass = printscript.infrastructure.MainKt`
+- Plugin `application`, `mainClass = printscript.infrastructure.cli.MainKt`
 - Resources: `language.config.json`, `grammar.config.json`, `type-system.config.json`, `formatter-language.json`, `formatter-user-defaults.json`, `linter.config.json`
 
 Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
@@ -298,14 +298,14 @@ Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 - `ExecuteCode.execute(...)` — lo anterior + interpreter → `Result<List<SideEffect>, ExecutionFailure>`
 - `FormatCode` / `CheckFormat` / `LintProgram` — reciben `CodeReader` + configs/formatter ya armados
 - `LoadFormatter` arma el `Formatter` a partir de configs parseadas (no lee archivos)
-- No hay `Main.kt` acá: el CLI vive en `:cli` y se corre desde infrastructure
+- No hay `Main.kt` acá: el CLI vive en `:cli` y se corre desde `infrastructure/cli`
 - Tests de integración con archivos `.ps` y un DSL `assertAst { node(...) }`
 
 Ver [modules/APPLICATION.md](modules/APPLICATION.md).
 
 ### `cli` — comandos Clikt
 
-Subcomandos `run` / `lint` / `check` / `format` / `typecheck`. Handlers inyectados (`FileCommand`). No conoce use cases concretos.
+Subcomandos `run` / `lint` / `check` / `format` / `typecheck`. Llaman al use case y devuelven el resultado. `SourceFiles` y `CommandEffects` los inyecta infrastructure.
 
 Ver [modules/CLI.md](modules/CLI.md).
 
@@ -459,7 +459,7 @@ Módulo existente, cableado en `LintProgram`. Detalle: [modules/LINTER.md](modul
 
 ### CLI
 
-Nuevo subcomando: `FileCliCommand(...)` en `PrintScriptRuntime` (o un `CliktCommand` + `emit` si tiene flags extra). No hace falta una task Gradle extra: Clikt + `./gradlew :infrastructure:run --args="…"`. Detalle: [modules/CLI.md](modules/CLI.md).
+Nuevo subcomando: clase en `cli/command/` que llama al use case, `*Effects` + factory en `infrastructure/cli/`. Registrar en `CommandFactories.defaults()`. Detalle: [modules/CLI.md](modules/CLI.md).
 
 ---
 
@@ -509,5 +509,5 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.y
 | Pretty-print / bloques | FORMATTER | gramática de `if`/`{` + bump de `indentLevel` en `emitSyntheticToken` (el render ya existe) |
 | Lint/format del Kotlin del repo | BUILD_LOGIC | `build-logic` / `printscript.quality` |
 | CLI / correr un archivo | CLI + INFRASTRUCTURE | `./gradlew ps-run examples/hello.ps` |
-| Nuevo subcomando | CLI + INFRASTRUCTURE | `FileCliCommand` (o `CliktCommand` + `emit`) en `PrintScriptRuntime` |
+| Nuevo subcomando | CLI + INFRASTRUCTURE | comando en `:cli` (use case) + `*Effects` en infra + factory |
 | Leer un `.ps` de otro lado (stdin, string) | common `CodeReader` + infrastructure | nueva impl de `CodeReader` |

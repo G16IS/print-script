@@ -24,7 +24,7 @@ listOf(
         description = taskDescription
         command.set(commandName)
         dependsOn(":infrastructure:classes")
-        mainClass.set("printscript.infrastructure.MainKt")
+        mainClass.set("printscript.infrastructure.cli.MainKt")
         classpath(
             provider {
                 project(":infrastructure")

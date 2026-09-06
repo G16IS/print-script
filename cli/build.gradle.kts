@@ -9,6 +9,9 @@ repositories {
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":application"))
+    implementation(project(":formatter"))
+    implementation(project(":type-checker"))
     api(libs.clikt)
 
     testImplementation(kotlin("test"))

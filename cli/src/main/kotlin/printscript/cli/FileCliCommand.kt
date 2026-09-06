@@ -5,16 +5,22 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.parameters.arguments.argument
 
-class FileCliCommand(
+abstract class SourceFileCommand(
     name: String,
     private val helpText: String,
-    private val printOk: Boolean = true,
-    private val command: FileCommand,
+    protected val printOk: Boolean = true,
 ) : CliktCommand(name) {
-    private val file by argument(help = "Path to the PrintScript source file")
+    protected val file by argument(help = "Path to the PrintScript source file")
 
     override fun help(context: Context): String = helpText
+}
 
+class FileCliCommand(
+    name: String,
+    helpText: String,
+    printOk: Boolean = true,
+    private val command: FileCommand,
+) : SourceFileCommand(name, helpText, printOk) {
     override fun run() = emit(command.execute(file), printOk)
 }
 

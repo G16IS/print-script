@@ -1,4 +1,4 @@
-package printscript.infrastructure
+package printscript.infrastructure.cli
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import printscript.cli.CommandResult
+import printscript.cli.FileCliCommand
+import printscript.cli.FileCommand
 
 class PrintScriptRuntimeTest {
     @TempDir
@@ -70,6 +73,27 @@ class PrintScriptRuntimeTest {
 
         assertEquals(1, result.statusCode)
         assertTrue(result.stderr.contains("ERROR"))
+    }
+
+    @Test
+    fun `create uses injected command factories`() {
+        val result =
+            PrintScriptRuntime
+                .create(
+                    commandFactories =
+                        listOf(
+                            CommandFactory { _ ->
+                                FileCliCommand(
+                                    "analyze",
+                                    "Analyze a PrintScript file",
+                                    command = FileCommand { CommandResult.Ok },
+                                )
+                            },
+                        ),
+                ).capture(arrayOf("analyze", "foo.ps"))
+
+        assertEquals(0, result.statusCode)
+        assertEquals("OK\n", result.stdout)
     }
 
     private fun sourceFile(contents: String): String {

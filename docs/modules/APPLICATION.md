@@ -84,7 +84,7 @@ Las tres configs llegan **ya construidas**. Application no lee JSON en el caso d
 
 No hay ejecución de `println` en este caso de uso. “Interpret” acá = lex + parse + type-check. La ejecución está en `ExecuteCode` (CLI `run`).
 
-No hay `Main.kt` acá: el CLI es `:cli` + `infrastructure/Main.kt`.
+No hay `Main.kt` acá: el CLI es `:cli` + `infrastructure/cli/Main.kt`.
 
 ---
 
@@ -179,7 +179,7 @@ Son el contrato de integración del lenguaje v1. Si cambiás la gramática de fo
 
 ### CLI
 
-Ver [CLI.md](CLI.md). Los handlers se cablean en `PrintScriptRuntime` (infrastructure), no acá.
+Ver [CLI.md](CLI.md). Los comandos de `:cli` llaman a estos use cases; infrastructure ejecuta los efectos del resultado.
 
 ### Execute / interpreter
 
@@ -198,6 +198,6 @@ Archivo en `resources/examples/` + test en `InterpretCodeTest` con el DSL. Prefe
 ## Invariantes
 
 - Application no reimplementa reglas de token ni de gramática.
-- El formatter no lee archivos: `LoadFormatter` le inyecta configs ya parseadas. Paths de JSON/YAML viven en infrastructure (`PrintScriptRuntime`).
+- El formatter no lee archivos: `LoadFormatter` le inyecta configs ya parseadas. Paths de JSON/YAML viven en infrastructure (`DefaultConfigFactory`).
 - El `LanguageConfig` que usás en runtime tiene que tener el `order` que el **lexer real** espera (último = más prioritario), no el del markdown.
 - `interpretCode` asume que hay statements hasta EOF. Un archivo vacío (solo whitespace) hace `peek` → `EOF` y devuelve `SyntaxProgram.empty()` sin llamar al parser. Un archivo con basura al inicio tira desde lexer o parser.

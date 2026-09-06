@@ -9,7 +9,7 @@ repositories {
 }
 
 application {
-    mainClass.set("printscript.infrastructure.MainKt")
+    mainClass.set("printscript.infrastructure.cli.MainKt")
 }
 
 dependencies {

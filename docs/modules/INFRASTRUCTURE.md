@@ -1,6 +1,6 @@
 # Módulo `infrastructure`
 
-Dependencias: `common`, `:cli`, `:application`, `:formatter`, `:type-checker` + `kotlinx-serialization-json` + `kaml` (YAML). Es el único módulo con el plugin `kotlin-serialization`. Plugin `application` (`mainClass = printscript.infrastructure.MainKt`).
+Dependencias: `common`, `:cli`, `:application`, `:formatter`, `:type-checker` + `kotlinx-serialization-json` + `kaml` (YAML). Es el único módulo con el plugin `kotlin-serialization`. Plugin `application` (`mainClass = printscript.infrastructure.cli.MainKt`).
 
 I/O concreto: leer configs JSON/YAML, leer código desde archivo, y **correr el CLI**. El dominio en `common` permanece ignoto de JSON.
 
@@ -11,7 +11,9 @@ I/O concreto: leer configs JSON/YAML, leer código desde archivo, y **correr el 
 - Forma del JSON o YAML / un serializer nuevo
 - Validación post-load de `LanguageConfig`
 - Otra fuente de caracteres (`CodeReader` para stdin, string, etc.)
-- Cablear un subcomando del CLI a un caso de uso (`PrintScriptRuntime`)
+- Cablear un subcomando: `cli/CommandFactory.kt` (comando de `:cli` + `FileSources` + `*Effects`)
+- Ejecutar efectos del resultado (prints, OK, errores) en `cli/Effects.kt`
+- Cargar JSON/YAML (`cli/DefaultConfigFactory` → `PrintScriptConfigs`)
 - **No** para la semántica de una regla: eso es `common` + `parser`/`lexer`/`type-checker`/`formatter`
 - **No** para parsear args: eso es `:cli`
 
@@ -22,9 +24,16 @@ I/O concreto: leer configs JSON/YAML, leer código desde archivo, y **correr el 
 ```
 infrastructure/src/main/
   kotlin/printscript/infrastructure/
-    Main.kt                      entrypoint: PrintScriptRuntime.create().runCli(args)
-    PrintScriptRuntime.kt        composition root: JSON + FileCodeReader + use cases
-    ErrorFormatting.kt           mensaje + (line:col-line:col)
+    cli/
+      Main.kt                    entrypoint: PrintScriptRuntime.create().runCli(args)
+      PrintScriptRuntime.kt      composition root: ConfigFactory + CommandFactory
+      PrintScriptConfigs.kt      bag inmutable de configs ya cargadas
+      ConfigFactory.kt           puerto para cargar configs
+      DefaultConfigFactory.kt    JSON/YAML del classpath + YAML de usuario
+      ErrorFormatting.kt         mensaje + (line:col-line:col)
+      FileSources.kt             lee `.ps` del filesystem
+      Effects.kt                 Run/Lint/Check/Format/TypeCheck → CommandResult
+      CommandFactory.kt          factories + CommandFactories.defaults()
     reader/
       JSONLanguageConfigReader.kt
       JSONGrammarConfigReader.kt
