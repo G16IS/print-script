@@ -12,7 +12,7 @@ data class UnresolvableExpression(
     override val location: Location,
 ) : RuntimeError {
     override val message: String
-        get() = "No hay evaluator para nodo '$nodeName'"
+        get() = "No hay handler registrado para nodo '$nodeName'"
 }
 
 data class DivisionByZero(
