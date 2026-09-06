@@ -1,15 +1,21 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     `java-library`
+    application
 }
 
 repositories {
     mavenCentral()
 }
 
+application {
+    mainClass.set("printscript.cli.MainKt")
+}
+
 dependencies {
     implementation(project(":common"))
     implementation(project(":application"))
+    implementation(project(":infrastructure"))
     implementation(project(":formatter"))
     implementation(project(":type-checker"))
     api(libs.clikt)

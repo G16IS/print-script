@@ -1,4 +1,4 @@
-package printscript.infrastructure.cli
+package printscript.cli
 
 import printscript.ast.Location
 import printscript.error.FormatError

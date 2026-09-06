@@ -1,54 +1,82 @@
 package printscript.cli
 
+import java.nio.file.Files
+import java.nio.file.Path
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 
 class PrintScriptCliTest {
+    @TempDir
+    lateinit var tempDir: Path
+
     @Test
-    fun `run prints handler output and exits 0`() {
-        val result =
-            cli(
-                run = FileCommand { CommandResult.Output("hello\n") },
-            ).capture(arrayOf("run", "foo.ps"))
+    fun `run prints println output`() {
+        val file =
+            sourceFile(
+                """
+                let pepe: string = "Hello, World!";
+                println(pepe);
+                """.trimIndent(),
+            )
+
+        val result = PrintScriptCli.create().capture(arrayOf("run", file))
 
         assertEquals(0, result.statusCode)
-        assertEquals("hello\n", result.stdout)
+        assertEquals("Hello, World!\n", result.stdout)
     }
 
     @Test
-    fun `lint prints OK when the handler succeeds`() {
-        val result = cli().capture(arrayOf("lint", "foo.ps"))
+    fun `typecheck reports a type error`() {
+        val file =
+            sourceFile(
+                """
+                let x: number = "hola";
+                """.trimIndent(),
+            )
 
-        assertEquals(0, result.statusCode)
-        assertEquals("OK\n", result.stdout)
-    }
-
-    @Test
-    fun `typecheck prints failures to stderr and exits 1`() {
-        val result =
-            cli(
-                typecheck = FileCommand { CommandResult.Failed(listOf("Se esperaba number (1:5-1:10)")) },
-            ).capture(arrayOf("typecheck", "foo.ps"))
+        val result = PrintScriptCli.create().capture(arrayOf("typecheck", file))
 
         assertEquals(1, result.statusCode)
-        assertTrue(result.stderr.contains("Se esperaba number (1:5-1:10)"))
+        assertTrue(result.stderr.contains("Se esperaba number"))
     }
 
     @Test
-    fun `format prints formatted source without OK`() {
-        val result =
-            cli(
-                format = FileCommand { CommandResult.Output("1 + 2;\n") },
-            ).capture(arrayOf("format", "foo.ps"))
+    fun `format pretty-prints an expression`() {
+        val file = sourceFile("1+2;")
+
+        val result = PrintScriptCli.create().capture(arrayOf("format", file))
 
         assertEquals(0, result.statusCode)
         assertEquals("1 + 2;\n", result.stdout)
     }
 
     @Test
+    fun `check fails on unformatted source`() {
+        val file = sourceFile("1+2;")
+
+        val result = PrintScriptCli.create().capture(arrayOf("check", file))
+
+        assertEquals(1, result.statusCode)
+        assertTrue(result.stderr.isNotBlank())
+    }
+
+    @Test
+    fun `parse failure prints ERROR`() {
+        val file = sourceFile("let")
+
+        val result = PrintScriptCli.create().capture(arrayOf("run", file))
+
+        assertEquals(1, result.statusCode)
+        assertTrue(result.stderr.contains("ERROR"))
+    }
+
+    @Test
     fun `unsupported language version prints ERROR`() {
-        val result = cli().capture(arrayOf("--version", "2.0", "run", "foo.ps"))
+        val file = sourceFile("1+2;")
+
+        val result = PrintScriptCli.create().capture(arrayOf("--version", "2.0", "run", file))
 
         assertEquals(1, result.statusCode)
         assertTrue(result.stderr.contains("ERROR"))
@@ -56,33 +84,14 @@ class PrintScriptCliTest {
 
     @Test
     fun `missing subcommand prints help`() {
-        val result = cli().capture(arrayOf())
+        val result = PrintScriptCli.create().capture(arrayOf())
 
         assertTrue(result.stdout.contains("Usage") || result.stderr.contains("Usage"))
     }
 
-    @Test
-    fun `extra file command is registered without changing the root`() {
-        val result =
-            PrintScriptCli(
-                FileCliCommand("analyze", "Analyze a PrintScript file") { CommandResult.Ok },
-            ).capture(arrayOf("analyze", "foo.ps"))
-
-        assertEquals(0, result.statusCode)
-        assertEquals("OK\n", result.stdout)
+    private fun sourceFile(contents: String): String {
+        val file = tempDir.resolve("sample.ps")
+        Files.writeString(file, contents)
+        return file.toAbsolutePath().toString()
     }
-
-    private fun cli(
-        run: FileCommand = FileCommand { CommandResult.Ok },
-        lint: FileCommand = FileCommand { CommandResult.Ok },
-        check: FileCommand = FileCommand { CommandResult.Ok },
-        format: FileCommand = FileCommand { CommandResult.Ok },
-        typecheck: FileCommand = FileCommand { CommandResult.Ok },
-    ) = PrintScriptCli(
-        FileCliCommand("run", "Execute a PrintScript file", printOk = false, run),
-        FileCliCommand("lint", "Lint a PrintScript file", command = lint),
-        FileCliCommand("check", "Check that a PrintScript file matches the formatter", command = check),
-        FileCliCommand("format", "Format a PrintScript file and print it to stdout", printOk = false, format),
-        FileCliCommand("typecheck", "Type-check a PrintScript file", command = typecheck),
-    )
 }

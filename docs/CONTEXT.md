@@ -25,11 +25,11 @@ El diseño es **pipeline + configuración declarativa**. Lexer y parser no hardc
 | `parser` | [modules/PARSER.md](modules/PARSER.md) | Tokens → `SyntaxProgram` evaluando `Grammar` |
 | `type-checker` | [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md) | Tipos y símbolos sobre el parse tree. Cableado en `interpretCode` |
 | `interpreter` | [modules/INTERPRETER.md](modules/INTERPRETER.md) | `SyntaxProgram` → `List<SideEffect>`. Cableado en `ExecuteCode` (CLI `run`) |
-| `infrastructure` | [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md) | JSON + filesystem + composition root del CLI (`Main`) |
+| `infrastructure` | [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md) | JSON/YAML + `FileCodeReader`. No es el CLI |
 | `application` | [modules/APPLICATION.md](modules/APPLICATION.md) | Casos de uso: type-check, execute, format, check, lint |
 | `formatter` | [modules/FORMATTER.md](modules/FORMATTER.md) | Pretty-print / check de whitespace. Cableado en `FormatCode` / `CheckFormat` |
 | `linter` | [modules/LINTER.md](modules/LINTER.md) | Reglas de estilo sobre el árbol. Cableado en `LintProgram` |
-| `cli` | [modules/CLI.md](modules/CLI.md) | Clikt: subcomandos `run`/`lint`/`check`/`format`/`typecheck` |
+| `cli` | [modules/CLI.md](modules/CLI.md) | Composition root: carga configs y llama use cases (`run`/`lint`/`check`/`format`/`typecheck`) |
 
 ### Módulos a futuro (pipeline)
 
@@ -159,9 +159,9 @@ type-checker    ← common
 interpreter     ← common
 formatter       ← common
 linter          ← common
-cli             ← common + clikt + application (comandos llaman use cases; I/O inyectado)
-infrastructure  ← common, cli, application, formatter, type-checker
-                  (+ kotlinx.serialization-json + kaml)
+cli             ← common + clikt + application + infrastructure
+                  (composition root: carga configs, llama use cases, presenta)
+infrastructure  ← common (+ kotlinx.serialization-json + kaml)
 application     ← common, lexer, parser, type-checker, interpreter, formatter, linter
                   (NO infrastructure; I/O se inyecta)
 ```
@@ -172,8 +172,8 @@ Dependencias extra de **test**:
 - `formatter` testImplementation `infrastructure` (carga `formatter-language.json`)
 - `interpreter` testImplementation `lexer`, `parser`, `infrastructure` (lex+parse+interpret)
 - `application` tests usan `JSONGrammarConfigReader` + `JSONTypeSystemConfigReader` + `FileCodeReader` + un `LanguageConfig` armado en código (`PrintScriptLanguage`), no el JSON del lexer tal cual
-- `cli` tests usan `FileCommand` fake (no pegan al pipeline)
-- `infrastructure` tests de runtime arman un `.ps` temporal y llaman `PrintScriptRuntime.create().capture(...)`
+- `cli` tests arman un `.ps` temporal y llaman `PrintScriptCli.create().capture(...)` (pipeline real)
+- `infrastructure` tests cubren readers JSON/YAML contra resources
 
 Toolchain: `kotlin.jvmToolchain(21)`. Version catalog: `gradle/libs.versions.toml`.
 
@@ -280,14 +280,13 @@ Módulo Gradle `:formatter`. Recibe configs ya parseadas + `SyntaxProgram` y pro
 
 Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 
-### `infrastructure` — I/O, serializers y runtime del CLI
+### `infrastructure` — I/O y serializers
 
-Único módulo con kotlinx.serialization. El CLI de este módulo vive en `infrastructure/cli/`. Composition root: `PrintScriptRuntime` pide `ConfigFactory` + `List<CommandFactory>` (DIP). `DefaultConfigFactory` carga JSON/YAML a `PrintScriptConfigs`. Cada factory arma un comando de `:cli` con `FileSources` + `*Effects`. El comando llama al use case y devuelve el resultado; `cli/Effects.kt` ejecuta los efectos (prints, OK, errores).
+Único módulo con kotlinx.serialization. Lee JSON/YAML y archivos `.ps`. **No** es el CLI: el composition root vive en `:cli`.
 
 - `JSONLanguageConfigReader` / `JSONGrammarConfigReader` / `JSONTypeSystemConfigReader` / `JSONFormatterLanguageConfigReader` / `JSONFormatterRulesConfigReader` / `YAMLFormatterRulesConfigReader` / `JSONLinterConfigReader` implementan los ports de `common`
 - Serializers **surrogate** en `serializer/config`: el dominio no lleva `@Serializable`. `LanguageConfigSerializer` + `TokenRuleSerializer` (discrimina `type: exact|regex`)
 - Discriminación de `GrammarRule` por **clave JSON** (`or`, `seq`, `left`, `atom`, `repeat`), no por campo `type`
-- Plugin `application`, `mainClass = printscript.infrastructure.cli.MainKt`
 - Resources: `language.config.json`, `grammar.config.json`, `type-system.config.json`, `formatter-language.json`, `formatter-user-defaults.json`, `linter.config.json`
 
 Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
@@ -297,15 +296,15 @@ Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 - `InterpretCode.interpretCode(...)` — lex + parse + type-check → `Report`
 - `ExecuteCode.execute(...)` — lo anterior + interpreter → `Result<List<SideEffect>, ExecutionFailure>`
 - `FormatCode` / `CheckFormat` / `LintProgram` — reciben `CodeReader` + configs/formatter ya armados
-- `LoadFormatter` arma el `Formatter` a partir de configs parseadas (no lee archivos)
-- No hay `Main.kt` acá: el CLI vive en `:cli` y se corre desde `infrastructure/cli`
+- `LoadFormatter` arma el `Formatter` a partir de configs parseadas (no lee archivos). Lo llama el CLI al arrancar
+- No hay `Main.kt` acá: el CLI vive en `:cli`
 - Tests de integración con archivos `.ps` y un DSL `assertAst { node(...) }`
 
 Ver [modules/APPLICATION.md](modules/APPLICATION.md).
 
-### `cli` — comandos Clikt
+### `cli` — composition root
 
-Subcomandos `run` / `lint` / `check` / `format` / `typecheck`. Llaman al use case y devuelven el resultado. `SourceFiles` y `CommandEffects` los inyecta infrastructure.
+Plugin `application`, `mainClass = printscript.cli.MainKt`. Carga configs (readers de infrastructure + `LoadFormatter`), registra subcomandos `run` / `lint` / `check` / `format` / `typecheck`, cada uno llama al use case y presenta stdout/stderr.
 
 Ver [modules/CLI.md](modules/CLI.md).
 
@@ -459,7 +458,7 @@ Módulo existente, cableado en `LintProgram`. Detalle: [modules/LINTER.md](modul
 
 ### CLI
 
-Nuevo subcomando: clase en `cli/command/` que llama al use case, `*Effects` + factory en `infrastructure/cli/`. Registrar en `CommandFactories.defaults()`. Detalle: [modules/CLI.md](modules/CLI.md).
+Nuevo subcomando: clase en `cli/command/` que carga el `.ps`, llama al use case y presenta el resultado. Registrar en `PrintScriptCli.create()`. Detalle: [modules/CLI.md](modules/CLI.md).
 
 ---
 
@@ -472,10 +471,10 @@ Nuevo subcomando: clase en `cli/command/` que llama al use case, `*Effects` + fa
 | `type-checker` | Scope, resolver (literales, binarios, permutación), `TypeChecker` (match/mismatch/redeclare), `check` vs `checkStrict` |
 | `interpreter` | contexto (scope/shadow/assign), evaluators (literales/binarios/calls/div-cero), executors, integración lex+parse+interpret con `SideEffect` |
 | `formatter` | `format`/`check` de `1+2`, gap/indent render, walker con dos hijos del mismo nombre, loader (bindings + defaults JSON / type desconocido / `count` inválido), JSON real |
-| `infrastructure` | `JSONLanguageConfigReader` / `JSONGrammarConfigReader` / `JSONTypeSystemConfigReader` contra el resource real; readers del formatter y del linter; `PrintScriptRuntime` (run/format/check/typecheck + `ERROR` de parse) |
+| `infrastructure` | `JSONLanguageConfigReader` / `JSONGrammarConfigReader` / `JSONTypeSystemConfigReader` contra el resource real; readers del formatter y del linter |
 | `common` | `Result`/`Report`, `TypeSystemConfig` / `FormatterLanguageConfig` (validación), variantes de `TypeError` / `FormatError` |
 | `application` | `.ps` end-to-end lex+parse+type-check (`Report`); `ExecuteCode` (prints); format/check de `1+2;` y `let x:number=1;` (`Result`/`Report`) |
-| `cli` | parsing de args Clikt con handlers fake |
+| `cli` | pipeline real vía `PrintScriptCli.create()` (run/format/check/typecheck + `ERROR` de parse + `--version` / help) |
 
 Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.yml` corre `test` de todos los módulos; `lint.yml` corre `detekt`; `format.yml` corre `ktlintCheck`.
 

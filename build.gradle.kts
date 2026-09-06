@@ -23,11 +23,11 @@ listOf(
         group = "printscript"
         description = taskDescription
         command.set(commandName)
-        dependsOn(":infrastructure:classes")
-        mainClass.set("printscript.infrastructure.cli.MainKt")
+        dependsOn(":cli:classes")
+        mainClass.set("printscript.cli.MainKt")
         classpath(
             provider {
-                project(":infrastructure")
+                project(":cli")
                     .extensions
                     .getByType(SourceSetContainer::class.java)
                     .getByName("main")

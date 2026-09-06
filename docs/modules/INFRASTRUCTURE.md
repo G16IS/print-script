@@ -1,8 +1,8 @@
 # Módulo `infrastructure`
 
-Dependencias: `common`, `:cli`, `:application`, `:formatter`, `:type-checker` + `kotlinx-serialization-json` + `kaml` (YAML). Es el único módulo con el plugin `kotlin-serialization`. Plugin `application` (`mainClass = printscript.infrastructure.cli.MainKt`).
+Dependencias: `common` + `kotlinx-serialization-json` + `kaml` (YAML). Es el único módulo con el plugin `kotlin-serialization`. **No** es el CLI: no tiene `Main` ni plugin `application`.
 
-I/O concreto: leer configs JSON/YAML, leer código desde archivo, y **correr el CLI**. El dominio en `common` permanece ignoto de JSON.
+I/O concreto: leer configs JSON/YAML y leer código desde archivo. El dominio en `common` permanece ignoto de JSON. El composition root (cargar configs + llamar use cases) vive en `:cli`.
 
 ---
 
@@ -11,11 +11,8 @@ I/O concreto: leer configs JSON/YAML, leer código desde archivo, y **correr el 
 - Forma del JSON o YAML / un serializer nuevo
 - Validación post-load de `LanguageConfig`
 - Otra fuente de caracteres (`CodeReader` para stdin, string, etc.)
-- Cablear un subcomando: `cli/CommandFactory.kt` (comando de `:cli` + `FileSources` + `*Effects`)
-- Ejecutar efectos del resultado (prints, OK, errores) en `cli/Effects.kt`
-- Cargar JSON/YAML (`cli/DefaultConfigFactory` → `PrintScriptConfigs`)
 - **No** para la semántica de una regla: eso es `common` + `parser`/`lexer`/`type-checker`/`formatter`
-- **No** para parsear args: eso es `:cli`
+- **No** para parsear args, cargar el pipeline ni presentar resultados: eso es `:cli`
 
 ---
 
@@ -24,16 +21,6 @@ I/O concreto: leer configs JSON/YAML, leer código desde archivo, y **correr el 
 ```
 infrastructure/src/main/
   kotlin/printscript/infrastructure/
-    cli/
-      Main.kt                    entrypoint: PrintScriptRuntime.create().runCli(args)
-      PrintScriptRuntime.kt      composition root: ConfigFactory + CommandFactory
-      PrintScriptConfigs.kt      bag inmutable de configs ya cargadas
-      ConfigFactory.kt           puerto para cargar configs
-      DefaultConfigFactory.kt    JSON/YAML del classpath + YAML de usuario
-      ErrorFormatting.kt         mensaje + (line:col-line:col)
-      FileSources.kt             lee `.ps` del filesystem
-      Effects.kt                 Run/Lint/Check/Format/TypeCheck → CommandResult
-      CommandFactory.kt          factories + CommandFactories.defaults()
     reader/
       JSONLanguageConfigReader.kt
       JSONGrammarConfigReader.kt
@@ -164,7 +151,7 @@ El type-checker **no** llama a este reader: recibe el `TypeSystemConfig` ya arma
 - `peek()` no avanza posición
 - No cierra el reader (no hay `Closeable`). Para archivos cortos de la materia alcanza; para un CLI largo habría que cerrar
 
-El CLI (`PrintScriptRuntime`) y los tests de application le pasan un **path de filesystem**, no un classpath. Los `.ps` de test se resuelven con `File(url.toURI()).absolutePath`.
+El CLI (`PrintScriptCli`) y los tests de application le pasan un **path de filesystem**, no un classpath. Los `.ps` de test se resuelven con `File(url.toURI()).absolutePath`.
 
 ---
 
@@ -212,7 +199,7 @@ JSON, docs y tests coinciden: **primero gana**. Keywords antes que identifiers p
 
 `FormatterRulesConfigReaderTest`: YAML de usuario (`enabled` / `count`) + resource `formatter-user-defaults.json`. JSON y YAML de usuario comparten `FormatterRulesConfigSerializer`.
 
-`JSONLanguageConfigReaderTest` lee el resource real (`order`, LET, STRING_LITERAL). `PrintScriptRuntimeTest` cubre `run` / `typecheck` / `format` / `check` y parse inválido → `ERROR`. No hay test de `FileCodeReader`.
+`JSONLanguageConfigReaderTest` lee el resource real (`order`, LET, STRING_LITERAL). El pipeline del CLI (`run` / `typecheck` / `format` / `check` + parse inválido → `ERROR`) vive en `PrintScriptCliTest` (`:cli`). No hay test de `FileCodeReader`.
 
 ---
 
