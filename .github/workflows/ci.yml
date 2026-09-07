@@ -11,9 +11,9 @@
 
 name: CI
 
-on:
-  push:
-  pull_request:
+on: # los eventos que lo disparan
+    - pull_request
+    - workflow_dispatch
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
