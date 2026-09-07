@@ -14,7 +14,7 @@ class TokenFactoryTest {
     @Test
     fun `type comes from the rule`() {
         val token = TokenFactory.create(ExactRule(listOf("let"), "LET", false), location, "let")
-        assertEquals("LET", token.type)
+        assertEquals("LET", token.value.type)
     }
 
     @Test
@@ -27,18 +27,18 @@ class TokenFactoryTest {
                 partial = "^[a-zA-Z_]",
             )
         val token = TokenFactory.create(rule, location, "pepe")
-        assertEquals(Optional.of("pepe"), token.value)
+        assertEquals(Optional.of("pepe"), token.value.value)
     }
 
     @Test
     fun `capture false leaves the value empty`() {
         val token = TokenFactory.create(ExactRule(listOf("let"), "LET", false), location, "let")
-        assertEquals(Optional.empty<String>(), token.value)
+        assertEquals(Optional.empty<String>(), token.value.value)
     }
 
     @Test
     fun `location is forwarded`() {
         val token = TokenFactory.create(ExactRule(listOf(";"), "SEMICOLON", false), location, ";")
-        assertEquals(location, token.location)
+        assertEquals(location, token.value.location)
     }
 }

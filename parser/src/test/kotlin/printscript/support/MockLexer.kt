@@ -4,6 +4,8 @@ import java.util.Optional
 import printscript.Lexer
 import printscript.ast.Location
 import printscript.domain.Token
+import printscript.error.LexerError
+import printscript.util.Result
 
 class MockLexer(
     tokens: List<Token>,
@@ -11,15 +13,15 @@ class MockLexer(
     private val tokens: List<Token> = ensureEof(tokens)
     private var index: Int = 0
 
-    override fun nextToken(): Token {
+    override fun nextToken(): Result<Token, LexerError> {
         val token = tokens[index]
         if (index < tokens.lastIndex) index += 1
-        return token
+        return Result.Ok(token)
     }
 
-    override fun peek(offset: Int?): Token {
+    override fun peek(offset: Int?): Result<Token, LexerError> {
         val i = index + (offset ?: 0)
-        return tokens[i.coerceIn(0, tokens.lastIndex)]
+        return Result.Ok(tokens[i.coerceIn(0, tokens.lastIndex)])
     }
 
     companion object {
