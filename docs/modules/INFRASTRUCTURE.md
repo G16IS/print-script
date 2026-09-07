@@ -1,8 +1,8 @@
 # Módulo `infrastructure`
 
-Dependencias: `common` + `kotlinx-serialization-json` + `kaml` (YAML). Es el único módulo con el plugin `kotlin-serialization`.
+Dependencias: `common` + `kotlinx-serialization-json` + `kaml` (YAML). Es el único módulo con el plugin `kotlin-serialization`. **No** es el CLI: no tiene `Main` ni plugin `application`.
 
-I/O concreto: leer configs JSON/YAML y leer código desde archivo. El dominio en `common` permanece ignoto de JSON.
+I/O concreto: leer configs JSON/YAML y leer código desde archivo. El dominio en `common` permanece ignoto de JSON. El composition root (cargar configs + llamar use cases) vive en `:cli`.
 
 ---
 
@@ -12,6 +12,7 @@ I/O concreto: leer configs JSON/YAML y leer código desde archivo. El dominio en
 - Validación post-load de `LanguageConfig`
 - Otra fuente de caracteres (`CodeReader` para stdin, string, etc.)
 - **No** para la semántica de una regla: eso es `common` + `parser`/`lexer`/`type-checker`/`formatter`
+- **No** para parsear args, cargar el pipeline ni presentar resultados: eso es `:cli`
 
 ---
 
@@ -27,9 +28,12 @@ infrastructure/src/main/
       JSONFormatterLanguageConfigReader.kt
       JSONFormatterRulesConfigReader.kt
       YAMLFormatterRulesConfigReader.kt
+      JSONLinterConfigReader.kt
       FileCodeReader.kt
     serializer/config/
       JsonCodecs.kt              asJsonDecoder / asJsonEncoder
+      LanguageConfigSerializer.kt
+      TokenRuleSerializer.kt     type: exact | regex
       ExactRuleSerializer.kt
       RegexRuleSerializer.kt
       GrammarSerializer.kt
@@ -45,12 +49,14 @@ infrastructure/src/main/
       NodeConfigSerializer.kt
       FormatterRulesConfigSerializer.kt
       FormatterLanguageConfigSerializer.kt
+      LinterConfigSerializer.kt
   resources/
     language.config.json
     grammar.config.json
     type-system.config.json
     formatter-language.json
     formatter-user-defaults.json
+    linter.config.json
 ```
 
 Specs: [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](../configs/GRAMMAR_CONFIG.md), [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md), [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
@@ -82,7 +88,7 @@ El JSON discrimina con `"type": "exact" | "regex"`.
 
 No reordena `order`: el lexer prueba las categorías de primero a último, igual que está escrito en el JSON.
 
-`LanguageConfig` en `common` **no** está anotado `@Serializable`; el reader usa `decodeFromString<LanguageConfig>`. Los surrogates de las reglas sí. Si el decode de `LanguageConfig` se pone quisquilloso, el patrón a copiar es el de `GrammarSerializer` (surrogate explícito).
+`LanguageConfig` en `common` **no** está anotado `@Serializable`. El reader usa `LanguageConfigSerializer` (surrogate) + `TokenRuleSerializer` (campo JSON `type`). Los surrogates de `ExactRule` / `RegexRule` ignoran `type` (`ignoreUnknownKeys`).
 
 Los tests de application **no** usan este reader: arman `LanguageConfig` en código.
 
@@ -145,7 +151,7 @@ El type-checker **no** llama a este reader: recibe el `TypeSystemConfig` ya arma
 - `peek()` no avanza posición
 - No cierra el reader (no hay `Closeable`). Para archivos cortos de la materia alcanza; para un CLI largo habría que cerrar
 
-`interpretCode` y `ParseExample` le pasan un **path de filesystem**, no un classpath. Los `.ps` de test se resuelven con `File(url.toURI()).absolutePath`.
+El CLI (`PrintScriptCli`) y los tests de application le pasan un **path de filesystem**, no un classpath. Los `.ps` de test se resuelven con `File(url.toURI()).absolutePath`.
 
 ---
 
@@ -161,7 +167,7 @@ Tokens: `LET`, `CALL` (`println`, capture), `TYPE` (`string`/`number`, capture),
 
 `COMMA` está; la gramática no lo usa.
 
-Partial de string en este JSON: `"^\"`. En tests: `"^\"[^\"]*$"`.
+Partial de string en este JSON: `"^\"[^\"]*$"` (permite tokenizar `"hola"`). Números siguen con `^[0-9]` (el `1.5` se parte).
 
 ### `grammar.config.json`
 
@@ -193,7 +199,7 @@ JSON, docs y tests coinciden: **primero gana**. Keywords antes que identifiers p
 
 `FormatterRulesConfigReaderTest`: YAML de usuario (`enabled` / `count`) + resource `formatter-user-defaults.json`. JSON y YAML de usuario comparten `FormatterRulesConfigSerializer`.
 
-No hay test de `JSONLanguageConfigReader` ni de `FileCodeReader`.
+`JSONLanguageConfigReaderTest` lee el resource real (`order`, LET, STRING_LITERAL). El pipeline del CLI (`run` / `typecheck` / `format` / `check` + parse inválido → `ERROR`) vive en `PrintScriptCliTest` (`:cli`). No hay test de `FileCodeReader`.
 
 ---
 

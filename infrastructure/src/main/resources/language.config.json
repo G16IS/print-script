@@ -79,7 +79,7 @@
         "matcher": ["^\"[^\"]*\""],
         "token": "STRING_LITERAL",
         "capture": true,
-        "partial": "^\""
+        "partial": "^\"[^\"]*$"
       },
       {
         "type": "regex",

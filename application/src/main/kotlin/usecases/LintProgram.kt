@@ -5,22 +5,19 @@ import printscript.domain.LanguageConfig
 import printscript.domain.LinterConfig
 import printscript.error.LintError
 import printscript.factory.DefaultLinterFactory
+import printscript.reader.CodeReader
 import printscript.syntax.SyntaxProgram
 import printscript.util.Report
 
-internal object LintProgram {
+object LintProgram {
     fun lint(
         langConfig: LanguageConfig,
         grammar: Grammar,
-        path: String,
+        reader: CodeReader,
         linterConfig: LinterConfig,
     ): Report<SyntaxProgram, LintError> {
-        val program: SyntaxProgram = ParseProgram.parse(langConfig, grammar, path)
+        val program = ParseProgram.parse(langConfig, grammar, reader)
 
-        val linter = DefaultLinterFactory.create(linterConfig)
-
-        val lintReport: Report<SyntaxProgram, LintError> = linter.lint(program)
-
-        return lintReport
+        return DefaultLinterFactory.create(linterConfig).lint(program)
     }
 }

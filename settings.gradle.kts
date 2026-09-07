@@ -29,3 +29,41 @@ include("application")
 include("interpreter")
 include("linter")
 include("formatter")
+include("cli")
+
+// Gradle treats every token after the task name as another task, so
+// `./gradlew ps-run examples/hello.ps` would look for a task called
+// `examples/hello.ps`. Steal that token and pass it as -Pfile.
+val printscriptCliTasks = setOf("ps-run", "ps-lint", "ps-check", "ps-format", "ps-typecheck")
+val originalTaskNames = gradle.startParameter.taskNames
+if (originalTaskNames.isNotEmpty()) {
+    val rewritten = mutableListOf<String>()
+    val files = mutableListOf<String>()
+    var index = 0
+    while (index < originalTaskNames.size) {
+        val name = originalTaskNames[index]
+        rewritten += name
+        val bareName = name.substringAfterLast(':')
+        if (bareName in printscriptCliTasks && index + 1 < originalTaskNames.size) {
+            val next = originalTaskNames[index + 1]
+            val looksLikeSource =
+                !next.startsWith("-") &&
+                    !next.contains(':') &&
+                    next.substringAfterLast(':') !in printscriptCliTasks &&
+                    (next.endsWith(".ps") || next.contains('/') || next.contains('\\'))
+            if (looksLikeSource) {
+                files += next
+                index += 1
+            }
+        }
+        index += 1
+    }
+    if (files.isNotEmpty()) {
+        gradle.startParameter.setTaskNames(rewritten.filter { it !in files })
+        val source = files.last()
+        System.setProperty("printscript.file", source)
+        val properties = HashMap(gradle.startParameter.projectProperties)
+        properties["file"] = source
+        gradle.startParameter.setProjectProperties(properties)
+    }
+}

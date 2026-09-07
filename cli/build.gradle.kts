@@ -1,23 +1,24 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    application
 }
 
 repositories {
     mavenCentral()
 }
 
+application {
+    mainClass.set("printscript.cli.MainKt")
+}
+
 dependencies {
     implementation(project(":common"))
-    implementation(project(":lexer"))
-    implementation(project(":parser"))
-    implementation(project(":type-checker"))
-    implementation(project(":interpreter"))
-    implementation(project(":linter"))
+    implementation(project(":application"))
+    implementation(project(":infrastructure"))
     implementation(project(":formatter"))
+    implementation(project(":type-checker"))
+    implementation(libs.clikt)
 
-    testImplementation(project(":infrastructure"))
-
-    testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
