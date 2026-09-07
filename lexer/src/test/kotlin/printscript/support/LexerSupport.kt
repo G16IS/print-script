@@ -6,7 +6,10 @@ import printscript.Lexer
 import printscript.ast.Location
 import printscript.domain.LanguageConfig
 import printscript.domain.Token
+import printscript.error.Error
+import printscript.error.LexerError
 import printscript.reader.CharPosition
+import printscript.util.Result
 
 fun lexer(
     source: String,
@@ -16,20 +19,25 @@ fun lexer(
 fun lex(
     source: String,
     config: LanguageConfig = PrintScriptLanguage.config(),
-): List<Token> {
+): Result<List<Token>, LexerError> {
     val stream = lexer(source, config)
     val tokens = mutableListOf<Token>()
     while (true) {
-        val token = stream.nextToken()
+        val tokenResult = stream.nextToken()
+        val token =
+            when (tokenResult) {
+                is Result.Err -> return tokenResult
+                is Result.Ok -> tokenResult.value
+            }
         tokens += token
-        if (token.type == "EOF") return tokens
+        if (token.type == "EOF") return Result.Ok(tokens)
     }
 }
 
 fun types(
     source: String,
     config: LanguageConfig = PrintScriptLanguage.config(),
-): List<String> = lex(source, config).map { it.type }
+): List<String> = castTokenListResult(lex(source, config)).map { it.type }
 
 data class ExpectedToken(
     val type: String,
@@ -60,7 +68,7 @@ fun assertLex(
     source: String,
     vararg expected: ExpectedToken,
 ) {
-    assertLexed(source, lex(source), expected)
+    assertLexed(source, castTokenListResult(lex(source)), expected)
 }
 
 fun assertLex(
@@ -68,7 +76,7 @@ fun assertLex(
     config: LanguageConfig,
     vararg expected: ExpectedToken,
 ) {
-    assertLexed(source, lex(source, config), expected)
+    assertLexed(source, castTokenListResult(lex(source, config)), expected)
 }
 
 fun assertLocation(
@@ -100,3 +108,8 @@ private fun assertLexed(
         "values for `$source`",
     )
 }
+
+fun castTokenResult(tokenResult: Result<Token, Error>): Token = (tokenResult as Result.Ok<Token>).value
+
+fun castTokenListResult(tokenList: Result<List<Token>, Error>): List<Token> =
+    (tokenList as Result.Ok<List<Token>>).value

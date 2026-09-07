@@ -1,16 +1,20 @@
 package printscript.support
 
 import java.io.File
+import java.rmi.UnexpectedException
 import printscript.DefaultLexerFactory
 import printscript.DefaultParserFactory
+import printscript.Lexer
 import printscript.domain.ExactRule
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.RegexRule
+import printscript.domain.Token
 import printscript.domain.TokenRule
 import printscript.infrastructure.reader.FileCodeReader
 import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxProgram
+import printscript.util.Result
 
 /**
  * Parses PrintScript source with the real lexer/parser + grammar.config.json,
@@ -30,10 +34,17 @@ object PsSupport {
         val parser = DefaultParserFactory.create(grammar)
 
         var program = SyntaxProgram.empty()
-        while (lexer.peek(null).type != "EOF") {
+        while (peekNextToken(lexer).type != "EOF") {
             program = parser.parseNextStatement(lexer, program)
         }
         return program
+    }
+
+    private fun peekNextToken(lexer: Lexer): Token {
+        when (val token = lexer.peek(null)) {
+            is Result.Err -> throw UnexpectedException("Token error")
+            is Result.Ok -> return token.value
+        }
     }
 
     /**
