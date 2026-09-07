@@ -48,13 +48,14 @@ En el **root** (el plugin también se aplica ahí, sin ktlint/detekt):
 ./gradlew installGitHooks      # git hooks del repo, no-op si ya están
 ```
 
-CI (`.github/workflows/`, aparte de testing):
+CI (`.github/workflows/ci.yml`). Format/lint/wrapper en paralelo desde el arranque (no necesitan clases). `assemble` + `test` van en el mismo job para no recompilar en otra VM:
 
-| Workflow | Archivo | Comando |
-|---|---|---|
-| Tests | `tests.yml` | `./gradlew test --continue` |
-| Lint | `lint.yml` | `./gradlew detekt --continue` |
-| Format | `format.yml` | `./gradlew ktlintCheck --continue` |
+| Job | Comando |
+|---|---|
+| Gradle Wrapper | valida el checksum de `gradle-wrapper.jar` |
+| Format (ktlint) | `./gradlew ktlintCheck --continue` |
+| Lint (detekt) | `./gradlew detekt --continue` |
+| Build + tests | `./gradlew assemble --continue` y después `./gradlew test --continue` |
 
 Hoy el plugin se aplica al **root** (solo `installGitHooks`) y a **todos** los subproyectos desde el `build.gradle.kts` raíz (`gradle.beforeProject`), sin editar cada `*/build.gradle.kts`. ktlint y detekt **fallan** si hay findings: el código existente de `parser` (y el resto) todavía no está limpio.
 

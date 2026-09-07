@@ -6,14 +6,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/G16IS/print-script/actions/workflows/tests.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/G16IS/print-script/tests.yml?branch=main&style=for-the-badge&label=tests&logo=gradle" alt="Tests">
-  </a>
-  <a href="https://github.com/G16IS/print-script/actions/workflows/lint.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/G16IS/print-script/lint.yml?branch=main&style=for-the-badge&label=lint&logo=checkmarx" alt="Lint">
-  </a>
-  <a href="https://github.com/G16IS/print-script/actions/workflows/format.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/G16IS/print-script/format.yml?branch=main&style=for-the-badge&label=format&logo=prettier" alt="Format">
+  <a href="https://github.com/G16IS/print-script/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/G16IS/print-script/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white" alt="CI">
   </a>
 </p>
 
@@ -132,7 +126,7 @@ Hace falta **JDK 21**.
 ./gradlew ps-typecheck examples/hello.ps
 ```
 
-CI corre esas tres cosas en cada push / PR a `main`: [tests](.github/workflows/tests.yml), [lint](.github/workflows/lint.yml) y [format](.github/workflows/format.yml).
+CI ([`ci.yml`](.github/workflows/ci.yml)) en cada push / PR, en paralelo: wrapper, `ktlintCheck`, `detekt`, y un job `assemble` + `test` (mismo runner, un compilado).
 
 ---
 

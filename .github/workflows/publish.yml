@@ -1,0 +1,26 @@
+name: Publish
+
+on:
+    release:
+        types: [created]
+
+permissions:
+    packages: write
+    contents: read
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: 21
+
+            - name: Publish packages
+              run: ./gradlew publish -Pversion=${GITHUB_REF_NAME#v}
+              env:
+                  GITHUB_ACTOR: ${{ github.actor }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
