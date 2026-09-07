@@ -476,7 +476,7 @@ Nuevo subcomando: clase en `cli/command/` que carga el `.ps`, llama al use case 
 | `application` | `.ps` end-to-end lex+parse+type-check (`Report`); `ExecuteCode` (prints); format/check de `1+2;` y `let x:number=1;` (`Result`/`Report`) |
 | `cli` | pipeline real vía `PrintScriptCli.create()` (run/format/check/typecheck + `ERROR` de parse + `--version` / help) |
 
-Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/tests.yml` corre `test` de todos los módulos; `lint.yml` corre `detekt`; `format.yml` corre `ktlintCheck`.
+Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/ci.yml` corre wrapper / `ktlintCheck` / `detekt` en paralelo, y `assemble` + `test` en el mismo job (un compilado).
 
 ---
 

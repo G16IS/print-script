@@ -6,6 +6,11 @@ plugins {
     id("printscript.quality")
 }
 
+allprojects {
+    group = "com.g16is.printscript"
+    version = project.findProperty("version") as? String ?: "0.0.0-SNAPSHOT"
+}
+
 gradle.beforeProject {
     if (this != rootProject) {
         pluginManager.apply("printscript.quality")
