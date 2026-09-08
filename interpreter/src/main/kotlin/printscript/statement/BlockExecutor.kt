@@ -1,17 +1,14 @@
 package printscript.statement
 
 import printscript.InterpreterContext
+import printscript.SideEffect
 import printscript.error.RuntimeError
-import printscript.expression.ExpressionSolver
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
-interface StatementExecutor {
-    val nodeNames: Set<String>
-
+fun interface BlockExecutor {
     fun execute(
-        node: SyntaxNode,
+        statements: List<SyntaxNode>,
         context: InterpreterContext,
-        solver: ExpressionSolver,
-    ): Result<StatementResult, RuntimeError>
+    ): Result<List<SideEffect>, RuntimeError>
 }

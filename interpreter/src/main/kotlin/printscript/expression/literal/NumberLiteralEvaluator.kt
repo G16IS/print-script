@@ -7,23 +7,24 @@ import printscript.error.RuntimeError
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
-import printscript.node.NodeKind
+import printscript.node.AstNames
+import printscript.node.tokenValue
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
+import printscript.util.flatMap
 
-class NumberLiteralEvaluator : ExpressionEvaluator {
-    override val kind = NodeKind.NUMBER_LITERAL
+object NumberLiteralEvaluator : ExpressionEvaluator {
+    override val nodeNames = setOf(AstNames.NUMBER)
 
     override fun evaluate(
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<EvalResult, RuntimeError> {
-        val text = node.value()
-        val number =
-            text.toDoubleOrNull()
-                ?: return Result.Err(InvalidLiteral(text, node.location))
-
-        return Result.Ok(EvalResult.pure(NumberValue(number)))
-    }
+    ): Result<EvalResult, RuntimeError> =
+        node.tokenValue().flatMap { text ->
+            val number =
+                text.toDoubleOrNull()?.takeIf { it.isFinite() }
+                    ?: return@flatMap Result.Err(InvalidLiteral(text, node.location))
+            Result.Ok(EvalResult.pure(NumberValue(number)))
+        }
 }
