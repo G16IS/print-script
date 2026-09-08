@@ -35,7 +35,11 @@ object PsSupport {
 
         var program = SyntaxProgram.empty()
         while (peekNextToken(lexer).type != "EOF") {
-            program = parser.parseNextStatement(lexer, program)
+            val parseResult = parser.parseNextStatement(lexer, program)
+            when (parseResult) {
+                is Result.Err -> throw UnexpectedException(parseResult.error.message)
+                is Result.Ok -> program = parseResult.value
+            }
         }
         return program
     }

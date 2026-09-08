@@ -7,14 +7,14 @@ import printscript.token.TokenSource
 class ParseContext(
     val grammar: Grammar,
     val tokens: TokenSource,
-    private val evaluateRule: (String) -> SyntaxNode?,
+    private val evaluateRule: (String) -> ParseResult<SyntaxNode>,
 ) {
-    fun evaluate(ruleName: String): SyntaxNode? = evaluateRule(ruleName)
+    fun evaluate(ruleName: String): ParseResult<SyntaxNode> = evaluateRule(ruleName)
 
-    fun tryEvaluate(ruleName: String): SyntaxNode? {
+    fun tryEvaluate(ruleName: String): ParseResult<SyntaxNode> {
         val mark = tokens.checkpoint()
-        val node = evaluate(ruleName)
-        if (node == null) tokens.restore(mark)
-        return node
+        val result = evaluate(ruleName)
+        if (result is ParseResult.Missing) tokens.restore(mark)
+        return result
     }
 }

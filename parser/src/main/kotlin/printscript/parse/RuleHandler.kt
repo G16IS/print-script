@@ -10,5 +10,5 @@ interface RuleHandler {
         name: String,
         rule: GrammarRule,
         ctx: ParseContext,
-    ): SyntaxNode?
+    ): ParseResult<SyntaxNode>
 }

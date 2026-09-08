@@ -1,6 +1,8 @@
 package printscript
 
+import printscript.error.ParserError
 import printscript.syntax.SyntaxProgram
+import printscript.util.Result
 
 /**
  * Transforms a token stream into a [SyntaxProgram] one statement at a time.
@@ -10,5 +12,5 @@ interface Parser {
     fun parseNextStatement(
         tokenStream: Lexer,
         program: SyntaxProgram,
-    ): SyntaxProgram
+    ): Result<SyntaxProgram, ParserError>
 }

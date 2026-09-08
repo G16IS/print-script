@@ -12,7 +12,7 @@ class RuleEvaluator(
     fun evaluate(
         ruleName: String,
         tokens: TokenSource,
-    ): SyntaxNode? {
+    ): ParseResult<SyntaxNode> {
         val rule = grammar.rule(ruleName)
         return handlerFor(rule).evaluate(ruleName, rule, context(tokens))
     }

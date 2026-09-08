@@ -7,6 +7,7 @@ import printscript.domain.SeqRule
 import printscript.domain.SeqStep
 import printscript.domain.TokenStep
 import printscript.error.ParseErrors
+import printscript.error.ParserError
 import printscript.parse.step.StepEvaluator
 import printscript.parse.step.StepOutcome
 import printscript.syntax.SyntaxNode
@@ -20,15 +21,21 @@ class SeqRuleHandler(
         name: String,
         rule: GrammarRule,
         ctx: ParseContext,
-    ): SyntaxNode? {
-        val match = runSteps((rule as SeqRule).steps, ctx) ?: return null
-        return SyntaxNode(name, children = match.children, location = match.location)
-    }
+    ): ParseResult<SyntaxNode> =
+        when (val result = runSteps((rule as SeqRule).steps, ctx)) {
+            is SeqResult.Match ->
+                ParseResult.Matched(
+                    SyntaxNode(name, children = result.children, location = result.location),
+                )
+
+            SeqResult.Miss -> ParseResult.Missing
+            is SeqResult.Failed -> ParseResult.Failed(result.error)
+        }
 
     private fun runSteps(
         steps: List<SeqStep>,
         ctx: ParseContext,
-    ): SeqMatch? {
+    ): SeqResult {
         val mark = ctx.tokens.checkpoint()
         val children = mutableListOf<SyntaxNode>()
         val seen = mutableListOf<Location>()
@@ -41,17 +48,30 @@ class SeqRuleHandler(
         mark: Int,
         children: MutableList<SyntaxNode>,
         seen: MutableList<Location>,
-    ): SeqMatch? {
-        for ((index, step) in steps.withIndex()) {
-            val outcome = stepEvaluator.evaluate(step, ctx)
-            if (!outcome.matched) return abort(index, mark, ctx, step)
-            collect(outcome, children, seen)
+    ): SeqResult {
+        var result: SeqResult? = null
+        var index = 0
+        while (result == null && index < steps.size) {
+            val step = steps[index]
+            when (val outcome = stepEvaluator.evaluate(step, ctx)) {
+                is StepOutcome.Hit -> collect(outcome, children, seen)
+                is StepOutcome.Failed -> result = SeqResult.Failed(outcome.error)
+                is StepOutcome.Miss ->
+                    result =
+                        if (index == 0) {
+                            ctx.tokens.restore(mark)
+                            SeqResult.Miss
+                        } else {
+                            SeqResult.Failed(unexpectedToken(ctx, step))
+                        }
+            }
+            index += 1
         }
-        return SeqMatch(children, spanOf(seen, ctx))
+        return result ?: SeqResult.Match(children, spanOf(seen, ctx))
     }
 
     private fun collect(
-        outcome: StepOutcome,
+        outcome: StepOutcome.Hit,
         children: MutableList<SyntaxNode>,
         seen: MutableList<Location>,
     ) {
@@ -59,18 +79,10 @@ class SeqRuleHandler(
         outcome.location?.let { seen += it }
     }
 
-    private fun abort(
-        index: Int,
-        mark: Int,
+    private fun unexpectedToken(
         ctx: ParseContext,
         step: SeqStep,
-    ): SeqMatch? {
-        if (index == 0) {
-            ctx.tokens.restore(mark)
-            return null
-        }
-        throw ParseErrors.unexpectedToken(ctx.tokens.peek(), describe(step))
-    }
+    ): ParserError = ParseErrors.unexpectedToken(ctx.tokens.peek(), describe(step))
 
     private fun spanOf(
         seen: List<Location>,
@@ -88,7 +100,15 @@ class SeqRuleHandler(
         }
 }
 
-private data class SeqMatch(
-    val children: List<SyntaxNode>,
-    val location: Location,
-)
+private sealed interface SeqResult {
+    data class Match(
+        val children: List<SyntaxNode>,
+        val location: Location,
+    ) : SeqResult
+
+    data object Miss : SeqResult
+
+    data class Failed(
+        val error: ParserError,
+    ) : SeqResult
+}

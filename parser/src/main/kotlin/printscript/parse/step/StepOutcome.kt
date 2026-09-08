@@ -1,19 +1,18 @@
 package printscript.parse.step
 
 import printscript.ast.Location
+import printscript.error.ParserError
 import printscript.syntax.SyntaxNode
 
-data class StepOutcome(
-    val matched: Boolean,
-    val node: SyntaxNode? = null,
-    val location: Location? = null,
-) {
-    companion object {
-        fun miss(): StepOutcome = StepOutcome(matched = false)
+sealed interface StepOutcome {
+    data class Hit(
+        val node: SyntaxNode? = null,
+        val location: Location? = node?.location,
+    ) : StepOutcome
 
-        fun hit(
-            node: SyntaxNode? = null,
-            location: Location? = node?.location,
-        ): StepOutcome = StepOutcome(matched = true, node = node, location = location)
-    }
+    data object Miss : StepOutcome
+
+    data class Failed(
+        val error: ParserError,
+    ) : StepOutcome
 }

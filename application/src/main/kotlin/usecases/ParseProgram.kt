@@ -4,6 +4,7 @@ import java.rmi.UnexpectedException
 import printscript.DefaultLexerFactory
 import printscript.DefaultParserFactory
 import printscript.Lexer
+import printscript.Parser
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.Token
@@ -23,7 +24,7 @@ internal object ParseProgram {
         var program = SyntaxProgram.empty()
 
         while (peekNextToken(lexer).type != "EOF") {
-            program = parser.parseNextStatement(lexer, program)
+            program = parseStatement(parser, lexer, program)
         }
 
         return program
@@ -31,8 +32,19 @@ internal object ParseProgram {
 
     private fun peekNextToken(lexer: Lexer): Token {
         when (val token = lexer.peek(null)) {
-            is Result.Err -> throw UnexpectedException("Token error")
+            is Result.Err -> throw UnexpectedException(token.error.message)
             is Result.Ok -> return token.value
+        }
+    }
+
+    private fun parseStatement(
+        parser: Parser,
+        lexer: Lexer,
+        program: SyntaxProgram,
+    ): SyntaxProgram {
+        when (val program = parser.parseNextStatement(lexer, program)) {
+            is Result.Err -> throw UnexpectedException(program.error.message)
+            is Result.Ok -> return program.value
         }
     }
 }
