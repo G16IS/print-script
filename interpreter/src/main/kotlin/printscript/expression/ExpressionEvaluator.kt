@@ -2,12 +2,11 @@ package printscript.expression
 
 import printscript.InterpreterContext
 import printscript.error.RuntimeError
-import printscript.node.NodeKind
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
 interface ExpressionEvaluator {
-    val kind: NodeKind
+    val nodeNames: Set<String>
 
     fun evaluate(
         node: SyntaxNode,

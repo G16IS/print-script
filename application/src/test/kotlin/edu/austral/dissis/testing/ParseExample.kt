@@ -11,7 +11,7 @@ import printscript.infrastructure.reader.JSONTypeSystemConfigReader
 import printscript.syntax.SyntaxProgram
 import printscript.typechecker.TypeError
 import printscript.util.Report
-import usecases.InterpretCode.interpretCode
+import usecases.TypecheckCode.typecheck
 
 object ParseExample {
     private val language: LanguageConfig = PrintScriptLanguage.config()
@@ -23,7 +23,12 @@ object ParseExample {
         JSONTypeSystemConfigReader.read(stream("type-system.config.json"))
 
     fun parse(example: String): Report<SyntaxProgram, TypeError> =
-        interpretCode(language, grammar, typeSystem, FileCodeReader(file("examples/$example")))
+        typecheck(
+            language,
+            grammar,
+            typeSystem,
+            FileCodeReader(file("examples/$example")),
+        )
 
     private fun stream(name: String): InputStream =
         requireNotNull(loader().getResourceAsStream(name)) { "Missing resource $name" }

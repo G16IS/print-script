@@ -9,8 +9,20 @@ import printscript.typechecker.DefaultTypeCheckerFactory
 import printscript.typechecker.TypeError
 import printscript.util.Report
 
-object InterpretCode {
-    fun interpretCode(
+object TypecheckCode {
+    /**
+     * Typechecks the code read from the given reader
+     * using the provided language configuration,
+     * grammar, and type system configuration.
+     *
+     * @param langConfig The language configuration to use for typechecking.
+     * @param grammar The grammar to use for parsing the code.
+     * @param typeSystem The type system configuration to use for typechecking.
+     * @param reader The code reader to read the code from.
+     * @return A report containing either the successfully parsed
+     * and typechecked program or a list of type errors encountered during typechecking.
+     */
+    fun typecheck(
         langConfig: LanguageConfig,
         grammar: Grammar,
         typeSystem: TypeSystemConfig,

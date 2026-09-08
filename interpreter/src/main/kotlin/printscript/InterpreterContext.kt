@@ -1,7 +1,7 @@
 package printscript
 
 import printscript.ast.Location
-import printscript.error.TypeError
+import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
 import printscript.util.Result
 import printscript.util.map
@@ -29,7 +29,7 @@ class InterpreterContext private constructor(
         name: String,
         value: RuntimeValue,
         location: Location = Location.empty(),
-    ): Result<InterpreterContext, TypeError> =
+    ): Result<InterpreterContext, RuntimeError> =
         when {
             variables.containsKey(name) ->
                 Result.Ok(InterpreterContext(parent, variables + (name to value)))
