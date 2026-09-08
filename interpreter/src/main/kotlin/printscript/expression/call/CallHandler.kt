@@ -1,13 +1,15 @@
-package printscript.expression
+package printscript.expression.call
 
-import printscript.InterpreterContext
 import printscript.error.RuntimeError
+import printscript.expression.EvalResult
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
-interface ExpressionSolver {
-    fun solve(
+interface CallHandler {
+    val callee: String
+
+    fun handle(
+        result: EvalResult,
         node: SyntaxNode,
-        context: InterpreterContext,
     ): Result<EvalResult, RuntimeError>
 }
