@@ -11,16 +11,18 @@ class OrRuleHandler : RuleHandler {
         name: String,
         rule: GrammarRule,
         ctx: ParseContext,
-    ): SyntaxNode? = firstMatch((rule as OrRule).alternatives, ctx)
+    ): ParseResult<SyntaxNode> = firstMatch((rule as OrRule).alternatives, ctx)
 
     private fun firstMatch(
         alternatives: List<String>,
         ctx: ParseContext,
-    ): SyntaxNode? {
+    ): ParseResult<SyntaxNode> {
         for (alternative in alternatives) {
-            val node = ctx.tryEvaluate(alternative)
-            if (node != null) return node
+            val result = ctx.tryEvaluate(alternative)
+            if (result !is ParseResult.Missing) {
+                return result
+            }
         }
-        return null
+        return ParseResult.Missing
     }
 }

@@ -11,16 +11,16 @@ class AtomRuleHandler : RuleHandler {
         name: String,
         rule: GrammarRule,
         ctx: ParseContext,
-    ): SyntaxNode? = match(name, rule as AtomRule, ctx)
+    ): ParseResult<SyntaxNode> = match(name, rule as AtomRule, ctx)
 
     private fun match(
         name: String,
         atom: AtomRule,
         ctx: ParseContext,
-    ): SyntaxNode? {
+    ): ParseResult<SyntaxNode> {
         val token = ctx.tokens.peek()
-        if (token.type != atom.token) return null
+        if (token.type != atom.token) return ParseResult.Missing
         ctx.tokens.advance()
-        return SyntaxNode(name, token = token, location = token.location)
+        return ParseResult.Matched(SyntaxNode(name, token = token, location = token.location))
     }
 }

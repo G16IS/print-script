@@ -6,15 +6,15 @@ object ParseErrors {
     fun unexpectedToken(
         token: Token,
         expected: String,
-    ): ParseException =
-        ParseException(
-            "Expected $expected, found ${token.type}",
+    ): ParserError =
+        MissingToken(
             token.location,
+            "Expected $expected, found ${token.type}",
         )
 
-    fun unexpectedStart(token: Token): ParseException =
-        ParseException(
-            "Unexpected token ${token.type}; expected start of statement",
+    fun unexpectedStart(token: Token): ParserError =
+        UnexpectedStart(
             token.location,
+            "Unexpected token ${token.type}; expected start of statement",
         )
 }
