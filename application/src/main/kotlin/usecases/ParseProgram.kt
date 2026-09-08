@@ -7,7 +7,7 @@ import printscript.Lexer
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.Token
-import printscript.infrastructure.reader.FileCodeReader
+import printscript.reader.CodeReader
 import printscript.syntax.SyntaxProgram
 import printscript.util.Result
 
@@ -15,10 +15,9 @@ internal object ParseProgram {
     fun parse(
         langConfig: LanguageConfig,
         grammar: Grammar,
-        path: String,
+        reader: CodeReader,
     ): SyntaxProgram {
-        val codeReader = FileCodeReader(path)
-        val lexer = DefaultLexerFactory.create(codeReader, langConfig)
+        val lexer = DefaultLexerFactory.create(reader, langConfig)
         val parser = DefaultParserFactory.create(grammar)
 
         var program = SyntaxProgram.empty()
