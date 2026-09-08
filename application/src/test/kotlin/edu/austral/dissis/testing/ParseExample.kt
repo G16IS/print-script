@@ -9,7 +9,6 @@ import printscript.infrastructure.reader.FileCodeReader
 import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.infrastructure.reader.JSONTypeSystemConfigReader
 import printscript.syntax.SyntaxProgram
-import printscript.typechecker.TypeError
 import printscript.util.Report
 import usecases.TypecheckCode.typecheck
 

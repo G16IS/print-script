@@ -3,11 +3,12 @@ package usecases
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
+import printscript.error.Error
 import printscript.reader.CodeReader
 import printscript.syntax.SyntaxProgram
 import printscript.typechecker.DefaultTypeCheckerFactory
-import printscript.typechecker.TypeError
 import printscript.util.Report
+import printscript.util.Result
 
 object TypecheckCode {
     /**
@@ -27,9 +28,12 @@ object TypecheckCode {
         grammar: Grammar,
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
-    ): Report<SyntaxProgram, TypeError> {
-        val program = ParseProgram.parse(langConfig, grammar, reader)
-
-        return DefaultTypeCheckerFactory.create(typeSystem).check(program)
+    ): Report<SyntaxProgram, Error> {
+        return when (val program = ParseProgram.parse(langConfig, grammar, reader)) {
+            is Result.Ok -> DefaultTypeCheckerFactory
+                .create(typeSystem)
+                .check(program.value)
+            is Result.Err -> program.toReport()
+        }
     }
 }

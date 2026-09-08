@@ -8,7 +8,6 @@ import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.error.RuntimeError
 import printscript.reader.CodeReader
-import printscript.typechecker.TypeError
 import printscript.util.Result
 import printscript.util.fold
 

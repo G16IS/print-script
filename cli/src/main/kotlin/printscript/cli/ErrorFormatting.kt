@@ -4,7 +4,6 @@ import printscript.ast.Location
 import printscript.error.FormatError
 import printscript.error.LintError
 import printscript.error.RuntimeError
-import printscript.typechecker.TypeError
 
 internal fun formatLocated(
     message: String,
