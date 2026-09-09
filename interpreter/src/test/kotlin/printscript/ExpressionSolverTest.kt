@@ -6,32 +6,25 @@ import org.junit.jupiter.api.Test
 import printscript.error.DivisionByZero
 import printscript.error.InvalidLiteral
 import printscript.error.InvalidOperands
-import printscript.error.NoNodeKindForNode
-import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
+import printscript.error.UnrecognizedNode
+import printscript.error.UnresolvableCall
 import printscript.error.UnresolvableExpression
-import printscript.expression.EvalResult
-import printscript.expression.ExpressionSolver
-import printscript.expression.GroupEvaluator
-import printscript.expression.binaryoperation.BinaryOperationEvaluator
-import printscript.expression.binaryoperation.DefaultTypeConfiguration
-import printscript.expression.call.CallEvaluator
-import printscript.expression.literal.IdentifierEvaluator
-import printscript.expression.literal.NumberLiteralEvaluator
-import printscript.expression.literal.StringLiteralEvaluator
-import printscript.node.NodeKind
-import printscript.node.NodeKindResolver
-import printscript.node.PrintScriptMapping
+import printscript.expression.DefaultExpressionSolver
+import printscript.support.TEST_LOCATION
 import printscript.support.binary
 import printscript.support.call
+import printscript.support.err
 import printscript.support.identifierNode
+import printscript.support.leaf
 import printscript.support.node
 import printscript.support.numberNode
+import printscript.support.ok
 import printscript.support.stringNode
-import printscript.util.Result
+import printscript.syntax.SyntaxNode
 
 class ExpressionSolverTest {
-    private val solver = ExpressionSolver(NodeKindResolver(PrintScriptMapping.mapping), defaultEvaluators())
+    private val solver = DefaultExpressionSolver(DefaultInterpreterFactory.defaultEvaluators())
 
     @Test
     fun `number literal evaluates to NumberValue`() {
@@ -50,9 +43,13 @@ class ExpressionSolverTest {
 
     @Test
     fun `malformed number literal fails with InvalidLiteral`() {
-        val error = err(solver.solve(leafNumber("abc"), InterpreterContext()))
+        assertTrue(err(solver.solve(leafNumber("abc"), InterpreterContext())) is InvalidLiteral)
+    }
 
-        assertTrue(error is InvalidLiteral)
+    @Test
+    fun `non finite number literal fails with InvalidLiteral`() {
+        assertTrue(err(solver.solve(leafNumber("Infinity"), InterpreterContext())) is InvalidLiteral)
+        assertTrue(err(solver.solve(leafNumber("NaN"), InterpreterContext())) is InvalidLiteral)
     }
 
     @Test
@@ -60,6 +57,13 @@ class ExpressionSolverTest {
         val result = solver.solve(stringNode("hola"), InterpreterContext())
 
         assertEquals(StringValue("hola"), ok(result).value)
+    }
+
+    @Test
+    fun `string literal without quotes fails with InvalidLiteral`() {
+        val bare = leaf("string", "STRING_LITERAL", "hola")
+
+        assertTrue(err(solver.solve(bare, InterpreterContext())) is InvalidLiteral)
     }
 
     @Test
@@ -71,9 +75,7 @@ class ExpressionSolverTest {
 
     @Test
     fun `undeclared identifier fails`() {
-        val error = err(solver.solve(identifierNode("nope"), InterpreterContext()))
-
-        assertTrue(error is UndeclaredIdentifier)
+        assertTrue(err(solver.solve(identifierNode("nope"), InterpreterContext())) is UndeclaredIdentifier)
     }
 
     @Test
@@ -133,6 +135,11 @@ class ExpressionSolverTest {
     }
 
     @Test
+    fun `empty group fails with UnrecognizedNode`() {
+        assertTrue(err(solver.solve(node("group"), InterpreterContext())) is UnrecognizedNode)
+    }
+
+    @Test
     fun `println call yields UnitValue and a PrintEffect`() {
         val result = ok(solver.solve(call(numberNode("42")), InterpreterContext()))
 
@@ -157,6 +164,13 @@ class ExpressionSolverTest {
     }
 
     @Test
+    fun `unknown callee fails with UnresolvableCall`() {
+        val unknown = call(numberNode("1"), callee = "readInput")
+
+        assertTrue(err(solver.solve(unknown, InterpreterContext())) is UnresolvableCall)
+    }
+
+    @Test
     fun `call used as operand of an arithmetic operation fails`() {
         val context = InterpreterContext().declareVariable("x", NumberValue(1.0))
         val expression = binary(numberNode("1"), "+", call(identifierNode("x")))
@@ -165,39 +179,38 @@ class ExpressionSolverTest {
     }
 
     @Test
-    fun `node name outside the mapping fails with NoNodeKindForNode`() {
+    fun `unknown node name fails with UnresolvableExpression`() {
         val unknown = node("if", numberNode("1"))
 
-        assertTrue(err(solver.solve(unknown, InterpreterContext())) is NoNodeKindForNode)
+        assertTrue(err(solver.solve(unknown, InterpreterContext())) is UnresolvableExpression)
     }
 
     @Test
-    fun `mapped kind without evaluator fails with UnresolvableExpression`() {
-        val statementOnlyMapping = mapOf("weird" to NodeKind.VARIABLE_DECLARATION)
-        val noStatementEvaluators =
-            ExpressionSolver(
-                NodeKindResolver(statementOnlyMapping),
-                listOf(NumberLiteralEvaluator()),
-            )
+    fun `number node without token value fails with UnrecognizedNode`() {
+        val bare = SyntaxNode("number", token = null, location = TEST_LOCATION)
 
-        val error = err(noStatementEvaluators.solve(node("weird", numberNode("1")), InterpreterContext()))
-
-        assertTrue(error is UnresolvableExpression)
+        assertTrue(err(solver.solve(bare, InterpreterContext())) is UnrecognizedNode)
     }
 
-    private fun defaultEvaluators() =
-        listOf(
-            NumberLiteralEvaluator(),
-            StringLiteralEvaluator(),
-            IdentifierEvaluator(),
-            GroupEvaluator(),
-            BinaryOperationEvaluator(DefaultTypeConfiguration()),
-            CallEvaluator(),
-        )
+    @Test
+    fun `identifier node without token value fails with UnrecognizedNode`() {
+        val bare = SyntaxNode("identifier", token = null, location = TEST_LOCATION)
 
-    private fun leafNumber(text: String) = printscript.support.leaf("number", "NUMBER_LITERAL", text)
+        assertTrue(err(solver.solve(bare, InterpreterContext())) is UnrecognizedNode)
+    }
 
-    private fun ok(result: Result<EvalResult, RuntimeError>) = (result as Result.Ok).value
+    @Test
+    fun `binary operator without token value fails with UnrecognizedNode`() {
+        val expression =
+            node(
+                "expression",
+                numberNode("1"),
+                SyntaxNode("OPERATOR", token = null, location = TEST_LOCATION),
+                numberNode("2"),
+            )
 
-    private fun err(result: Result<EvalResult, RuntimeError>) = (result as Result.Err).error
+        assertTrue(err(solver.solve(expression, InterpreterContext())) is UnrecognizedNode)
+    }
+
+    private fun leafNumber(text: String) = leaf("number", "NUMBER_LITERAL", text)
 }

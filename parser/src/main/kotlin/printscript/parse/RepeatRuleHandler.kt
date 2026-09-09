@@ -3,6 +3,7 @@ package printscript.parse
 import printscript.ast.Location
 import printscript.domain.GrammarRule
 import printscript.domain.RepeatRule
+import printscript.error.ParserError
 import printscript.syntax.SyntaxNode
 import printscript.util.Locations
 
@@ -13,28 +14,50 @@ class RepeatRuleHandler : RuleHandler {
         name: String,
         rule: GrammarRule,
         ctx: ParseContext,
-    ): SyntaxNode {
-        val items = collect((rule as RepeatRule).item, ctx)
-        return SyntaxNode(name, children = items, location = spanOf(items, ctx))
-    }
+    ): ParseResult<SyntaxNode> =
+        when (val result = collect((rule as RepeatRule).item, ctx)) {
+            is CollectResult.Items ->
+                ParseResult.Matched(
+                    SyntaxNode(name, children = result.items, location = spanOf(result.items, ctx)),
+                )
+
+            is CollectResult.Failed -> ParseResult.Failed(result.error)
+        }
 
     private fun collect(
         item: String,
         ctx: ParseContext,
-    ): List<SyntaxNode> {
+    ): CollectResult {
         val items = mutableListOf<SyntaxNode>()
         while (true) {
             val before = ctx.tokens.checkpoint()
-            val next = ctx.tryEvaluate(item) ?: break
-            val after = ctx.tokens.checkpoint()
-            check(after != before) { "Repeat of '$item' matched without consuming tokens" }
-            items += next
+            when (val next = ctx.tryEvaluate(item)) {
+                is ParseResult.Matched -> {
+                    val after = ctx.tokens.checkpoint()
+                    check(after != before) {
+                        "Repeat of '$item' matched without consuming tokens"
+                    }
+                    items += next.node
+                }
+
+                ParseResult.Missing -> return CollectResult.Items(items)
+                is ParseResult.Failed -> return CollectResult.Failed(next.error)
+            }
         }
-        return items
     }
 
     private fun spanOf(
         items: List<SyntaxNode>,
         ctx: ParseContext,
     ): Location = Locations.span(items, ctx.tokens.peek().location)
+}
+
+private sealed interface CollectResult {
+    data class Items(
+        val items: List<SyntaxNode>,
+    ) : CollectResult
+
+    data class Failed(
+        val error: ParserError,
+    ) : CollectResult
 }

@@ -2,7 +2,7 @@ package usecases
 
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
-import printscript.error.FormatError
+import printscript.error.Error
 import printscript.formatter.Formatter
 import printscript.reader.CodeReader
 import printscript.util.Result
@@ -13,9 +13,9 @@ object FormatCode {
         grammar: Grammar,
         reader: CodeReader,
         formatter: Formatter,
-    ): Result<String, FormatError> {
-        val program = ParseProgram.parse(langConfig, grammar, reader)
-
-        return formatter.format(program)
-    }
+    ): Result<String, Error> =
+        when (val program = ParseProgram.parse(langConfig, grammar, reader)) {
+            is Result.Ok -> formatter.format(program.value)
+            is Result.Err -> Result.Err(program.error)
+        }
 }

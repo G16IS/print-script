@@ -6,7 +6,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.Grammar
-import printscript.error.FormatError
+import printscript.error.Error
 import printscript.formatter.Formatter
 import printscript.infrastructure.reader.FileCodeReader
 import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
@@ -26,12 +26,12 @@ object FormatExample {
 
     private val formatter: Formatter = loadFormatter()
 
-    fun format(example: String): Result<String, FormatError> {
+    fun format(example: String): Result<String, Error> {
         val path = file("examples/$example")
         return FormatCode.formatCode(language, grammar, FileCodeReader(path), formatter)
     }
 
-    fun check(example: String): Report<Unit, FormatError> {
+    fun check(example: String): Report<Unit, Error> {
         val path = file("examples/$example")
         val source = Files.readString(Path.of(path))
         return CheckFormat.checkFormat(language, grammar, FileCodeReader(path), source, formatter)

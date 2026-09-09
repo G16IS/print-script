@@ -6,10 +6,9 @@ import printscript.SideEffect
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
+import printscript.error.Error
 import printscript.error.RuntimeError
 import printscript.reader.CodeReader
-import printscript.typechecker.DefaultTypeCheckerFactory
-import printscript.typechecker.TypeError
 import printscript.util.Result
 import printscript.util.fold
 
@@ -20,8 +19,7 @@ object ExecuteCode {
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
     ): Result<List<SideEffect>, ExecutionFailure> {
-        val program = ParseProgram.parse(langConfig, grammar, reader)
-        val report = DefaultTypeCheckerFactory.create(typeSystem).check(program)
+        val report = TypecheckCode.typecheck(langConfig, grammar, typeSystem, reader)
 
         if (!report.isOk) {
             return Result.Err(ExecutionFailure.Types(report.errors))
@@ -29,7 +27,7 @@ object ExecuteCode {
 
         return DefaultInterpreterFactory
             .create()
-            .interpret(InterpreterContext(), program)
+            .interpret(InterpreterContext(), report.value!!)
             .fold(
                 onOk = { Result.Ok(it) },
                 onErr = { Result.Err(ExecutionFailure.Runtime(it)) },
@@ -39,7 +37,7 @@ object ExecuteCode {
 
 sealed interface ExecutionFailure {
     data class Types(
-        val errors: List<TypeError>,
+        val errors: List<Error>,
     ) : ExecutionFailure
 
     data class Runtime(

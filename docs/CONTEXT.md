@@ -253,12 +253,9 @@ Ver [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md).
 
 Módulo Gradle `:interpreter` (`implementation` solo `common`). Recorre el `SyntaxProgram` y devuelve `Result<List<SideEffect>, RuntimeError>` (fail-fast, Result end-to-end). **Está cableado** en `ExecuteCode` (CLI `run`). `interpretCode` sigue cortando en el type-checker.
 
-Dos niveles de dispatch:
+Dispatch por `node.name` (el nombre de regla de `grammar.config.json`). `DefaultInterpreter` despacha statements; `DefaultExpressionSolver` despacha expresiones. Un handler declara `nodeNames`; no hay enum ni mapping aparte.
 
-1. `NodeKindResolver` traduce `node.name` (regla de la gramática) a `NodeKind` vía `PrintScriptMapping`.
-2. `DefaultInterpreter` despacha statements (`VariableDeclarationExecutor`, `ExpressionStatementExecutor`); `ExpressionSolver` despacha expresiones.
-
-`println` es una **expresión** (`factor → call`), no un statement. Los efectos viajan en `EvalResult(value, sideEffects)` y se combinan de hijos a padres. `CallEvaluator` hardcodea el callee `"println"` y emite `PrintEffect`.
+`println` es una **expresión** (`factor → call`), no un statement. Los efectos viajan en `EvalResult(value, sideEffects)` y se combinan de hijos a padres. `PrintlnHandler` emite `PrintEffect`.
 
 Valores: `NumberValue(Double)`, `StringValue` (sin comillas), `UnitValue` (resultado de un call). Números enteros se imprimen sin `.0` (`toPrintableString()`).
 
@@ -325,7 +322,7 @@ Ver [modules/BUILD_LOGIC.md](modules/BUILD_LOGIC.md).
 5. **Errores por capa.** Lexer tira `Error` / `IllegalStateException`. Parser tira `ParseException`. Type-checker acumula en `Report` / `Result` (su `TypeError` data class, no lanza). `interpretCode` / `formatCode` / `checkFormat` **no** lanzan: devuelven `Report` / `Result`. Interpreter reporta `Result.Err(RuntimeError)` y no lanza.
 6. **Streaming.** Ni lexer ni parser cargan el programa entero de una: caracteres → tokens on demand → un statement por llamada.
 
-El interpreter **sí** conoce `"println"` (en `CallEvaluator`) y los nombres de regla v1 (en `PrintScriptMapping`). Extenderlo es registrar executor/evaluator, no tocar el motor de dispatch.
+El interpreter despacha por nombres de regla (`node.name`) y registra `CallHandler`s (`println`). Extenderlo es registrar executor/evaluator/handler, no tocar el motor de dispatch ni un enum.
 
 ---
 
@@ -443,7 +440,7 @@ Ya camina `SyntaxNode` y está cableado después del parser. Nuevo *kind* → ha
 
 ### Interpreter (construcción nueva)
 
-Módulo existente, cableado en `ExecuteCode`. Nuevo *kind* → entrada en `NodeKind` + `PrintScriptMapping` + executor o evaluator en `DefaultInterpreterFactory`. Detalle en [modules/INTERPRETER.md](modules/INTERPRETER.md).
+Módulo existente. Nueva construcción → executor/evaluator con `nodeNames` = regla del JSON, registrado en `DefaultInterpreterFactory`. Detalle en [modules/INTERPRETER.md](modules/INTERPRETER.md). Cablearlo: dependencia en `application` + llamada después del type-check en `InterpretCode.kt`.
 
 ### Formatter (rule nueva)
 
@@ -490,7 +487,7 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/ci.yml`
 - `DefaultParser` cachea el `TokenSource` por identidad del `Lexer`: no reutilices un parser con **otro** lexer sin un parser nuevo (o el bind se queda corto si es el mismo objeto).
 - Locations: `FileCodeReader` arranca en `(1,1)`; el `MockReader` de tests del lexer arranca línea `0`. No compares locations entre esos dos mundos.
 - No aplanes `expression`/`term` de un solo hijo: el interpreter y los tests de application dependen del wrap de `LeftRule`.
-- `DefaultInterpreter` exige en construcción que todo `NodeKind` del mapping tenga executor **o** evaluator; duplicados de kind explotan igual.
+- `DefaultInterpreter` no lanza en construcción. Kind mapeado sin executor ni evaluator → `Result.Err(UnresolvableExpression)` al interpretar; duplicados de kind se quedan con el último handler.
 
 ---
 
@@ -502,9 +499,9 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/ci.yml`
 | Cambiar sintaxis | GRAMMAR_CONFIG + parser | `grammar.config.json`, `ParserTest`, ejemplos `.ps` |
 | Nuevo combinador de gramática | parser + infrastructure serializers + common domain | 3 módulos a la vez |
 | Tipos / variables no declaradas | TYPE_CHECKER + TYPE_SYSTEM_CONFIG | `:type-checker` + `type-system.config.json` |
-| Ejecutar el programa | INTERPRETER + APPLICATION `ExecuteCode` | CLI `run`; no pasa por `interpretCode` |
-| Nueva construcción a ejecutar | INTERPRETER | `NodeKind` + executor/evaluator + mapping |
-| Reglas de estilo | LINTER | regla + provider + `linter.config.json` |
+| Ejecutar el programa | INTERPRETER | ya existe `:interpreter`; cablear en `application/InterpretCode.kt` |
+| Nueva construcción a ejecutar | INTERPRETER | executor/evaluator con `nodeNames` + registro en factory |
+| Reglas de estilo | LINTER | módulo a futuro |
 | Pretty-print / bloques | FORMATTER | gramática de `if`/`{` + bump de `indentLevel` en `emitSyntheticToken` (el render ya existe) |
 | Lint/format del Kotlin del repo | BUILD_LOGIC | `build-logic` / `printscript.quality` |
 | CLI / correr un archivo | CLI + INFRASTRUCTURE | `./gradlew ps-run examples/hello.ps` |

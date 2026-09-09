@@ -5,13 +5,13 @@ import java.io.InputStream
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
+import printscript.error.Error
 import printscript.infrastructure.reader.FileCodeReader
 import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.infrastructure.reader.JSONTypeSystemConfigReader
 import printscript.syntax.SyntaxProgram
-import printscript.typechecker.TypeError
 import printscript.util.Report
-import usecases.InterpretCode.interpretCode
+import usecases.TypecheckCode.typecheck
 
 object ParseExample {
     private val language: LanguageConfig = PrintScriptLanguage.config()
@@ -22,8 +22,13 @@ object ParseExample {
     private val typeSystem: TypeSystemConfig =
         JSONTypeSystemConfigReader.read(stream("type-system.config.json"))
 
-    fun parse(example: String): Report<SyntaxProgram, TypeError> =
-        interpretCode(language, grammar, typeSystem, FileCodeReader(file("examples/$example")))
+    fun parse(example: String): Report<SyntaxProgram, Error> =
+        typecheck(
+            language,
+            grammar,
+            typeSystem,
+            FileCodeReader(file("examples/$example")),
+        )
 
     private fun stream(name: String): InputStream =
         requireNotNull(loader().getResourceAsStream(name)) { "Missing resource $name" }

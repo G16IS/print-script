@@ -4,9 +4,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import printscript.domain.Token
-import printscript.error.ParseException
+import printscript.error.ParserError
 import printscript.support.MockLexer
 import printscript.support.PrintScriptGrammar
 import printscript.support.Tokens
@@ -15,6 +14,7 @@ import printscript.support.op
 import printscript.support.rhs
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
+import printscript.util.Result
 
 class ParserTest {
     private lateinit var parser: Parser
@@ -32,9 +32,8 @@ class ParserTest {
 
     @Test
     fun `rejects stream that only has EOF`() {
-        assertThrows<ParseException> {
-            parser.parseNextStatement(MockLexer(listOf(Tokens.eof())), SyntaxProgram.empty())
-        }
+        val result = parseNext(MockLexer(listOf(Tokens.eof())))
+        assertTrue(result is Result.Err)
     }
 
     @Test
@@ -124,8 +123,8 @@ class ParserTest {
                 Tokens.semicolon(),
             )
         var program = SyntaxProgram.empty()
-        program = parser.parseNextStatement(lexer, program)
-        program = parser.parseNextStatement(lexer, program)
+        program = parseOk(parser.parseNextStatement(lexer, program))
+        program = parseOk(parser.parseNextStatement(lexer, program))
         assertEquals(listOf("variable", "expression-stmt"), program.statements.map { it.name })
     }
 
@@ -160,35 +159,38 @@ class ParserTest {
 
     @Test
     fun `rejects missing colon in declaration`() {
-        assertThrows<ParseException> {
-            parseOne(
-                Tokens.let(),
-                Tokens.id("x"),
-                Tokens.type("number"),
-                Tokens.assign(),
-                Tokens.number("1"),
-                Tokens.semicolon(),
+        val result =
+            parseNext(
+                mockLexer(
+                    Tokens.let(),
+                    Tokens.id("x"),
+                    Tokens.type("number"),
+                    Tokens.assign(),
+                    Tokens.number("1"),
+                    Tokens.semicolon(),
+                ),
             )
-        }
+        assertTrue(result is Result.Err)
     }
 
     @Test
     fun `rejects missing semicolon after println`() {
-        assertThrows<ParseException> {
-            parseOne(
-                Tokens.print(),
-                Tokens.lparen(),
-                Tokens.id("x"),
-                Tokens.rparen(),
+        val result =
+            parseNext(
+                mockLexer(
+                    Tokens.print(),
+                    Tokens.lparen(),
+                    Tokens.id("x"),
+                    Tokens.rparen(),
+                ),
             )
-        }
+        assertTrue(result is Result.Err)
     }
 
     @Test
     fun `rejects unexpected token at the start of a statement`() {
-        assertThrows<ParseException> {
-            parseOne(Tokens.colon())
-        }
+        val result = parseNext(mockLexer(Tokens.colon()))
+        assertTrue(result is Result.Err)
     }
 
     @Test
@@ -247,8 +249,19 @@ class ParserTest {
         assertEquals("3", numberValue(expr.rhs()))
     }
 
-    private fun parseOne(vararg tokens: Token) =
-        parser.parseNextStatement(mockLexer(*tokens), SyntaxProgram.empty()).statements.single()
+    private fun parseOne(vararg tokens: Token): SyntaxNode =
+        parseOk(parser.parseNextStatement(mockLexer(*tokens), SyntaxProgram.empty()))
+            .statements
+            .single()
+
+    private fun parseNext(lexer: MockLexer): Result<SyntaxProgram, ParserError> =
+        parser.parseNextStatement(lexer, SyntaxProgram.empty())
+
+    private fun parseOk(result: Result<SyntaxProgram, ParserError>): SyntaxProgram =
+        when (result) {
+            is Result.Ok -> result.value
+            is Result.Err -> error("Expected a parsed program, got: ${result.error.message}")
+        }
 
     private fun mockLexer(vararg tokens: Token) = MockLexer(tokens.toList())
 

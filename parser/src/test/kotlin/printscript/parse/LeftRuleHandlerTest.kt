@@ -1,9 +1,8 @@
 package printscript.parse
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import printscript.error.ParseException
 import printscript.support.Tokens
 import printscript.support.atom
 import printscript.support.evaluator
@@ -14,6 +13,7 @@ import printscript.support.op
 import printscript.support.parse
 import printscript.support.rhs
 import printscript.support.source
+import printscript.syntax.SyntaxNode
 
 class LeftRuleHandlerTest {
     private val grammar =
@@ -51,7 +51,7 @@ class LeftRuleHandlerTest {
     @Test
     fun `left does not consume an operator from a lower rule`() {
         val tokens = source(Tokens.number("1"), Tokens.op("*"), Tokens.number("2"))
-        val node = evaluator(grammar).evaluate("expr", tokens)!!
+        val node = matched(evaluator(grammar).evaluate("expr", tokens))
         assertEquals("expr", node.name)
         assertEquals(1, node.children.size)
         assertEquals("*", tokens.peek().value.get())
@@ -59,8 +59,13 @@ class LeftRuleHandlerTest {
 
     @Test
     fun `left fails when the right operand is missing`() {
-        assertThrows<ParseException> {
-            parse(grammar, Tokens.number("1"), Tokens.op("+"))
-        }
+        val result = evaluator(grammar).evaluate("expr", source(Tokens.number("1"), Tokens.op("+")))
+        assertTrue(result is ParseResult.Failed)
     }
+
+    private fun matched(result: ParseResult<*>): SyntaxNode =
+        when (result) {
+            is ParseResult.Matched -> result.node as SyntaxNode
+            else -> error("Expected a match, got: $result")
+        }
 }
