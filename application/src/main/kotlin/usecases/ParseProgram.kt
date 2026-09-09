@@ -19,21 +19,25 @@ internal object ParseProgram {
         val parser = DefaultParserFactory.create(grammar)
 
         var program = SyntaxProgram.empty()
+        var error: Error? = null
+        var isEof = false
 
-        val result = lexer.peek(null)
-
-        val token = when (result) {
-            is Result.Err -> return Result.Err(result.error)
-            is Result.Ok -> result.value
-        }
-
-        while (token.type != "EOF") {
-            when (val result = parser.parseNextStatement(lexer, program)) {
-                is Result.Err -> return Result.Err(result.error)
-                is Result.Ok -> program = result.value
+        while (error == null && !isEof) {
+            when (val peeked = lexer.peek(null)) {
+                is Result.Err -> error = peeked.error
+                is Result.Ok -> {
+                    if (peeked.value.type == "EOF") {
+                        isEof = true
+                    } else {
+                        when (val parsed = parser.parseNextStatement(lexer, program)) {
+                            is Result.Err -> error = parsed.error
+                            is Result.Ok -> program = parsed.value
+                        }
+                    }
+                }
             }
         }
 
-        return Result.Ok(program)
+        return if (error != null) Result.Err(error) else Result.Ok(program)
     }
 }

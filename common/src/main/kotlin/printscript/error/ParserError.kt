@@ -2,7 +2,7 @@ package printscript.error
 
 import printscript.ast.Location
 
-sealed interface ParserError {
+sealed interface ParserError : Error {
     val message: String
     val location: Location
 }

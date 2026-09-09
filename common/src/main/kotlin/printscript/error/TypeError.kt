@@ -60,3 +60,8 @@ data class UnrecognizedNode(
     override val message: String
         get() = "Nodo no reconocido '$nodeName'"
 }
+
+data class TypeErrorWithMessage(
+    override val message: String,
+    override val location: Location,
+) : TypeError

@@ -6,6 +6,7 @@ import printscript.SideEffect
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
+import printscript.error.Error
 import printscript.error.RuntimeError
 import printscript.reader.CodeReader
 import printscript.util.Result
@@ -36,7 +37,7 @@ object ExecuteCode {
 
 sealed interface ExecutionFailure {
     data class Types(
-        val errors: List<TypeError>,
+        val errors: List<Error>,
     ) : ExecutionFailure
 
     data class Runtime(

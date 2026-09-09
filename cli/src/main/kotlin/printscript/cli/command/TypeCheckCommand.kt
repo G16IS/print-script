@@ -2,7 +2,7 @@ package printscript.cli.command
 
 import printscript.cli.SourceFileCommand
 import printscript.cli.emit
-import printscript.cli.formatTypeError
+import printscript.cli.formatError
 import printscript.cli.presentReport
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
@@ -19,7 +19,7 @@ class TypeCheckCommand(
         emit(
             presentReport(
                 { TypecheckCode.typecheck(lang, grammar, typeSystem, FileCodeReader(file)) },
-                ::formatTypeError,
+                ::formatError,
             ),
         )
     }

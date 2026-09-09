@@ -17,12 +17,12 @@ object LintProgram {
         grammar: Grammar,
         reader: CodeReader,
         linterConfig: LinterConfig,
-    ): Report<SyntaxProgram, out Error> {
-        return when(val program = ParseProgram.parse(langConfig, grammar, reader)) {
-            is Result.Ok -> DefaultLinterFactory
-                .create(linterConfig)
-                .lint(program.value)
+    ): Report<SyntaxProgram, Error> =
+        when (val program = ParseProgram.parse(langConfig, grammar, reader)) {
+            is Result.Ok -> {
+                val linted = DefaultLinterFactory.create(linterConfig).lint(program.value)
+                Report(value = linted.value, errors = linted.errors)
+            }
             is Result.Err -> program.toReport()
         }
-    }
 }

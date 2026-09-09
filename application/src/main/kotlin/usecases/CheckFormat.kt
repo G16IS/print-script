@@ -7,7 +7,6 @@ import printscript.formatter.Formatter
 import printscript.reader.CodeReader
 import printscript.util.Report
 import printscript.util.Result
-import printscript.util.toReport
 
 object CheckFormat {
     fun checkFormat(
@@ -16,14 +15,16 @@ object CheckFormat {
         reader: CodeReader,
         source: String,
         formatter: Formatter,
-    ): Report<Unit, out Error> {
-        val program = when (
-            val result = ParseProgram.parse(langConfig, grammar, reader)
-        ) {
-            is Result.Err -> return result.toReport()
-            is Result.Ok -> result.value
-        }
+    ): Report<Unit, Error> {
+        val program =
+            when (
+                val result = ParseProgram.parse(langConfig, grammar, reader)
+            ) {
+                is Result.Err -> return Report(errors = listOf(result.error))
+                is Result.Ok -> result.value
+            }
 
-        return formatter.check(program, source.replace("\r\n", "\n"))
+        val checked = formatter.check(program, source.replace("\r\n", "\n"))
+        return Report(value = checked.value, errors = checked.errors)
     }
 }

@@ -5,6 +5,7 @@ import java.io.InputStream
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
+import printscript.error.Error
 import printscript.infrastructure.reader.FileCodeReader
 import printscript.infrastructure.reader.JSONGrammarConfigReader
 import printscript.infrastructure.reader.JSONTypeSystemConfigReader
@@ -21,7 +22,7 @@ object ParseExample {
     private val typeSystem: TypeSystemConfig =
         JSONTypeSystemConfigReader.read(stream("type-system.config.json"))
 
-    fun parse(example: String): Report<SyntaxProgram, TypeError> =
+    fun parse(example: String): Report<SyntaxProgram, Error> =
         typecheck(
             language,
             grammar,

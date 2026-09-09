@@ -2,7 +2,7 @@ package printscript.cli
 
 import printscript.PrintEffect
 import printscript.SideEffect
-import printscript.error.FormatError
+import printscript.error.Error
 import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
@@ -23,7 +23,7 @@ internal fun presentRun(block: () -> Result<List<SideEffect>, ExecutionFailure>)
             onErr = { failure ->
                 when (failure) {
                     is ExecutionFailure.Types ->
-                        CommandResult.Failed(failure.errors.map { formatTypeError(it) })
+                        CommandResult.Failed(failure.errors.map { formatError(it) })
                     is ExecutionFailure.Runtime ->
                         CommandResult.Failed(listOf(formatRuntimeError(failure.error)))
                 }
@@ -31,11 +31,11 @@ internal fun presentRun(block: () -> Result<List<SideEffect>, ExecutionFailure>)
         )
     }
 
-internal fun presentFormat(block: () -> Result<String, FormatError>): CommandResult =
+internal fun presentFormat(block: () -> Result<String, Error>): CommandResult =
     catching {
         block().fold(
             onOk = { CommandResult.Output(it) },
-            onErr = { CommandResult.Failed(listOf(formatFormatError(it))) },
+            onErr = { CommandResult.Failed(listOf(formatError(it))) },
         )
     }
 
