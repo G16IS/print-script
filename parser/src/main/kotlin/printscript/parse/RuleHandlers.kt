@@ -8,5 +8,6 @@ object RuleHandlers {
             OrRuleHandler(),
             LeftRuleHandler(),
             RepeatRuleHandler(),
+            OptionalRuleHandler(),
         )
 }
