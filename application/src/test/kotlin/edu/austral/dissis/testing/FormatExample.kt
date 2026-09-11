@@ -22,7 +22,7 @@ object FormatExample {
     private val language = PrintScriptLanguage.config()
 
     private val grammar: Grammar =
-        JSONGrammarConfigReader.read(stream("grammar.config.json"))
+        JSONGrammarConfigReader.read(stream("grammar.config.v1.json"))
 
     private val formatter: Formatter = loadFormatter()
 
@@ -39,7 +39,7 @@ object FormatExample {
 
     private fun loadFormatter(): Formatter {
         val languageConfig =
-            JSONFormatterLanguageConfigReader.read(stream("formatter-language.json"))
+            JSONFormatterLanguageConfigReader.read(stream("formatter-language.v1.json"))
         val defaults =
             JSONFormatterRulesConfigReader.read(stream("formatter-user-defaults.json"))
         val loaded =

@@ -88,8 +88,8 @@ class JSONGrammarConfigReaderTest {
         )
 
     private fun resource() =
-        checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
-            "Missing grammar.config.json"
+        checkNotNull(javaClass.getResourceAsStream("/grammar.config.v1.json")) {
+            "Missing grammar.config.v1.json"
         }
 
     private fun repeatJson() =

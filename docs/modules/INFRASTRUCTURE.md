@@ -157,7 +157,7 @@ El CLI (`PrintScriptCli`) y los tests de application le pasan un **path de files
 
 ## Resources actuales (v1)
 
-### `language.config.json`
+### `language.config.v1.json`
 
 Categorías: `keywords`, `types`, `operators`, `literals`, `identifiers`.
 
@@ -169,11 +169,11 @@ Tokens: `LET`, `CALL` (`println`, capture), `TYPE` (`string`/`number`, capture),
 
 Partial de string en este JSON: `"^\"[^\"]*$"` (permite tokenizar `"hola"`). Números siguen con `^[0-9]` (el `1.5` se parte).
 
-### `grammar.config.json`
+### `grammar.config.v1.json`
 
 `start: statement`. Producciones: `statement`, `variable`, `expression-stmt`, `expression`, `term`, `factor`, `number`, `string`, `identifier`, `call`, `group`. Sin `repeat`. `call` tiene un solo argumento.
 
-### `type-system.config.json`
+### `type-system.config.v1.json`
 
 `types`: `number`, `string`. Literales `NUMBER_LITERAL` / `STRING_LITERAL`. Operaciones `+ - * /` (el `+` también string+string y string+number). `nodes` con kinds `declaration`, `expression`, `binary-or-primary`, `primary`, `call`, `group`, `literal`, `identifier`.
 
@@ -195,7 +195,7 @@ JSON, docs y tests coinciden: **primero gana**. Keywords antes que identifiers p
 
 `JSONTypeSystemConfigReaderTest`: resource canónico, `commutative: false`, rechaza tipos inexistentes.
 
-`FormatterLanguageConfigReaderTest`: resource `formatter-language.json` (`rules` + `userBindings`).
+`FormatterLanguageConfigReaderTest`: resource `formatter-language.v1.json` (`rules` + `userBindings`).
 
 `FormatterRulesConfigReaderTest`: YAML de usuario (`enabled` / `count`) + resource `formatter-user-defaults.json`. JSON y YAML de usuario comparten `FormatterRulesConfigSerializer`.
 

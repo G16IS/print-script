@@ -11,7 +11,7 @@ class JSONLanguageConfigReaderTest {
     fun `reads the production language config`() {
         val config =
             JSONLanguageConfigReader.read(
-                requireNotNull(javaClass.classLoader.getResourceAsStream("language.config.json")),
+                requireNotNull(javaClass.classLoader.getResourceAsStream("language.config.v1.json")),
             )
 
         assertEquals(

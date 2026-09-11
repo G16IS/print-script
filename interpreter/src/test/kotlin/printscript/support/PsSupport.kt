@@ -17,7 +17,7 @@ import printscript.syntax.SyntaxProgram
 import printscript.util.Result
 
 /**
- * Parses PrintScript source with the real lexer/parser + grammar.config.json,
+ * Parses PrintScript source with the real lexer/parser + grammar.config.v1.json,
  * mirroring the application module's interpretCode flow.
  */
 object PsSupport {
@@ -52,7 +52,7 @@ object PsSupport {
     }
 
     /**
-     * Same rules and `order` as language.config.json. The lexer tries categories
+     * Same rules and `order` as language.config.v1.json. The lexer tries categories
      * from first to last, so keywords beat identifiers.
      */
     private fun language(): LanguageConfig =
@@ -70,8 +70,8 @@ object PsSupport {
 
     private fun grammar(): Grammar {
         val stream =
-            requireNotNull(PsSupport::class.java.getResourceAsStream("/grammar.config.json")) {
-                "Missing resource grammar.config.json"
+            requireNotNull(PsSupport::class.java.getResourceAsStream("/grammar.config.v1.json")) {
+                "Missing resource grammar.config.v1.json"
             }
         return JSONGrammarConfigReader.read(stream)
     }
@@ -99,7 +99,7 @@ object PsSupport {
         listOf(
             RegexRule(listOf("^\"[^\"]*\""), "STRING_LITERAL", true, "^\"[^\"]*$"),
             // Partial accepts the dot mid-lexeme so decimals like 1.5 tokenize
-            // (language.config.json's `^[0-9]` splits them; pre-existing lexer gap).
+            // (language.config.v1.json's `^[0-9]` splits them; pre-existing lexer gap).
             RegexRule(listOf("^[0-9]+(\\.[0-9]+)?"), "NUMBER_LITERAL", true, "^[0-9]+(\\.[0-9]*)?$"),
         )
 

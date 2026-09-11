@@ -18,9 +18,9 @@ import usecases.ExecutionFailure
 
 class ExecuteCodeTest {
     private val language = PrintScriptLanguage.config()
-    private val grammar: Grammar = JSONGrammarConfigReader.read(stream("grammar.config.json"))
+    private val grammar: Grammar = JSONGrammarConfigReader.read(stream("grammar.config.v1.json"))
     private val typeSystem: TypeSystemConfig =
-        JSONTypeSystemConfigReader.read(stream("type-system.config.json"))
+        JSONTypeSystemConfigReader.read(stream("type-system.config.v1.json"))
 
     @Test
     fun `declarations and prints emit printable side effects`() {

@@ -7,5 +7,5 @@ import printscript.infrastructure.reader.JSONGrammarConfigReader
 val PrintScriptGrammar: Grammar = JSONGrammarConfigReader.read(grammarStream())
 
 private fun grammarStream() =
-    JSONGrammarConfigReader::class.java.getResourceAsStream("/grammar.config.json")
-        ?: error("Missing grammar.config.json")
+    JSONGrammarConfigReader::class.java.getResourceAsStream("/grammar.config.v1.json")
+        ?: error("Missing grammar.config.v1.json")

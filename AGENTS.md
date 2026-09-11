@@ -96,12 +96,12 @@ Pipeline de PrintScript (streaming: caracteres → tokens on demand → un state
 
 Resources de lenguaje (classpath de infrastructure):
 
-- `language.config.json`
-- `grammar.config.json`
-- `type-system.config.json`
-- `formatter-language.json`
+- `language.config.v1.json`
+- `grammar.config.v1.json`
+- `type-system.config.v1.json`
+- `formatter-language.v1.json`
 - `formatter-user-defaults.json`
-- `linter.config.json`
+- `linter.config.v1.json`
 
 YAML opcional de usuario del formatter: `.printscript/formatter.yml` (constante `LoadFormatter.USER_YAML_PATH`). Si no existe, se usan los defaults JSON.
 
@@ -174,7 +174,7 @@ Jerarquía en `common` (`printscript.error`):
 - Módulos Gradle: kebab-case (`type-checker`).
 - Clases: PascalCase. Implementaciones por defecto: prefijo `Default`.
 - Tests: `FooTest.kt` junto al paquete de producción (application tests viven en `edu.austral.dissis`).
-- Config JSON: `*.config.json` / `formatter-*.json` / `linter.config.json`.
+- Config JSON: `*.config.json` / `formatter-*.json` / `linter.config.v1.json`.
 - Archivos de ejemplo PrintScript: `*.ps`.
 
 `java.util.Optional` aparece en `Token.value` y en `CodeReader` (`read`/`peek`), no tipos nullable de Kotlin.
@@ -203,7 +203,7 @@ Patrones vistos:
 - Parser: `MockLexer` + `PrintScriptGrammar` + `assertThrows<ParseException>`.
 - Interpreter / formatter: helper privado `ok(result)` que casteá `Result.Ok` y extrae `value`.
 - Application: archivos `.ps` en `application/src/test/resources/examples/` + DSL `assertAst { node("variable") { … } }`. `ParseExample.parse(...)` llama a `interpretCode` (lex + parse + type-check).
-- Integración interpreter/linter: parsean strings escribiendo un temp `.ps` y usando lexer+parser reales + `grammar.config.json` del classpath.
+- Integración interpreter/linter: parsean strings escribiendo un temp `.ps` y usando lexer+parser reales + `grammar.config.v1.json` del classpath.
 - Type-checker / common / parte de linter: `kotlin.test.*` (`assertTrue`, `assertIs`, …).
 - Lexer / parser / interpreter / formatter / infrastructure / application: `org.junit.jupiter.api.*`.
 
@@ -218,12 +218,12 @@ No hay tests de application para `LintProgram`.
 - **`LintProgram` no tiene caller** fuera de su archivo. Cableado en application, sin test de caso de uso.
 - **No hay CLI.** No hay `Main.kt`. No hay módulo `:cli` en `settings.gradle.kts`.
 - **Dos `TypeError`.** `common/.../error/TypeError.kt` (sealed, lo usa el interpreter) vs `type-checker/.../TypeError.kt` (data class, lo usa `interpretCode`).
-- **`string + number`.** El type-checker lo acepta (`type-system.config.json`). `DefaultTypeConfiguration` del interpreter solo tiene `number⊕number` y `string+string` → `InvalidOperands` en runtime.
-- **`partial` de literales en el JSON de producción es estrecho.** `language.config.json`: números `^[0-9]`, strings `^"`. Eso no tokeniza `1.5` ni strings a mitad. Los tests de lexer/interpreter usan un `partial` más amplio (`^[0-9]+(\\.[0-9]*)?$`, `^"[^"]*$`). Application tests del lexer en código usan el `partial` estrecho de números (igual que el JSON).
+- **`string + number`.** El type-checker lo acepta (`type-system.config.v1.json`). `DefaultTypeConfiguration` del interpreter solo tiene `number⊕number` y `string+string` → `InvalidOperands` en runtime.
+- **`partial` de literales en el JSON de producción es estrecho.** `language.config.v1.json`: números `^[0-9]`, strings `^"`. Eso no tokeniza `1.5` ni strings a mitad. Los tests de lexer/interpreter usan un `partial` más amplio (`^[0-9]+(\\.[0-9]*)?$`, `^"[^"]*$`). Application tests del lexer en código usan el `partial` estrecho de números (igual que el JSON).
 - **Locations.** `FileCodeReader` arranca en `(1,1)`. `MockReader` (tests del lexer) y `StringCodeReader` cuentan `(line = 0, col = index)`. No compares locations entre esos mundos.
 - **`DefaultParser` cachea el `TokenSource` por identidad del lexer.** No reutilices un parser con **otro** lexer sin crear un parser nuevo.
 - **`TokenRegistry` no lo usa `TokenStream`.** Leftover, igual que el enum `TokenType`.
-- **El interpreter despacha por `node.name`** (regla de `grammar.config.json`). `CallEvaluator` registra `CallHandler`s (`PrintlnHandler`). La tabla de ops **no** lee `type-system.config.json`.
+- **El interpreter despacha por `node.name`** (regla de `grammar.config.v1.json`). `CallEvaluator` registra `CallHandler`s (`PrintlnHandler`). La tabla de ops **no** lee `type-system.config.v1.json`.
 - **`repeat` en el parser está listo** y la gramática v1 no lo usa (pensado para bloques/`if`). `COMMA` se tokeniza y no se parsea.
 - **ktlint/detekt ≠ linter/formatter de PrintScript.** Lo primero es calidad del Kotlin (`printscript.quality`). Lo segundo son módulos del lenguaje.
 - **CI de lint/format solo corre en `main` y PRs a `main`.** `tests.yml` corre en cualquier push/PR.

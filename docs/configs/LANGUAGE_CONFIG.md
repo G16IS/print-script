@@ -1,4 +1,4 @@
-# Lexer Configuration — `language.config.json`
+# Lexer Configuration — `language.config.v1.json`
 
 Configuración declarativa del lexer. Define **categorías de tokens**, su **prioridad de evaluación** y las **reglas de matching**.
 
@@ -22,7 +22,7 @@ Array de strings. Define la **prioridad de las categorías** cuando varias regla
 
 En el código (`RuleDrawResolver`) gana la categoría con **menor índice**: la **primera** de `order`. Se prueba keywords, si no types, si no operators, y así. `order[0]` es la más prioritaria.
 
-El `language.config.json` de resources y los tests (`PrintScriptLanguage`, `PsSupport`) usan el mismo orden: keywords primero, identifiers último, para que `let` no salga `ID`. Ver [LEXER.md](../modules/LEXER.md).
+El `language.config.v1.json` de resources y los tests (`PrintScriptLanguage`, `PsSupport`) usan el mismo orden: keywords primero, identifiers último, para que `let` no salga `ID`. Ver [LEXER.md](../modules/LEXER.md).
 
 ### `config`
 Mapa de categoría → lista de reglas.
@@ -61,7 +61,7 @@ Matching exacto de strings.
 - El matching parcial se resuelve **automáticamente** carácter a carácter.
 - No se declara `partial`.
 
-**Ejemplo de parcial:**  
+**Ejemplo de parcial:**
 
 `"hol` no matchea ningún keyword completo → se descarta.
 

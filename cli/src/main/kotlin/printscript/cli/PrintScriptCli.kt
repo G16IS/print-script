@@ -11,6 +11,7 @@ import printscript.cli.command.FormatCommand
 import printscript.cli.command.LintCommand
 import printscript.cli.command.RunCommand
 import printscript.cli.command.TypeCheckCommand
+import printscript.infrastructure.config.PrintScriptConfigsLoader
 
 class PrintScriptCli(
     vararg commands: CliktCommand,
@@ -37,7 +38,7 @@ class PrintScriptCli(
 
     companion object {
         fun create(): PrintScriptCli {
-            val configs = PrintScriptConfigs.load()
+            val configs = PrintScriptConfigsLoader.load("1")
             return PrintScriptCli(
                 RunCommand(configs.lang, configs.grammar, configs.typeSystem),
                 LintCommand(configs.lang, configs.grammar, configs.linterConfig),

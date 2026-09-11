@@ -1,11 +1,11 @@
-# Parser Configuration — `grammar.config.json`
+# Parser Configuration — `grammar.config.v1.json`
 
 Configuración declarativa del parser. Define la **regla de arranque** y las **producciones** que el evaluador aplica sobre tokens genéricos (`Token.type: String`).
 
-Se carga igual que `language.config.json`: interface en `common`, serializers en `infrastructure`.
+Se carga igual que `language.config.v1.json`: interface en `common`, serializers en `infrastructure`.
 
 ```kotlin
-val grammar = JSONGrammarConfigReader.read(Path.of("grammar.config.json"))
+val grammar = JSONGrammarConfigReader.read(Path.of("grammar.config.v1.json"))
 val parser = DefaultParserFactory.create(grammar)
 ```
 
@@ -41,7 +41,7 @@ Mapa nombre → definición. Cada definición usa **una** clave de tipo (`or`, `
 | `{ "left": "term", "op": { "token": "OPERATOR", "values": ["+","-"] } }` | `LeftRule` | `LeftRuleSerializer` |
 | `{ "repeat": "statement" }` | `RepeatRule` | `RepeatRuleSerializer` |
 
-Los tipos de token (`LET`, `ID`, `OPERATOR`, …) son strings y tienen que coincidir con `language.config.json`.
+Los tipos de token (`LET`, `ID`, `OPERATOR`, …) son strings y tienen que coincidir con `language.config.v1.json`.
 
 ### Steps de `seq`
 
