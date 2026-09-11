@@ -17,10 +17,10 @@ object ParseExample {
     private val language: LanguageConfig = PrintScriptLanguage.config()
 
     private val grammar: Grammar =
-        JSONGrammarConfigReader.read(stream("grammar.config.json"))
+        JSONGrammarConfigReader.read(stream("grammar.config.v1.json"))
 
     private val typeSystem: TypeSystemConfig =
-        JSONTypeSystemConfigReader.read(stream("type-system.config.json"))
+        JSONTypeSystemConfigReader.read(stream("type-system.config.v1.json"))
 
     fun parse(example: String): Report<SyntaxProgram, Error> =
         typecheck(

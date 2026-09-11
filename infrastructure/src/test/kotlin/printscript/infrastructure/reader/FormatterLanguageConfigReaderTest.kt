@@ -35,7 +35,7 @@ class FormatterLanguageConfigReaderTest {
     }
 
     private fun languageResource() =
-        checkNotNull(javaClass.getResourceAsStream("/formatter-language.json")) {
-            "Missing formatter-language.json"
+        checkNotNull(javaClass.getResourceAsStream("/formatter-language.v1.json")) {
+            "Missing formatter-language.v1.json"
         }
 }

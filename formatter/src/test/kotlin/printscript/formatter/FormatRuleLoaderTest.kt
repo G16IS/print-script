@@ -21,8 +21,8 @@ class FormatRuleLoaderTest {
     private val loader = FormatRuleLoader(FormatRuleFactories.defaults())
     private val grammar =
         JSONGrammarConfigReader.read(
-            checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
-                "Missing grammar.config.json"
+            checkNotNull(javaClass.getResourceAsStream("/grammar.config.v1.json")) {
+                "Missing grammar.config.v1.json"
             },
         )
     private val lexemes =
@@ -111,8 +111,8 @@ class FormatRuleLoaderTest {
     }
 
     private fun languageResource() =
-        checkNotNull(javaClass.getResourceAsStream("/formatter-language.json")) {
-            "Missing formatter-language.json"
+        checkNotNull(javaClass.getResourceAsStream("/formatter-language.v1.json")) {
+            "Missing formatter-language.v1.json"
         }
 
     private fun defaultsResource() =

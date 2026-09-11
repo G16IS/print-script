@@ -23,8 +23,8 @@ import printscript.util.Result
 class FormatterCheckTest {
     private val grammar =
         JSONGrammarConfigReader.read(
-            checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
-                "Missing grammar.config.json"
+            checkNotNull(javaClass.getResourceAsStream("/grammar.config.v1.json")) {
+                "Missing grammar.config.v1.json"
             },
         )
     private val lexemes =
@@ -172,7 +172,7 @@ class FormatterCheckTest {
     private fun formatterFromLanguage(): Formatter {
         val language =
             JSONFormatterLanguageConfigReader.read(
-                checkNotNull(javaClass.getResourceAsStream("/formatter-language.json")),
+                checkNotNull(javaClass.getResourceAsStream("/formatter-language.v1.json")),
             )
         val defaults =
             JSONFormatterRulesConfigReader.read(

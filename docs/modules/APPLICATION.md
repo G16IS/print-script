@@ -57,7 +57,7 @@ application/src/test/
     formatted_declaration.ps
 ```
 
-`grammar.config.json` y `type-system.config.json` de test salen del **classpath de infrastructure**. Los `.ps` sí son de application.
+`grammar.config.v1.json` y `type-system.config.v1.json` de test salen del **classpath de infrastructure**. Los `.ps` sí son de application.
 
 ---
 
@@ -114,11 +114,11 @@ Tests:
 `ParseExample.parse("foo.ps")`:
 
 - Lenguaje: `PrintScriptLanguage.config()` (**no** el JSON del lexer)
-- Gramática: resource `grammar.config.json`
-- Type-system: resource `type-system.config.json`
+- Gramática: resource `grammar.config.v1.json`
+- Type-system: resource `type-system.config.v1.json`
 - Path: resource `examples/foo.ps` resuelto a `File` absoluto
 
-`PrintScriptLanguage` duplica las reglas de `language.config.json` con el mismo `order` (keywords primero). Si agregás un token, actualizá JSON **y** esta clase **y** el `PrintScriptLanguage` del lexer (y `PsSupport` del interpreter).
+`PrintScriptLanguage` duplica las reglas de `language.config.v1.json` con el mismo `order` (keywords primero). Si agregás un token, actualizá JSON **y** esta clase **y** el `PrintScriptLanguage` del lexer (y `PsSupport` del interpreter).
 
 `InterpretCodeTest` aserta la **forma** del árbol, no locations:
 

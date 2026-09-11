@@ -82,11 +82,11 @@ Tres archivos, bien separados:
 
 | Archivo                     | Responsabilidad                              |
 |-----------------------------|----------------------------------------------|
-| `language.config.json`      | Tokens, matching, orden de prioridad         |
-| `grammar.config.json`       | Producciones sintácticas                     |
-| `type-system.config.json`   | Tipos, literales, operaciones, nodos semánticos |
+| `language.config.v1.json`      | Tokens, matching, orden de prioridad         |
+| `grammar.config.v1.json`       | Producciones sintácticas                     |
+| `type-system.config.v1.json`   | Tipos, literales, operaciones, nodos semánticos |
 
-Spec de ese JSON: [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md). El archivo está en `infrastructure/src/main/resources/type-system.config.json`. El modelo `TypeSystemConfig` valida al construirse: todo tipo citado en `literals` u `operations` existe en `types`. No hay `ConfigBundle` cruzado con grammar/language todavía.
+Spec de ese JSON: [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md). El archivo está en `../../infrastructure/src/main/resources/type-system.config.v1.json`. El modelo `TypeSystemConfig` valida al construirse: todo tipo citado en `literals` u `operations` existe en `types`. No hay `ConfigBundle` cruzado con grammar/language todavía.
 
 ### `operations`
 

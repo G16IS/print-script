@@ -1,6 +1,6 @@
 # Módulo `formatter`
 
-Dependencias: `common`. Tests tiran de `infrastructure` para cargar `formatter-language.json`.
+Dependencias: `common`. Tests tiran de `infrastructure` para cargar `formatter-language.v1.json`.
 
 Pretty-printer de PrintScript sobre `SyntaxProgram`. No es linter (el linter reporta; este reescribe o chequea whitespace). No ejecuta. No lee archivos: recibe configs ya parseadas. Application lo llama desde `FormatCode` / `CheckFormat`.
 
@@ -10,7 +10,7 @@ Pretty-printer dirigido por rules. JSON de lenguaje (rules fijas + bindings) + J
 
 ## Cuándo tocarlo
 
-- Nueva rule de estilo que entre en space/newline → binding o rule en `formatter-language.json`
+- Nueva rule de estilo que entre en space/newline → binding o rule en `formatter-language.v1.json`
 - Nuevo *kind* de whitespace → `FormatRule` + `FormatRuleFactory` + JSON
 - Cambiar el walk / `FormatPoint` / `GrammarWalker` / `Gap`
 - Indent de bloques: `WalkState.indentLevel` alrededor de `{` `}` (ver receta abajo)
@@ -106,7 +106,7 @@ Dos formas. Lectura en `infrastructure`, dominio en `common` (**no** `@Serializa
 
 `FormatRuleLoader` no lee archivos: instancia `FormatterLanguageConfig` + user + defaults ya decodificadas. Merge: YAML pisa defaults JSON por `type`; si falta en ambos, el `default` del binding. YAML `type` que no está en `userBindings` → `UnknownRuleType`.
 
-Resources: `formatter-language.json`, `formatter-user-defaults.json`.
+Resources: `formatter-language.v1.json`, `formatter-user-defaults.json`.
 
 ---
 
@@ -158,7 +158,7 @@ Infrastructure: `FormatterLanguageConfigReaderTest` (resource) + `FormatterRules
 
 ## Cómo extender
 
-1. Si entra en space/newline: `rules` o `userBindings` en `formatter-language.json`. El YAML de usuario no cambia de forma (`type` + un value).
+1. Si entra en space/newline: `rules` o `userBindings` en `formatter-language.v1.json`. El YAML de usuario no cambia de forma (`type` + un value).
 2. Si no: `FormatRule` + `FormatRuleFactory` en `FormatRuleFactories.defaults()`.
 3. Tests de `format` / `check`. La puntuación que el parser no deja en el árbol la reinyecta `GrammarWalker`.
 
