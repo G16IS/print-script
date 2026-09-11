@@ -4,9 +4,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.error.DivisionByZero
-import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
 import printscript.support.PsSupport
+import printscript.support.ok
 import printscript.util.Result
 
 class InterpreterIntegrationTest {
@@ -88,6 +88,4 @@ class InterpreterIntegrationTest {
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is DivisionByZero)
     }
-
-    private fun ok(result: Result<List<SideEffect>, RuntimeError>) = (result as Result.Ok).value
 }

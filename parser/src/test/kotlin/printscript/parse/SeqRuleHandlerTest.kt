@@ -1,10 +1,8 @@
 package printscript.parse
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import printscript.error.ParseException
 import printscript.support.Tokens
 import printscript.support.atom
 import printscript.support.capture
@@ -42,15 +40,15 @@ class SeqRuleHandlerTest {
     fun `seq that fails on the first step restores the cursor`() {
         val g = grammar("s", "s" to seq(expect("LET"), capture("ID")))
         val tokens = source(Tokens.number("1"), Tokens.id("x"))
-        assertNull(evaluator(g).evaluate("s", tokens))
+        val result = evaluator(g).evaluate("s", tokens)
+        assertTrue(result is ParseResult.Missing)
         assertEquals("NUMBER_LITERAL", tokens.peek().type)
     }
 
     @Test
-    fun `seq that fails halfway throws`() {
+    fun `seq that fails halfway reports an error`() {
         val g = grammar("s", "s" to seq(expect("LET"), expect("SEMICOLON")))
-        assertThrows<ParseException> {
-            parse(g, Tokens.let(), Tokens.id("x"))
-        }
+        val result = evaluator(g).evaluate("s", source(Tokens.let(), Tokens.id("x")))
+        assertTrue(result is ParseResult.Failed)
     }
 }

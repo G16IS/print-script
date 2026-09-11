@@ -2,13 +2,13 @@ package printscript.cli.command
 
 import printscript.cli.SourceFileCommand
 import printscript.cli.emit
-import printscript.cli.formatTypeError
+import printscript.cli.formatError
 import printscript.cli.presentReport
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.infrastructure.reader.FileCodeReader
-import usecases.InterpretCode
+import usecases.TypecheckCode
 
 class TypeCheckCommand(
     private val lang: LanguageConfig,
@@ -18,8 +18,8 @@ class TypeCheckCommand(
     override fun run() {
         emit(
             presentReport(
-                { InterpretCode.interpretCode(lang, grammar, typeSystem, FileCodeReader(file)) },
-                ::formatTypeError,
+                { TypecheckCode.typecheck(lang, grammar, typeSystem, FileCodeReader(file)) },
+                ::formatError,
             ),
         )
     }

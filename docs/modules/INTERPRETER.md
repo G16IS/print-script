@@ -6,16 +6,16 @@ Ejecuta un `SyntaxProgram` ya parseado y produce efectos observables (`SideEffec
 
 **Está cableado** en `ExecuteCode` (CLI `run`). `interpretCode` sigue cortando en el type-checker. Los tests de integración del interpreter hacen lex+parse (sin type-check) y después `interpret`.
 
-Mismo principio que lexer y parser: agregar una construcción nueva no toca el motor de dispatch, solo registra un `StatementExecutor`, `ExpressionEvaluator` o `BinaryOperationRule` nuevo. La tabla de operadores **sí** está hardcodeada (`DefaultTypeConfiguration`); no lee `type-system.config.json`.
+Mismo principio que lexer y parser: agregar una construcción nueva no toca el motor de dispatch, solo registra un `StatementExecutor`, `ExpressionEvaluator`, `BinaryOperationRule` o `CallHandler`. La tabla de operadores **sí** está hardcodeada (`DefaultTypeConfiguration`); no lee `type-system.config.json`.
 
 ---
 
 ## Cuándo tocarlo
 
-- Nueva statement/expresión del lenguaje → executor/evaluator nuevo + entrada en `NodeKind`
+- Nueva statement/expresión del lenguaje → executor/evaluator con `nodeNames` = nombres de regla del JSON + registro en la factory
+- Nuevo call (`readInput`, etc.) → `CallHandler` + registro en la factory
 - Nuevas combinaciones de tipos para operadores → regla en `DefaultTypeConfiguration`
 - Política de errores de runtime o formato de output
-- **No** para nombres de reglas: el mapping nombre→`NodeKind` es configuración (`PrintScriptMapping`)
 
 ---
 
@@ -28,13 +28,14 @@ interface Interpreter {
 
 object DefaultInterpreterFactory {
     fun create(
-        mapping: Map<String, NodeKind> = PrintScriptMapping.mapping,
-        typeConfiguration: TypeConfiguration = DefaultTypeConfiguration(),
+        typeConfiguration: TypeConfiguration = DefaultTypeConfiguration,
     ): DefaultInterpreter
 }
 ```
 
-Errores: **Result end-to-end**. `interpret`, `solve`, `evaluate` y `execute` devuelven `Result<_, RuntimeError>` usando los helpers de `common/util/Result.kt` (`map` / `flatMap` / `fold`). Fail-fast: el primer error corta la ejecución y sube. `RuntimeError` vive en `common`; algunas variantes también son `TypeError` (`UndeclaredIdentifier`, `InvalidOperands`, `UnrecognizedNode`).
+`interpret` es la única entrada. `DefaultInterpreter` implementa `BlockExecutor`: el fold de statements queda ahí para que un `if` futuro reciba la interface sin depender de la clase concreta.
+
+Errores: **Result end-to-end, sin excepciones**. `interpret`, `solve`, `evaluate` y `execute` devuelven `Result<_, RuntimeError>` (`map` / `flatMap` / `fold`). Fail-fast. Wiring incompleto o nodo malformado también es `Err` (`UnresolvableExpression` / `UnrecognizedNode`). Los constructores no validan ni lanzan. Handler duplicado: last-wins (`associateBy`).
 
 ---
 
@@ -42,90 +43,93 @@ Errores: **Result end-to-end**. `interpret`, `solve`, `evaluate` y `execute` dev
 
 ```
 interpreter/src/main/kotlin/printscript/
-  Interpreter.kt                  interface + Result
-  DefaultInterpreter.kt           dispatch statements, threading de contexto
-  DefaultInterpreterFactory.kt    arma resolver + solver + executors
-  InterpreterContext.kt           entorno inmutable copy-on-write con parent chain
-  RuntimeValue.kt                 NumberValue | StringValue | UnitValue (+ toPrintableString)
+  Interpreter.kt                  interface: solo interpret
+  DefaultInterpreter.kt           Interpreter + BlockExecutor: dispatch por node.name
+  DefaultInterpreterFactory.kt    arma solver + executors
+  InterpreterContext.kt           entorno inmutable copy-on-write
+  RuntimeValue.kt                 NumberValue | StringValue | UnitValue
+  ResultExt.kt                    zip interno (lookups puros, no solve)
   node/
-    NodeKind.kt                   vocabulario cerrado del intérprete
-    NodeKindResolver.kt           nombre de regla -> NodeKind (Result)
-    PrintScriptMapping.kt         mapping default grammar.config.json v1
+    NodeAccess.kt                 tokenValue / childAt / firstChild / namedChild
+    AstNames.kt                   nombres de regla/captura de grammar.config.json
   statement/
-    StatementExecutor.kt          kind + execute(node, context, solver): Result<StatementResult, _>
+    BlockExecutor.kt              fun interface del fold de statements
+    StatementExecutor.kt          nodeNames + execute(node, context, solver)
     StatementResult.kt            sideEffects + newContext
-    VariableDeclarationExecutor.kt   let x: T = expr;
-    ExpressionStatementExecutor.kt   <expr>; (descarta valor, conserva efectos)
+    VariableDeclarationExecutor.kt   let x: T = expr;  (object)
+    ExpressionStatementExecutor.kt   <expr>;           (object)
   expression/
-    ExpressionEvaluator.kt        kind + evaluate(...) : Result<EvalResult, _>
-    EvalResult.kt                 value + sideEffects (los efectos viajan acá)
-    ExpressionSolver.kt           dispatch por Map<NodeKind, Evaluator>
-    GroupEvaluator.kt             passthrough de ( expr )
+    ExpressionEvaluator.kt        nodeNames + evaluate(..., solver)
+    ExpressionSolver.kt           interface solve(...)
+    DefaultExpressionSolver.kt    dispatch por node.name
+    EvalResult.kt                 value + sideEffects
+    GroupEvaluator.kt             passthrough de ( expr )  (object)
     literal/
-      NumberLiteralEvaluator.kt      toDouble()
-      StringLiteralEvaluator.kt      strip de comillas
-      IdentifierEvaluator.kt         lookup o UndeclaredIdentifier
+      NumberLiteralEvaluator.kt      toDouble finito o InvalidLiteral (object)
+      StringLiteralEvaluator.kt      exige comillas (object)
+      IdentifierEvaluator.kt         lookup o UndeclaredIdentifier (object)
     binaryoperation/
-      BinaryOperationRule.kt      operator + left/right/result types + apply
+      BinaryOperationRule.kt      apply nullable
       TypeConfiguration.kt        interface
-      DefaultTypeConfiguration.kt reglas v1: number + - * /, string+string (no string+number)
-      BinaryOperationEvaluator.kt unario passthrough, div-by-zero, InvalidOperands
+      DefaultTypeConfiguration.kt object: number + - * /, string+string
+      BinaryOperationEvaluator.kt dispatch plano → binaryParts / evalOperands / apply
     call/
-      CallEvaluator.kt            println(x) -> PrintEffect + UnitValue
+      CallHandler.kt              callee + handle(EvalResult)
+      PrintlnHandler.kt           println → PrintEffect + UnitValue (object)
+      CallEvaluator.kt            despacha handlers por nombre
 ```
 
 ---
 
 ## Dispatch
 
-Dos niveles, mismo patrón:
+Un nivel: `node.name` es el nombre de regla de `grammar.config.json`. `DefaultInterpreter` y `DefaultExpressionSolver` indexan handlers por `nodeNames`. Nombre sin handler → `UnresolvableExpression`. Call desconocido → `UnresolvableCall`.
 
-1. `NodeKindResolver` traduce `node.name` (nombre de regla de la gramática) a `NodeKind` vía un `Map<String, NodeKind>`.
-2. `DefaultInterpreter` y `ExpressionSolver` despachan por `Map<NodeKind, _>`; duplicados explotan en construcción.
+Un evaluator puede declarar más de un nombre (`BinaryOperationEvaluator` cubre `expression` y `term`, la misma forma de `LeftRule`). Nombre duplicado: last-wins.
 
-Mapping default (`PrintScriptMapping`):
+Handlers default (`AstNames`):
 
-| Regla (grammar.config.json) | NodeKind |
+| Regla | Handler |
 |---|---|
-| `variable` | `VARIABLE_DECLARATION` |
-| `expression-stmt` | `EXPRESSION_STMT` |
-| `expression`, `term` | `BINARY_OP` |
-| `number` | `NUMBER_LITERAL` |
-| `string` | `STRING_LITERAL` |
-| `identifier` | `IDENTIFIER` |
-| `call` | `CALL` |
-| `group` | `GROUP` |
+| `variable` | `VariableDeclarationExecutor` |
+| `expression-stmt` | `ExpressionStatementExecutor` |
+| `expression`, `term` | `BinaryOperationEvaluator` |
+| `number` | `NumberLiteralEvaluator` |
+| `string` | `StringLiteralEvaluator` |
+| `identifier` | `IdentifierEvaluator` |
+| `call` | `CallEvaluator` |
+| `group` | `GroupEvaluator` |
 
-`DefaultInterpreter` valida en construcción que todo kind mapeado esté cubierto por un executor **o** un evaluator.
+El interpreter no llama `SyntaxNode.value()` / `child()` / `find()`. Token y children van por `tokenValue()` / `childAt()` / `firstChild()` / `namedChild()` → `UnrecognizedNode` si faltan.
+
+Los evaluators evitan pirámides: un `when` raso de dispatch y helpers con nombre (`binaryParts`, `evalOperands`, `calleeAndArgument`, `nameAndExpression`). `zip` solo combina lookups puros; `solve` de operandos es siempre secuencial (izquierda, después derecha) para no evaluar el derecho si el izquierdo falla y para preservar el orden de `println`.
 
 ---
 
 ## Modelo de ejecución
 
-**Efectos.** En esta gramática `println` es una expresión (`factor → call`), no un statement. Por eso cada evaluación de expresión devuelve `EvalResult(value, sideEffects)` y los evaluators combinan los efectos de sus hijos (literales e identificadores aportan lista vacía). `CallEvaluator` agrega el `PrintEffect`; `println(println(1))` acumula en orden de evaluación.
+**Efectos.** `println` es una expresión (`factor → call`). Cada evaluación devuelve `EvalResult(value, sideEffects)`. `PrintlnHandler` agrega el `PrintEffect`; `println(println(1))` acumula en orden de evaluación.
 
-**Valores.** `NumberValue(Double)`, `StringValue(String)` — sin comillas, las saca el evaluator. `UnitValue` es el resultado de un call: si termina como operando de una operación aritmética, `TypeConfiguration` no tiene regla y falla con `InvalidOperands`.
+**Valores.** `NumberValue(Double)` finito (`Infinity` / `NaN` → `InvalidLiteral`). `StringValue` sin comillas; el literal tiene que venir wrapped en `"..."`. `UnitValue` es el resultado de un call: como operando aritmético pega `InvalidOperands`.
 
-**Ops en runtime vs type-checker.** `DefaultTypeConfiguration` tiene `+ - * /` entre numbers y `+` entre strings. **No** tiene `string + number`. El type-checker, leyendo `type-system.config.json`, sí acepta `"a" + 1` (y la permutación `1 + "a"` si `commutative`). Si cableás el interpreter después del checker, ese programa pasa tipos y pega `InvalidOperands` al ejecutar.
+**Ops en runtime vs type-checker.** `DefaultTypeConfiguration` tiene `+ - * /` entre numbers y `+` entre strings. **No** tiene `string + number`. El type-checker sí acepta `"a" + 1`.
 
-**Formato de números al imprimir:** enteros sin decimales (`7`, no `7.0`); decimales tal cual (`1.5`). Lo hace `toPrintableString()`.
+**Formato de números al imprimir:** enteros sin decimales (`7`); decimales tal cual (`1.5`). `toPrintableString()`.
 
-**Contexto.** `InterpreterContext` inmutable copy-on-write con parent chain: `declareVariable` devuelve contexto nuevo (shaddea), `assignVariable` camina hacia arriba, reconstruye la cadena dueña y devuelve el resultado (nada de lo anterior muta). Los executors devuelven `StatementResult(sideEffects, newContext)` y `DefaultInterpreter` teje el contexto a través de los statements.
+**Contexto.** `InterpreterContext` inmutable copy-on-write. `assignVariable` → `Result<InterpreterContext, RuntimeError>`. Los executors devuelven `StatementResult`; `DefaultInterpreter` teje el contexto.
 
-**División por cero:** guard explícito en `BinaryOperationEvaluator` antes de aplicar la regla → `DivisionByZero` (con `Double` sería `Infinity` silencioso).
+**División por cero:** guard en `apply` → `DivisionByZero`.
 
-**Tipos declarados:** `let x: number = "hola";` se declara sin chequear el TYPE. Chequear initializer vs anotación es trabajo del type-checker; el intérprete confía en el programa validado.
+**Tipos declarados:** el intérprete no chequea initializer vs anotación.
 
 ---
 
 ## Forma del árbol que consume
 
-Igual que el resto del pipeline: nombres = reglas. Ojo con:
-
-- `LeftRuleHandler` **siempre envuelve**: `expression` sin operador queda con **un solo hijo** y `BinaryOperationEvaluator` lo trata como passthrough.
-- El operador de un binario está en `children[1]` (hoja `OPERATOR` capturada), no en el token del nodo.
-- En un `variable`, el id llega como hijo `"ID"` (captura de seq), no como `"identifier"`.
-- Un call anidado dentro de otra expresión es válido para el parser: `1 + println(x)` falla recién en runtime.
+- `LeftRuleHandler` **siempre envuelve**: `expression` sin operador queda con un solo hijo (passthrough).
+- El operador de un binario está en `children[1]`.
+- En un `variable`, el id llega como hijo `"ID"` (`AstNames.ID`), no como `"identifier"`.
+- Un call anidado es válido para el parser: `1 + println(x)` falla en runtime (`InvalidOperands`).
 
 ---
 
@@ -134,13 +138,15 @@ Igual que el resto del pipeline: nombres = reglas. Ojo con:
 | Archivo | Qué cubre |
 |---|---|
 | `InterpreterContextTest` | scopes, shadowing, assign con rebuild de cadena, assign no declarada |
-| `ExpressionSolverTest` | literales (incluye strip de comillas), identificador, binarios, unario, div-cero, operandos inválidos, calls anidados, errores de dispatch |
-| `DefaultInterpreterTest` | threading de contexto, redeclaración, orden de efectos, fail-fast, validaciones de construcción |
-| `InterpreterIntegrationTest` | `.ps` real lex→parse→interpret con asserts sobre `List<SideEffect>` |
+| `ExpressionSolverTest` | literales (comillas, Infinity/NaN), identificador, binarios, unario, div-cero, operandos inválidos, calls anidados, callee desconocido, grupo vacío, errores de dispatch |
+| `DefaultInterpreterTest` | threading de contexto vía `interpret` + `program(...)`, redeclaración, orden de efectos, fail-fast, last-wins, nombre sin handler |
+| `InterpreterIntegrationTest` | `.ps` real lex→parse→interpret |
+
+Helpers de test: `support/Results.kt` (`ok` / `err`), `support/Programs.kt` (`program(...)`).
 
 Correr: `./gradlew :interpreter:test`.
 
-Nota: los tests usan su propio `LanguageConfig` en código (`support/PsSupport`) con un `partial` de número que soporta decimales (`^[0-9]+(\.[0-9]*)?$`). El `partial` de `language.config.json` (`^[0-9]`) corta `1.5` en el lexer — gap preexistente del lexer, no del interpreter.
+Nota: los tests usan su propio `LanguageConfig` (`support/PsSupport`) con `partial` de número que soporta decimales. El `partial` de `language.config.json` corta `1.5` — gap del lexer.
 
 ---
 
@@ -148,12 +154,18 @@ Nota: los tests usan su propio `LanguageConfig` en código (`support/PsSupport`)
 
 ### Nueva expresión (ej. comparaciones)
 
-1. Entrada en `NodeKind` + entrada en `PrintScriptMapping` con el nombre de regla del JSON.
-2. `ExpressionEvaluator` nuevo con `override val kind`.
-3. Registrar en `DefaultInterpreterFactory.evaluators`.
-4. Si necesita tabla de tipos: reglas nuevas en `DefaultTypeConfiguration`.
+1. `ExpressionEvaluator` nuevo con `nodeNames` = el/los nombres de regla del JSON (`object` si no tiene deps).
+2. Registrar en `DefaultInterpreterFactory.defaultEvaluators`.
+3. Si necesita tabla de tipos: reglas en `DefaultTypeConfiguration`.
+4. No hay enum ni mapping aparte: el dispatch es `node.name`.
+
+### Nuevo call (ej. `readInput`)
+
+1. `object FooHandler : CallHandler` con `callee` y `handle`.
+2. Agregarlo a `CallEvaluator(listOf(PrintlnHandler, FooHandler))` en la factory.
+3. No editar un `when` en `CallEvaluator`.
 
 ### Nuevo statement (ej. asignaciones sueltas, if)
 
-1. Igual que arriba pero con `StatementExecutor` registrado en `statementExecutors`.
-2. Si el cuerpo repite statements (bloques), extraer el loop de `executeBlock` a un `fun interface BlockExecutor` y pasarlo como parámetro de `execute` — la firma actual ya reserva el lugar sin depender del intérprete concreto.
+1. `StatementExecutor` registrado en `defaultStatementExecutors`.
+2. Si el cuerpo repite statements (bloques), pasar el `BlockExecutor` a `execute` — el fold vive en `DefaultInterpreter` detrás de esa interface.

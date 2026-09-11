@@ -6,6 +6,7 @@ import edu.austral.dissis.testing.ast.assertAst
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import printscript.error.TypeError
 
 class InterpretCodeTest {
     @Test
@@ -81,7 +82,11 @@ class InterpretCodeTest {
         val report = ParseExample.parse("type_mismatch.ps")
 
         assertFalse(report.isOk)
-        assertTrue(report.errors.any { it.message.contains("Se esperaba number pero se encontró string") })
+        assertTrue(
+            report.errors.filterIsInstance<TypeError>().any {
+                it.message.contains("Se esperaba number pero se encontró string")
+            },
+        )
     }
 
     @Test
@@ -89,7 +94,11 @@ class InterpretCodeTest {
         val report = ParseExample.parse("undeclared_variable.ps")
 
         assertFalse(report.isOk)
-        assertTrue(report.errors.any { it.message.contains("Variable 'x' no declarada") })
+        assertTrue(
+            report.errors.filterIsInstance<TypeError>().any {
+                it.message.contains("Variable 'x' no declarada")
+            },
+        )
     }
 
     @Test
@@ -97,7 +106,11 @@ class InterpretCodeTest {
         val report = ParseExample.parse("redeclaration.ps")
 
         assertFalse(report.isOk)
-        assertTrue(report.errors.any { it.message.contains("La variable 'x' ya fue declarada") })
+        assertTrue(
+            report.errors.filterIsInstance<TypeError>().any {
+                it.message.contains("La variable 'x' ya fue declarada")
+            },
+        )
     }
 
     private fun AstBuilder.printCall(name: String) {

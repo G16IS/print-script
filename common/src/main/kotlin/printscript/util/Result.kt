@@ -17,6 +17,12 @@ data class Report<T, E>(
     val isOk: Boolean get() = errors.isEmpty()
 }
 
+fun <T, E> Result<T, E>.toReport(): Report<T, E> =
+    when (this) {
+        is Result.Ok -> Report(value = value, errors = emptyList())
+        is Result.Err -> Report(value = null, errors = listOf(error))
+    }
+
 val Result<*, *>.isOk: Boolean get() = this is Result.Ok
 
 inline fun <T, E, R> Result<T, E>.map(transform: (T) -> R): Result<R, E> =

@@ -4,17 +4,22 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import printscript.domain.ExactRule
 import printscript.domain.LanguageConfig
+import printscript.error.MultipleRulesWithSamePriority
+import printscript.error.UnexpectedEnfOfLine
+import printscript.error.UnexpectedToken
 import printscript.support.MockReader
 import printscript.support.PrintScriptLanguage
 import printscript.support.assertLex
 import printscript.support.assertLocation
 import printscript.support.assertTypes
+import printscript.support.castTokenListResult
+import printscript.support.castTokenResult
 import printscript.support.lex
 import printscript.support.lexer
 import printscript.support.tok
+import printscript.util.Result
 
 class TokenStreamTest {
     @Nested
@@ -40,8 +45,8 @@ class TokenStreamTest {
         @Test
         fun `nextToken after EOF yields another EOF`() {
             val stream = lexer("")
-            assertEquals("EOF", stream.nextToken().type)
-            assertEquals("EOF", stream.nextToken().type)
+            assertEquals("EOF", castTokenResult(stream.nextToken()).type)
+            assertEquals("EOF", castTokenResult(stream.nextToken()).type)
         }
     }
 
@@ -50,9 +55,9 @@ class TokenStreamTest {
         @Test
         fun `peek null does not consume`() {
             val stream = lexer("let x")
-            assertEquals("LET", stream.peek(null).type)
-            assertEquals("LET", stream.peek(null).type)
-            assertEquals("LET", stream.nextToken().type)
+            assertEquals("LET", castTokenResult(stream.peek(null)).type)
+            assertEquals("LET", castTokenResult(stream.peek(null)).type)
+            assertEquals("LET", castTokenResult(stream.nextToken()).type)
         }
 
         @Test
@@ -64,27 +69,27 @@ class TokenStreamTest {
         @Test
         fun `peek offset looks ahead without consuming`() {
             val stream = lexer("let x;")
-            assertEquals("LET", stream.peek(0).type)
-            assertEquals("ID", stream.peek(1).type)
-            assertEquals("SEMICOLON", stream.peek(2).type)
-            assertEquals("EOF", stream.peek(3).type)
-            assertEquals("LET", stream.nextToken().type)
-            assertEquals("ID", stream.nextToken().type)
+            assertEquals("LET", castTokenResult(stream.peek(0)).type)
+            assertEquals("ID", castTokenResult(stream.peek(1)).type)
+            assertEquals("SEMICOLON", castTokenResult(stream.peek(2)).type)
+            assertEquals("EOF", castTokenResult(stream.peek(3)).type)
+            assertEquals("LET", castTokenResult(stream.nextToken()).type)
+            assertEquals("ID", castTokenResult(stream.nextToken()).type)
         }
 
         @Test
         fun `peek then next then peek resume in order`() {
             val stream = lexer("1 + 2")
-            assertEquals("NUMBER_LITERAL", stream.peek(null).type)
-            assertEquals("1", stream.nextToken().value.get())
-            assertEquals("OPERATOR", stream.peek(null).type)
-            assertEquals("+", stream.nextToken().value.get())
-            assertEquals("NUMBER_LITERAL", stream.peek(null).type)
+            assertEquals("NUMBER_LITERAL", castTokenResult(stream.peek(null)).type)
+            assertEquals("1", castTokenResult(stream.nextToken()).value.get())
+            assertEquals("OPERATOR", castTokenResult(stream.peek(null)).type)
+            assertEquals("+", castTokenResult(stream.nextToken()).value.get())
+            assertEquals("NUMBER_LITERAL", castTokenResult(stream.peek(null)).type)
         }
 
         @Test
         fun `peek on empty source is EOF`() {
-            assertEquals("EOF", lexer("").peek(null).type)
+            assertEquals("EOF", castTokenResult(lexer("").peek(null)).type)
         }
     }
 
@@ -92,39 +97,33 @@ class TokenStreamTest {
     inner class Errors {
         @Test
         fun `unexpected character`() {
-            val exception =
-                assertThrows<IllegalArgumentException> {
-                    lex("@")
-                }
-            assertTrue(exception.message!!.contains("Unexpected token"))
+            val exception = lex("@")
+            assertTrue(exception is Result.Err && exception.error is UnexpectedToken)
         }
 
+        // TODO refactor v1 so that this behaviour doesn't exist
         @Test
         fun `single quote is not a string delimiter`() {
-            assertThrows<IllegalArgumentException> { lex("'hi'") }
+            val error = lex("'hi'")
+            assertTrue(error is Result.Err && error.error is UnexpectedToken)
         }
 
         @Test
         fun `unterminated string`() {
-            val exception =
-                assertThrows<IllegalStateException> {
-                    lex("\"hello")
-                }
-            assertTrue(exception.message!!.contains("Unexpected end of file"))
+            val error = lex("\"hello")
+            assertTrue(error is Result.Err && error.error is UnexpectedEnfOfLine)
         }
 
         @Test
         fun `unterminated string after other tokens`() {
-            assertThrows<IllegalStateException> { lex("let x = \"hello") }
+            val error = lex("let x = \"hello")
+            assertTrue(error is Result.Err && error.error is UnexpectedEnfOfLine)
         }
 
         @Test
         fun `trailing dot of a number at EOF is still partial`() {
-            val exception =
-                assertThrows<IllegalStateException> {
-                    lex("1.")
-                }
-            assertTrue(exception.message!!.contains("Unexpected end of file"))
+            val error = lex("1.")
+            assertTrue(error is Result.Err && error.error is UnexpectedEnfOfLine)
         }
     }
 
@@ -132,7 +131,7 @@ class TokenStreamTest {
     inner class Locations {
         @Test
         fun `string declaration locations match MockReader columns`() {
-            val tokens = lex("let x: string = \"hello\";")
+            val tokens = castTokenListResult(lex("let x: string = \"hello\";"))
             assertLocation(tokens[0], startCol = 1, endCol = 3)
             assertLocation(tokens[1], startCol = 5, endCol = 5)
             assertLocation(tokens[2], startCol = 6, endCol = 6)
@@ -145,12 +144,12 @@ class TokenStreamTest {
 
         @Test
         fun `EOF on empty input sits at column zero`() {
-            assertLocation(lex("")[0], startCol = 0, endCol = 0)
+            assertLocation(castTokenListResult(lex(""))[0], startCol = 0, endCol = 0)
         }
 
         @Test
         fun `MockReader does not bump the line on newline`() {
-            val tokens = lex("let\nx")
+            val tokens = castTokenListResult(lex("let\nx"))
             assertLocation(tokens[0], startCol = 1, endCol = 3)
             assertLocation(tokens[1], startCol = 5, endCol = 5)
         }
@@ -161,7 +160,8 @@ class TokenStreamTest {
         @Test
         fun `empty language config treats any character as unexpected`() {
             val config = LanguageConfig(emptyList(), emptyMap())
-            assertThrows<IllegalArgumentException> { lex("a", config) }
+            val error = lex("a", config)
+            assertTrue { error is Result.Err && error.error is UnexpectedToken }
         }
 
         @Test
@@ -170,8 +170,8 @@ class TokenStreamTest {
                 PrintScriptLanguage.config(
                     numberPartial = PrintScriptLanguage.PRODUCTION_NUMBER_PARTIAL,
                 )
-            val exception = assertThrows<IllegalArgumentException> { lex("1.5", config) }
-            assertTrue(exception.message!!.contains("Unexpected token"))
+            val exception = lex("1.5", config)
+            assertTrue(exception is Result.Err && exception.error is UnexpectedToken)
         }
 
         @Test
@@ -180,7 +180,8 @@ class TokenStreamTest {
                 PrintScriptLanguage.config(
                     stringPartial = PrintScriptLanguage.PRODUCTION_STRING_PARTIAL,
                 )
-            assertThrows<IllegalStateException> { lex("\"hello\"", config) }
+            val exception = lex("\"hello\"", config)
+            assertTrue { exception is Result.Err && exception.error is UnexpectedEnfOfLine }
         }
 
         @Test
@@ -203,7 +204,8 @@ class TokenStreamTest {
                     order = listOf("operators"),
                     config = mapOf("operators" to listOf(assign, equals)),
                 )
-            assertThrows<IllegalArgumentException> { lex("=x", config) }
+            val error = lex("=x", config)
+            assertTrue(error is Result.Err && error.error is MultipleRulesWithSamePriority)
             assertLex("==", config, tok("EQUALS"), tok("EOF"))
         }
     }
@@ -217,8 +219,8 @@ class TokenStreamTest {
                     MockReader("let"),
                     PrintScriptLanguage.config(),
                 )
-            assertEquals("LET", stream.nextToken().type)
-            assertEquals("EOF", stream.nextToken().type)
+            assertEquals("LET", castTokenResult(stream.nextToken()).type)
+            assertEquals("EOF", castTokenResult(stream.nextToken()).type)
         }
     }
 }

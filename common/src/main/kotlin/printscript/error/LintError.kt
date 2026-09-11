@@ -2,7 +2,7 @@ package printscript.error
 
 import printscript.ast.Location
 
-sealed interface LintError {
+sealed interface LintError : Error {
     val message: String
     val location: Location
 }

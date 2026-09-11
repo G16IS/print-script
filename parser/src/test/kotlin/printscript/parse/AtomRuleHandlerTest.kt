@@ -1,7 +1,7 @@
 package printscript.parse
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import printscript.support.Tokens
@@ -25,7 +25,8 @@ class AtomRuleHandlerTest {
     @Test
     fun `atom fails without consuming the current token`() {
         val tokens = source(Tokens.of("ID", "x"))
-        assertNull(evaluator.evaluate("n", tokens))
+        val result = evaluator.evaluate("n", tokens)
+        assertTrue(result is ParseResult.Missing)
         assertEquals("ID", tokens.peek().type)
     }
 

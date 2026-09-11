@@ -2,6 +2,7 @@ package printscript.support
 
 import printscript.domain.Grammar
 import printscript.domain.Token
+import printscript.parse.ParseResult
 import printscript.parse.RuleEvaluator
 import printscript.parse.RuleHandlers
 import printscript.syntax.SyntaxNode
@@ -16,10 +17,17 @@ fun parse(
     grammar: Grammar,
     vararg tokens: Token,
 ): SyntaxNode =
-    evaluator(grammar).evaluate(grammar.start, source(*tokens))
-        ?: error("Expected a match for start rule '${grammar.start}'")
+    when (val result = evaluator(grammar).evaluate(grammar.start, source(*tokens))) {
+        is ParseResult.Matched -> result.node
+        is ParseResult.Failed -> error("Failed to match start rule '${grammar.start}': ${result.error.message}")
+        ParseResult.Missing -> error("Expected a match for start rule '${grammar.start}'")
+    }
 
 fun parseOrNull(
     grammar: Grammar,
     vararg tokens: Token,
-): SyntaxNode? = evaluator(grammar).evaluate(grammar.start, source(*tokens))
+): SyntaxNode? =
+    when (val result = evaluator(grammar).evaluate(grammar.start, source(*tokens))) {
+        is ParseResult.Matched -> result.node
+        else -> null
+    }

@@ -70,7 +70,7 @@ class PrintScriptCliTest {
         val result = cli("run", file)
 
         assertEquals(1, result.statusCode)
-        assertTrue(result.stderr.contains("ERROR"))
+        assertTrue(result.stderr.contains("Expected ID, found EOF (1:4-1:4)"))
     }
 
     @Test

@@ -2,10 +2,13 @@ package printscript
 
 import printscript.domain.Grammar
 import printscript.error.ParseErrors
+import printscript.error.ParserError
+import printscript.parse.ParseResult
 import printscript.parse.RuleEvaluator
 import printscript.syntax.SyntaxProgram
 import printscript.token.LexerTokenSource
 import printscript.token.TokenSource
+import printscript.util.Result
 
 class DefaultParser(
     private val grammar: Grammar,
@@ -17,12 +20,13 @@ class DefaultParser(
     override fun parseNextStatement(
         tokenStream: Lexer,
         program: SyntaxProgram,
-    ): SyntaxProgram {
+    ): Result<SyntaxProgram, ParserError> {
         val tokens = bind(tokenStream)
-        val node =
-            evaluator.evaluate(grammar.start, tokens)
-                ?: throw ParseErrors.unexpectedStart(tokens.peek())
-        return program.withStatement(node)
+        return when (val result = evaluator.evaluate(grammar.start, tokens)) {
+            is ParseResult.Matched -> Result.Ok(program.withStatement(result.node))
+            ParseResult.Missing -> Result.Err(ParseErrors.unexpectedStart(tokens.peek()))
+            is ParseResult.Failed -> Result.Err(result.error)
+        }
     }
 
     private fun bind(lexer: Lexer): TokenSource {

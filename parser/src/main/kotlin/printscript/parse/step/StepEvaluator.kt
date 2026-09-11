@@ -2,9 +2,9 @@ package printscript.parse.step
 
 import printscript.domain.RuleRefStep
 import printscript.domain.SeqStep
-import printscript.domain.Token
 import printscript.domain.TokenStep
 import printscript.parse.ParseContext
+import printscript.parse.ParseResult
 import printscript.util.tokenLeaf
 
 class StepEvaluator {
@@ -23,24 +23,22 @@ class StepEvaluator {
         ctx: ParseContext,
     ): StepOutcome {
         val token = ctx.tokens.peek()
-        if (token.type != step.type) return StepOutcome.miss()
+        if (token.type != step.type) return StepOutcome.Miss
         ctx.tokens.advance()
-        return keepIfCaptured(step, token)
-    }
-
-    private fun keepIfCaptured(
-        step: TokenStep,
-        token: Token,
-    ): StepOutcome {
-        if (!step.capture) return StepOutcome.hit(location = token.location)
-        return StepOutcome.hit(tokenLeaf(token))
+        return if (step.capture) {
+            StepOutcome.Hit(tokenLeaf(token))
+        } else {
+            StepOutcome.Hit(location = token.location)
+        }
     }
 
     private fun reference(
         step: RuleRefStep,
         ctx: ParseContext,
-    ): StepOutcome {
-        val node = ctx.evaluate(step.name) ?: return StepOutcome.miss()
-        return StepOutcome.hit(node)
-    }
+    ): StepOutcome =
+        when (val result = ctx.evaluate(step.name)) {
+            is ParseResult.Matched -> StepOutcome.Hit(result.node)
+            ParseResult.Missing -> StepOutcome.Miss
+            is ParseResult.Failed -> StepOutcome.Failed(result.error)
+        }
 }
