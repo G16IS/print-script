@@ -1,8 +1,12 @@
 package usecases
 
-import printscript.DefaultInterpreterFactory
+import printscript.ErrorHandler
+import printscript.InputChannel
 import printscript.InterpreterContext
+import printscript.PrintChannel
 import printscript.SideEffect
+import printscript.application.config.PrintScriptConfigs
+import printscript.application.factory.InterpreterFactory
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
@@ -25,13 +29,30 @@ object ExecuteCode {
             return Result.Err(ExecutionFailure.Types(report.errors))
         }
 
-        return DefaultInterpreterFactory
-            .create()
-            .interpret(InterpreterContext(), report.value!!)
+        return InterpreterFactory
+            .create("1")
             .fold(
-                onOk = { Result.Ok(it) },
+                onOk = { interpreter ->
+                    interpreter
+                        .interpret(InterpreterContext(), report.value!!)
+                        .fold(
+                            onOk = { Result.Ok(it) },
+                            onErr = { Result.Err(ExecutionFailure.Runtime(it)) },
+                        )
+                },
                 onErr = { Result.Err(ExecutionFailure.Runtime(it)) },
             )
+    }
+
+    fun executeForTck(
+        version: String,
+        configs: PrintScriptConfigs,
+        codeReader: CodeReader,
+        printChannel: PrintChannel,
+        errorHandler: ErrorHandler,
+        inputChannel: InputChannel,
+    ) {
+        TODO("implement but have to change module factories to instanciate based on the version")
     }
 }
 

@@ -5,6 +5,7 @@ import java.rmi.UnexpectedException
 import printscript.DefaultLexerFactory
 import printscript.DefaultParserFactory
 import printscript.Lexer
+import printscript.application.factory.parser.ParserFactory
 import printscript.domain.ExactRule
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
@@ -31,7 +32,7 @@ object PsSupport {
         val file = File.createTempFile("printscript-interpreter-test", ".ps").apply { writeText(code) }
         val codeReader = FileCodeReader(file.absolutePath)
         val lexer = DefaultLexerFactory.create(codeReader, langConfig)
-        val parser = DefaultParserFactory.create(grammar)
+        val parser = (ParserFactory.create(grammar, "1") as Result.Ok).value
 
         var program = SyntaxProgram.empty()
         while (peekNextToken(lexer).type != "EOF") {

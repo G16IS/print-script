@@ -17,6 +17,7 @@ import printscript.support.call
 import printscript.support.err
 import printscript.support.identifierNode
 import printscript.support.leaf
+import printscript.support.mockv1Evaluators
 import printscript.support.node
 import printscript.support.numberNode
 import printscript.support.ok
@@ -24,7 +25,7 @@ import printscript.support.stringNode
 import printscript.syntax.SyntaxNode
 
 class ExpressionSolverTest {
-    private val solver = DefaultExpressionSolver(DefaultInterpreterFactory.defaultEvaluators())
+    private val solver = DefaultExpressionSolver(mockv1Evaluators())
 
     @Test
     fun `number literal evaluates to NumberValue`() {

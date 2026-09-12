@@ -11,7 +11,7 @@ import printscript.cli.command.FormatCommand
 import printscript.cli.command.LintCommand
 import printscript.cli.command.RunCommand
 import printscript.cli.command.TypeCheckCommand
-import printscript.infrastructure.config.PrintScriptConfigsLoader
+import printscript.infrastructure.tck.PrintScriptConfigsLoader
 
 class PrintScriptCli(
     vararg commands: CliktCommand,

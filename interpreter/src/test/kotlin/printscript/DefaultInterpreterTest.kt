@@ -3,21 +3,35 @@ package printscript
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import printscript.application.factory.InterpreterFactory
+import printscript.application.factory.parser.ParserFactory
 import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
 import printscript.error.UnrecognizedNode
 import printscript.error.UnresolvableExpression
 import printscript.expression.DefaultExpressionSolver
+import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
+import printscript.expression.GroupEvaluator
+import printscript.expression.binaryoperation.BinaryOperationEvaluator
+import printscript.expression.binaryoperation.DefaultTypeConfiguration
+import printscript.expression.call.CallEvaluator
+import printscript.expression.literal.IdentifierEvaluator
+import printscript.expression.literal.NumberLiteralEvaluator
+import printscript.expression.literal.StringLiteralEvaluator
+import printscript.infrastructure.tck.PrintScriptConfigsLoader
 import printscript.node.AstNames
 import printscript.statement.ExpressionStatementExecutor
 import printscript.statement.StatementExecutor
 import printscript.statement.StatementResult
 import printscript.statement.VariableDeclarationExecutor
 import printscript.support.call
+import printscript.support.createInterpreter
 import printscript.support.err
 import printscript.support.identifierNode
 import printscript.support.leaf
+import printscript.support.mockv1Evaluators
+import printscript.support.mockv1Executors
 import printscript.support.node
 import printscript.support.numberNode
 import printscript.support.ok
@@ -27,13 +41,12 @@ import printscript.syntax.SyntaxProgram
 import printscript.util.Result
 
 class DefaultInterpreterTest {
-    private val interpreter = DefaultInterpreterFactory.create()
 
     @Test
     fun `declaration threads the new context into later statements`() {
         val effects =
             ok(
-                interpreter.interpret(
+                createInterpreter("1").interpret(
                     InterpreterContext(),
                     program(
                         declaration("x", numberNode("1")),
@@ -49,7 +62,7 @@ class DefaultInterpreterTest {
     fun `redeclaration in the same scope shadows the previous value`() {
         val effects =
             ok(
-                interpreter.interpret(
+                createInterpreter("1").interpret(
                     InterpreterContext(),
                     program(
                         declaration("x", numberNode("1")),
@@ -66,7 +79,7 @@ class DefaultInterpreterTest {
     fun `effects accumulate in execution order`() {
         val effects =
             ok(
-                interpreter.interpret(
+                createInterpreter("1").interpret(
                     InterpreterContext(),
                     program(
                         expressionStatement(call(numberNode("1"))),
@@ -82,7 +95,7 @@ class DefaultInterpreterTest {
     @Test
     fun `first runtime error aborts execution with Err`() {
         val result =
-            interpreter.interpret(
+            createInterpreter("1").interpret(
                 InterpreterContext(),
                 program(
                     expressionStatement(call(numberNode("1"))),
@@ -95,7 +108,7 @@ class DefaultInterpreterTest {
 
     @Test
     fun `empty program produces no effects`() {
-        val result = interpreter.interpret(InterpreterContext(), SyntaxProgram.empty())
+        val result = createInterpreter("1").interpret(InterpreterContext(), SyntaxProgram.empty())
 
         assertEquals(emptyList<SideEffect>(), ok(result))
     }
@@ -130,12 +143,12 @@ class DefaultInterpreterTest {
     fun `call without evaluator fails with UnresolvableExpression`() {
         val solverWithoutCall =
             DefaultExpressionSolver(
-                DefaultInterpreterFactory.defaultEvaluators().filterNot { AstNames.CALL in it.nodeNames },
+                mockv1Evaluators().filterNot { AstNames.CALL in it.nodeNames },
             )
         val interpreter =
             DefaultInterpreter(
                 solverWithoutCall,
-                DefaultInterpreterFactory.defaultStatementExecutors(),
+                mockv1Executors(),
             )
 
         val result =
@@ -161,7 +174,7 @@ class DefaultInterpreterTest {
     private fun expressionStatement(expression: SyntaxNode): SyntaxNode =
         node("expression-stmt", node("expression", expression))
 
-    private fun solver(): ExpressionSolver = DefaultExpressionSolver(DefaultInterpreterFactory.defaultEvaluators())
+    private fun solver(): ExpressionSolver = DefaultExpressionSolver(mockv1Evaluators())
 
     private object FailingDeclarationExecutor : StatementExecutor {
         override val nodeNames = setOf(AstNames.VARIABLE)

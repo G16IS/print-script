@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import printscript.error.DivisionByZero
 import printscript.error.UndeclaredIdentifier
 import printscript.support.PsSupport
+import printscript.support.createInterpreter
 import printscript.support.ok
 import printscript.util.Result
 
@@ -22,7 +23,7 @@ class InterpreterIntegrationTest {
                 """.trimIndent(),
             )
 
-        val result = DefaultInterpreterFactory.create().interpret(InterpreterContext(), program)
+        val result = createInterpreter("1").interpret(InterpreterContext(), program)
 
         assertEquals(
             listOf(PrintEffect("Hello, World!"), PrintEffect("7")),
@@ -41,7 +42,7 @@ class InterpreterIntegrationTest {
                 println(b);
                 """.trimIndent(),
             )
-        val effects = ok(DefaultInterpreterFactory.create().interpret(InterpreterContext(), program))
+        val effects = ok(createInterpreter("1").interpret(InterpreterContext(), program))
 
         assertEquals(listOf(PrintEffect("1.5"), PrintEffect("2")), effects)
     }
@@ -56,7 +57,7 @@ class InterpreterIntegrationTest {
                 println(a + b);
                 """.trimIndent(),
             )
-        val effects = ok(DefaultInterpreterFactory.create().interpret(InterpreterContext(), program))
+        val effects = ok(createInterpreter("1").interpret(InterpreterContext(), program))
 
         assertEquals(listOf(PrintEffect("holamundo")), effects)
     }
@@ -64,7 +65,7 @@ class InterpreterIntegrationTest {
     @Test
     fun `grouping overrides precedence`() {
         val program = PsSupport.parse("println((1 + 2) * 3);")
-        val effects = ok(DefaultInterpreterFactory.create().interpret(InterpreterContext(), program))
+        val effects = ok(createInterpreter("1").interpret(InterpreterContext(), program))
 
         assertEquals(listOf(PrintEffect("9")), effects)
     }
@@ -73,7 +74,7 @@ class InterpreterIntegrationTest {
     fun `undeclared variable at runtime fails with UndeclaredIdentifier`() {
         val program = PsSupport.parse("println(nope);")
 
-        val result = DefaultInterpreterFactory.create().interpret(InterpreterContext(), program)
+        val result = createInterpreter("1").interpret(InterpreterContext(), program)
 
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is UndeclaredIdentifier)
@@ -83,7 +84,7 @@ class InterpreterIntegrationTest {
     fun `division by zero at runtime fails with DivisionByZero`() {
         val program = PsSupport.parse("println(1 / 0);")
 
-        val result = DefaultInterpreterFactory.create().interpret(InterpreterContext(), program)
+        val result = createInterpreter("1").interpret(InterpreterContext(), program)
 
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is DivisionByZero)

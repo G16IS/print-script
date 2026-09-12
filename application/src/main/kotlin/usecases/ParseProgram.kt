@@ -1,7 +1,7 @@
 package usecases
 
 import printscript.DefaultLexerFactory
-import printscript.DefaultParserFactory
+import printscript.application.factory.parser.ParserFactory
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.error.Error
@@ -14,9 +14,15 @@ internal object ParseProgram {
         langConfig: LanguageConfig,
         grammar: Grammar,
         reader: CodeReader,
+        version: String = "1",
     ): Result<SyntaxProgram, Error> {
         val lexer = DefaultLexerFactory.create(reader, langConfig)
-        val parser = DefaultParserFactory.create(grammar)
+
+        val parser =
+            when (val parserResult = ParserFactory.create(grammar, version)) {
+                is Result.Err -> return parserResult
+                is Result.Ok -> parserResult.value
+            }
 
         var program = SyntaxProgram.empty()
         var error: Error? = null

@@ -1,4 +1,4 @@
-package printscript.infrastructure.config
+package printscript.infrastructure.tck
 
 import java.io.InputStream
 import java.nio.file.Files
