@@ -13,9 +13,9 @@ import printscript.formatter.support.leaf
 import printscript.formatter.support.number
 import printscript.formatter.support.program
 import printscript.formatter.support.wrap
-import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
-import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
-import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.reader.JSONFormatterLanguageConfigReader
+import printscript.reader.JSONFormatterRulesConfigReader
+import printscript.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 

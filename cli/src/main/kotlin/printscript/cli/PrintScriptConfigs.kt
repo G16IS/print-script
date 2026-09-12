@@ -9,13 +9,13 @@ import printscript.domain.LanguageConfig
 import printscript.domain.LinterConfig
 import printscript.domain.TypeSystemConfig
 import printscript.formatter.Formatter
-import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
-import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
-import printscript.infrastructure.reader.JSONGrammarConfigReader
-import printscript.infrastructure.reader.JSONLanguageConfigReader
-import printscript.infrastructure.reader.JSONLinterConfigReader
-import printscript.infrastructure.reader.JSONTypeSystemConfigReader
-import printscript.infrastructure.reader.YAMLFormatterRulesConfigReader
+import printscript.reader.JSONFormatterLanguageConfigReader
+import printscript.reader.JSONFormatterRulesConfigReader
+import printscript.reader.JSONGrammarConfigReader
+import printscript.reader.JSONLanguageConfigReader
+import printscript.reader.JSONLinterConfigReader
+import printscript.reader.JSONTypeSystemConfigReader
+import printscript.reader.YAMLFormatterRulesConfigReader
 import printscript.util.fold
 import usecases.LoadFormatter
 

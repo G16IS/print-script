@@ -20,7 +20,7 @@ import printscript.formatter.support.star
 import printscript.formatter.support.term
 import printscript.formatter.support.token
 import printscript.formatter.support.wrap
-import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 

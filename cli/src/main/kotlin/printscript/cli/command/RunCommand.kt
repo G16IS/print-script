@@ -6,7 +6,7 @@ import printscript.cli.presentRun
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
-import printscript.infrastructure.reader.FileCodeReader
+import printscript.reader.FileCodeReader
 import usecases.ExecuteCode
 
 class RunCommand(

@@ -6,7 +6,7 @@ import printscript.cli.presentFormat
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.formatter.Formatter
-import printscript.infrastructure.reader.FileCodeReader
+import printscript.reader.FileCodeReader
 import usecases.FormatCode
 
 class FormatCommand(
