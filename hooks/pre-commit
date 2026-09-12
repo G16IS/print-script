@@ -23,7 +23,15 @@ echo ""
 echo "pre-commit: formateando y validando (ktlint, detekt, tests, build)"
 
 #######################################
-# 1) FORMAT (auto, sin frenar el commit)
+# 1) BUILD (compila todos los módulos)
+#######################################
+echo "🖥️   BUILD"
+echo " (./gradlew assemble)  → Build completo..."
+./gradlew assemble --quiet
+echo "   ✅  Build OK"
+
+#######################################
+# 2) FORMAT (auto, sin frenar el commit)
 #######################################
 echo "🖥️   FORMAT"
 echo " (./gradlew ktlintFormat)  → Formateando..."
@@ -44,7 +52,7 @@ fi
 echo "   ✅  Format aplicado"
 
 #######################################
-# 2) KTLINT CHECK
+# 3) KTLINT CHECK
 #######################################
 echo "🖥️   LINT"
 echo " (./gradlew ktlintCheck)  → Format check (ktlint)..."
@@ -54,14 +62,6 @@ echo "   ✅  ktlint OK"
 echo " (./gradlew detekt)  → Static analysis (detekt)..."
 ./gradlew detekt --quiet
 echo "   ✅  detekt OK"
-
-#######################################
-# 4) BUILD (compila todos los módulos)
-#######################################
-echo "🖥️   BUILD"
-echo " (./gradlew assemble)  → Build completo..."
-./gradlew assemble --quiet
-echo "   ✅  Build OK"
 
 echo ""
 echo "🎉  All checks passed!"

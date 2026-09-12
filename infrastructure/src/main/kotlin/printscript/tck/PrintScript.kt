@@ -1,4 +1,4 @@
-package printscript.infrastructure.tck
+package printscript.tck
 
 import printscript.ErrorHandler
 import printscript.InputChannel
