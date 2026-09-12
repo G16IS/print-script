@@ -1,18 +1,19 @@
 package printscript.io
 
+import printscript.ReadInputEffect
 import printscript.SideEffect
 
 class ConsoleReaderHandler : SideEffectHandler {
-    override fun applies(effect: SideEffect): Boolean {
-        return false // effect is ReadEffect
-    }
+    override fun applies(effect: SideEffect): Boolean = effect is ReadInputEffect
 
     override fun handle(effect: SideEffect): String? {
-        throw NotImplementedError("ConsoleReaderHandler is not implemented yet")
-//        assert(effect is ReadEffect) { "Error: Expected ReadEffect" }
-//        val effect = effect as ReadEffect
+        assert(effect is ReadInputEffect) {
+            "Error: Expected ReadInputEffect"
+        }
 
-//        print(effect.prompt)
-//        return readLine()
+        val effect = effect as ReadInputEffect
+
+        print(effect.prompt)
+        return readlnOrNull()
     }
 }
