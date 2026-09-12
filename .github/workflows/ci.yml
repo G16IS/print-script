@@ -7,7 +7,9 @@
 #   Gradle Wrapper              checksum del wrapper
 #   Format (ktlint)             ktlintCheck — estilo, no reescribe
 #   Lint (detekt)               análisis estático
-#   Build + tests + coverage    assemble (JARs), test, y coverage por módulo (80% mínimo)
+#   Build + tests               assemble (JARs) y después test
+#   Coverage                    job aparte: recompila + test + coverage por módulo (80% mínimo)
+#                               separado de "Build + tests" para que un fallo no tape al otro
 
 name: CI
 
@@ -114,23 +116,6 @@ jobs:
               if: ${{ !cancelled() && steps.build.outcome == 'success' }}
               run: ./gradlew test --continue
 
-            # coverageReport (informativo, siempre imprime la tabla) +
-            # verifyAllCoverage (falla si algún módulo < 80%). --continue asegura
-            # que el reporte se imprima igual aunque verify falle.
-            - name: Coverage report + threshold (80% por módulo)
-              id: coverage
-              if: ${{ !cancelled() && steps.test.outcome == 'success' }}
-              run: ./gradlew coverageReport verifyAllCoverage --continue
-
-            - name: Upload coverage reports
-              if: ${{ failure() && steps.coverage.outcome == 'failure' }}
-              uses: actions/upload-artifact@v4
-              with:
-                  name: coverage-reports
-                  path: "**/build/reports/kover/"
-                  if-no-files-found: ignore
-                  retention-days: 7
-
             - name: Upload test reports
               if: ${{ failure() && steps.test.outcome == 'failure' }}
               uses: actions/upload-artifact@v4
@@ -139,5 +124,40 @@ jobs:
                   path: |
                       **/build/reports/tests/
                       **/build/test-results/
+                  if-no-files-found: ignore
+                  retention-days: 7
+    
+    coverage:
+        name: Coverage (80% por módulo)
+        runs-on: ubuntu-latest
+        timeout-minutes: 25
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up JDK 21
+              uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: "21"
+
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v4
+
+            - name: Grant execute permission for gradlew
+              run: chmod +x gradlew
+
+            # coverageReport (informativo, siempre imprime la tabla) +
+            # verifyAllCoverage (falla si algún módulo < 80%).
+            - name: Coverage report + threshold
+              id: coverage
+              run: ./gradlew coverageReport verifyAllCoverage --continue
+
+            - name: Upload coverage reports
+              if: ${{ failure() && steps.coverage.outcome == 'failure' }}
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-reports
+                  path: "**/build/reports/kover/"
                   if-no-files-found: ignore
                   retention-days: 7
