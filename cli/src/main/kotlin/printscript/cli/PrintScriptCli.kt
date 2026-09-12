@@ -48,6 +48,15 @@ class PrintScriptCli(
             )
         }
 
+        fun create(configs: PrintScriptConfigs): PrintScriptCli =
+            PrintScriptCli(
+                RunCommand(configs.lang, configs.grammar, configs.typeSystem),
+                LintCommand(configs.lang, configs.grammar, configs.linterConfig),
+                CheckCommand(configs.lang, configs.grammar, configs.formatter),
+                FormatCommand(configs.lang, configs.grammar, configs.formatter),
+                TypeCheckCommand(configs.lang, configs.grammar, configs.typeSystem),
+            )
+
         private const val DEFAULT_VERSION = "1.0"
     }
 }

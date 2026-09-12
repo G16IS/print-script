@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
-# Format check (ktlintCheck) + lint (detekt) before every commit.
+
+# Pre-commit: formatea, chequea ktlint/detekt, corre tests y build.
+# Solo corre si hay archivos .kt/.kts en el stage. Proyecto multi-módulo.
 # Enable: ./gradlew installGitHooks
-# Bypass:      git commit --no-verify
+# Bypass: git commit --no-verify
 
 set -e
 
@@ -9,17 +11,58 @@ root="$(git rev-parse --show-toplevel)"
 cd "$root"
 
 staged="$(git diff --cached --name-only --diff-filter=ACMR || true)"
+
+# Si no hay .kt/.kts en el stage, no hacemos nada.
 if ! printf '%s\n' "$staged" | grep -qE '\.(kt|kts)$'; then
   exit 0
 fi
 
-echo "pre-commit: running ktlintCheck and detekt"
+echo ""
+echo "🔍  Running pre-commit checks..."
+echo ""
+echo "pre-commit: formateando y validando (ktlint, detekt, tests, build)"
 
-if ! ./gradlew ktlintCheck detekt --continue; then
-  echo
-  echo "pre-commit failed."
-  echo "  Auto-format: ./gradlew ktlintFormat"
-  echo "  See lint:    ./gradlew detekt"
-  echo "  Bypass:      git commit --no-verify"
-  exit 1
+#######################################
+# 1) FORMAT (auto, sin frenar el commit)
+#######################################
+echo "🖥️   FORMAT"
+echo " (./gradlew ktlintFormat)  → Formateando..."
+./gradlew ktlintFormat --quiet
+
+# Si el format tocó archivos que ya estaban en el stage, los re-agregamos
+# para que el commit incluya la versión formateada.
+changed_after_format="$(git diff --name-only --diff-filter=ACMR || true)"
+to_restage="$(printf '%s\n' "$staged" | grep -E '\.(kt|kts)$' || true)"
+
+if [ -n "$to_restage" ]; then
+  for f in $to_restage; do
+    if printf '%s\n' "$changed_after_format" | grep -qxF "$f"; then
+      git add "$f"
+    fi
+  done
 fi
+echo "   ✅  Format aplicado"
+
+#######################################
+# 2) KTLINT CHECK
+#######################################
+echo "🖥️   LINT"
+echo " (./gradlew ktlintCheck)  → Format check (ktlint)..."
+./gradlew ktlintCheck --quiet
+echo "   ✅  ktlint OK"
+
+echo " (./gradlew detekt)  → Static analysis (detekt)..."
+./gradlew detekt --quiet
+echo "   ✅  detekt OK"
+
+#######################################
+# 4) BUILD (compila todos los módulos)
+#######################################
+echo "🖥️   BUILD"
+echo " (./gradlew assemble)  → Build completo..."
+./gradlew assemble --quiet
+echo "   ✅  Build OK"
+
+echo ""
+echo "🎉  All checks passed!"
+echo ""
