@@ -6,6 +6,7 @@ import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
+import printscript.application.config.PrintScriptConfigs
 import printscript.cli.command.CheckCommand
 import printscript.cli.command.FormatCommand
 import printscript.cli.command.LintCommand
