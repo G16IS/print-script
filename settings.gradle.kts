@@ -30,7 +30,6 @@ include("interpreter")
 include("linter")
 include("formatter")
 include("cli")
-include("presentation")
 
 // Gradle treats every token after the task name as another task, so
 // `./gradlew ps-run examples/hello.ps` would look for a task called

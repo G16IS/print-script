@@ -3,7 +3,6 @@ package printscript.formatter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.ast.Location
 import printscript.domain.AtomRule
 import printscript.domain.Grammar
 import printscript.domain.RuleRefStep
@@ -15,6 +14,7 @@ import printscript.formatter.rules.TokenSpaceRule
 import printscript.formatter.support.leaf
 import printscript.formatter.support.program
 import printscript.formatter.support.wrap
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 

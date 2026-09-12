@@ -4,7 +4,6 @@ import java.util.Optional
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.ast.Location
 import printscript.domain.TokenLexemes
 import printscript.error.FormatError
 import printscript.error.MissingLexeme
@@ -21,6 +20,7 @@ import printscript.formatter.support.term
 import printscript.formatter.support.token
 import printscript.formatter.support.wrap
 import printscript.reader.JSONGrammarConfigReader
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 

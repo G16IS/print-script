@@ -1,6 +1,6 @@
 package printscript.typechecker
 
-import printscript.ast.Location
+import printscript.syntax.Location
 
 data class TypeError(
     val message: String,

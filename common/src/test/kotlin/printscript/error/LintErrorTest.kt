@@ -3,8 +3,8 @@ package printscript.error
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import printscript.ast.Location
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 import printscript.util.Report
 
 class LintErrorTest {

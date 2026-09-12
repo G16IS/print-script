@@ -1,4 +1,4 @@
-package printscript.ast
+package printscript.syntax
 
 import printscript.reader.CharPosition
 

@@ -1,8 +1,8 @@
 package printscript.cli
 
-import printscript.PrintEffect
 import printscript.SideEffect
 import printscript.error.Error
+import printscript.io.SideEffectManager
 import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
@@ -12,13 +12,9 @@ internal fun presentRun(block: () -> Result<List<SideEffect>, ExecutionFailure>)
     catching {
         block().fold(
             onOk = { effects ->
-                CommandResult.Output(
-                    effects.joinToString("") { effect ->
-                        when (effect) {
-                            is PrintEffect -> effect.text + "\n"
-                        }
-                    },
-                )
+                effects.forEach { effect -> SideEffectManager().handle(effect) }
+
+                return@fold CommandResult.Ok
             },
             onErr = { failure ->
                 when (failure) {

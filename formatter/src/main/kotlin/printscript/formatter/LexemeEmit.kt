@@ -1,9 +1,9 @@
 package printscript.formatter
 
-import printscript.ast.Location
 import printscript.error.FormatError
 import printscript.error.MissingLexeme
 import printscript.error.WhitespaceMismatch
+import printscript.syntax.Location
 import printscript.util.Result
 
 internal fun emitLexemePiece(

@@ -1,7 +1,7 @@
 package printscript.formatter
 
-import printscript.ast.Location
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 
 internal object SourceGaps {
     fun position(

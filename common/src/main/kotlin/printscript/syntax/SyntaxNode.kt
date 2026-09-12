@@ -1,6 +1,5 @@
 package printscript.syntax
 
-import printscript.ast.Location
 import printscript.domain.Token
 
 /**

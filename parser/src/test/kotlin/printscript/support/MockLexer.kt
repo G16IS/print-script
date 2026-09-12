@@ -2,9 +2,9 @@ package printscript.support
 
 import java.util.Optional
 import printscript.Lexer
-import printscript.ast.Location
 import printscript.domain.Token
 import printscript.error.LexerError
+import printscript.syntax.Location
 import printscript.util.Result
 
 class MockLexer(
