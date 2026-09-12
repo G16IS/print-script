@@ -7,7 +7,7 @@ import printscript.cli.presentReport
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.LinterConfig
-import printscript.infrastructure.reader.FileCodeReader
+import printscript.reader.FileCodeReader
 import usecases.LintProgram
 
 class LintCommand(

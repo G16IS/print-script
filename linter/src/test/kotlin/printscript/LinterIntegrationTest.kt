@@ -10,7 +10,7 @@ import printscript.domain.RuleConfig
 import printscript.error.InvalidIdentifierFormat
 import printscript.error.InvalidPrintlnArgument
 import printscript.factory.DefaultLinterFactory
-import printscript.infrastructure.reader.JSONLinterConfigReader
+import printscript.reader.JSONLinterConfigReader
 import printscript.support.LinterPsSupport
 
 class LinterIntegrationTest {

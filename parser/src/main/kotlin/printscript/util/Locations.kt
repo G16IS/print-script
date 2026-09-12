@@ -1,6 +1,6 @@
 package printscript.util
 
-import printscript.ast.Location
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 
 object Locations {

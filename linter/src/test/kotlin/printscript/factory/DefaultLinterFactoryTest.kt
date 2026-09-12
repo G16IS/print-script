@@ -6,11 +6,11 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import printscript.ast.Location
 import printscript.domain.LinterConfig
 import printscript.domain.RuleConfig
 import printscript.domain.Token
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
 

@@ -1,6 +1,5 @@
 package printscript.cli
 
-import printscript.ast.Location
 import printscript.error.Error
 import printscript.error.FormatError
 import printscript.error.LexerError
@@ -8,6 +7,7 @@ import printscript.error.LintError
 import printscript.error.ParserError
 import printscript.error.RuntimeError
 import printscript.error.TypeError
+import printscript.syntax.Location
 
 internal fun formatLocated(
     message: String,

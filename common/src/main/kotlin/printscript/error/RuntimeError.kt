@@ -1,7 +1,7 @@
 package printscript.error
 
-import printscript.ast.Location
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 
 sealed interface RuntimeError : Error {
     val message: String

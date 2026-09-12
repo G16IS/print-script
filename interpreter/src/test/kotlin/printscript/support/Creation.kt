@@ -15,18 +15,20 @@ import printscript.statement.StatementExecutor
 import printscript.statement.VariableDeclarationExecutor
 import printscript.util.Result
 
-fun mockv1Evaluators(): List<ExpressionEvaluator> = listOf(
-    NumberLiteralEvaluator,
-    StringLiteralEvaluator,
-    IdentifierEvaluator,
-    GroupEvaluator,
-    BinaryOperationEvaluator(DefaultTypeConfiguration),
-    CallEvaluator(),
-)
+fun mockv1Evaluators(): List<ExpressionEvaluator> =
+    listOf(
+        NumberLiteralEvaluator,
+        StringLiteralEvaluator,
+        IdentifierEvaluator,
+        GroupEvaluator,
+        BinaryOperationEvaluator(DefaultTypeConfiguration),
+        CallEvaluator(),
+    )
 
-fun mockv1Executors(): List<StatementExecutor> = listOf(
-    VariableDeclarationExecutor,
-    ExpressionStatementExecutor,
-)
+fun mockv1Executors(): List<StatementExecutor> =
+    listOf(
+        VariableDeclarationExecutor,
+        ExpressionStatementExecutor,
+    )
 
 fun createInterpreter(version: String): Interpreter = (InterpreterFactory.create(version) as Result.Ok).value

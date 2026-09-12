@@ -1,7 +1,7 @@
 package printscript.util
 
-import printscript.ast.Location
 import printscript.domain.Token
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 
 fun tokenLeaf(token: Token): SyntaxNode = SyntaxNode(name = token.type, token = token, location = token.location)

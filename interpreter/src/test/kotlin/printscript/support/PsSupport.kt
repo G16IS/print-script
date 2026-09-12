@@ -3,7 +3,6 @@ package printscript.support
 import java.io.File
 import java.rmi.UnexpectedException
 import printscript.DefaultLexerFactory
-import printscript.DefaultParserFactory
 import printscript.Lexer
 import printscript.application.factory.parser.ParserFactory
 import printscript.domain.ExactRule
@@ -12,8 +11,8 @@ import printscript.domain.LanguageConfig
 import printscript.domain.RegexRule
 import printscript.domain.Token
 import printscript.domain.TokenRule
-import printscript.infrastructure.reader.FileCodeReader
-import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.reader.FileCodeReader
+import printscript.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxProgram
 import printscript.util.Result
 

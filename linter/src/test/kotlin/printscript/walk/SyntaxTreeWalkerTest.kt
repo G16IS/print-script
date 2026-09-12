@@ -2,7 +2,7 @@ package printscript.walk
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import printscript.ast.Location
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 
 class SyntaxTreeWalkerTest {

@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test
 import printscript.PrintEffect
 import printscript.domain.Grammar
 import printscript.domain.TypeSystemConfig
-import printscript.infrastructure.reader.FileCodeReader
-import printscript.infrastructure.reader.JSONGrammarConfigReader
-import printscript.infrastructure.reader.JSONTypeSystemConfigReader
+import printscript.reader.FileCodeReader
+import printscript.reader.JSONGrammarConfigReader
+import printscript.reader.JSONTypeSystemConfigReader
 import printscript.util.Result
 import usecases.ExecuteCode
 import usecases.ExecutionFailure

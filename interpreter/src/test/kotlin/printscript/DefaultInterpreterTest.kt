@@ -3,23 +3,12 @@ package printscript
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.application.factory.InterpreterFactory
-import printscript.application.factory.parser.ParserFactory
 import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
 import printscript.error.UnrecognizedNode
 import printscript.error.UnresolvableExpression
 import printscript.expression.DefaultExpressionSolver
-import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
-import printscript.expression.GroupEvaluator
-import printscript.expression.binaryoperation.BinaryOperationEvaluator
-import printscript.expression.binaryoperation.DefaultTypeConfiguration
-import printscript.expression.call.CallEvaluator
-import printscript.expression.literal.IdentifierEvaluator
-import printscript.expression.literal.NumberLiteralEvaluator
-import printscript.expression.literal.StringLiteralEvaluator
-import printscript.infrastructure.tck.PrintScriptConfigsLoader
 import printscript.node.AstNames
 import printscript.statement.ExpressionStatementExecutor
 import printscript.statement.StatementExecutor
@@ -41,7 +30,6 @@ import printscript.syntax.SyntaxProgram
 import printscript.util.Result
 
 class DefaultInterpreterTest {
-
     @Test
     fun `declaration threads the new context into later statements`() {
         val effects =

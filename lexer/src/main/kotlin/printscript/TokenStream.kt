@@ -1,7 +1,6 @@
 package printscript
 
 import java.util.Optional
-import printscript.ast.Location
 import printscript.domain.Token
 import printscript.error.LexerError
 import printscript.error.UnexpectedEnfOfLine
@@ -11,6 +10,7 @@ import printscript.evaluator.MatchType
 import printscript.evaluator.RuleEvaluator
 import printscript.reader.CharPosition
 import printscript.reader.CodeReader
+import printscript.syntax.Location
 import printscript.util.Result
 
 class TokenStream(

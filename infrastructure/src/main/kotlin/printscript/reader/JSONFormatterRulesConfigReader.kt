@@ -1,0 +1,24 @@
+package printscript.reader
+
+import java.io.InputStream
+import java.nio.file.Path
+import kotlin.io.path.readText
+import kotlinx.serialization.json.Json
+import printscript.domain.FormatterRulesConfig
+import printscript.serializer.config.FormatterRulesConfigSerializer
+
+/**
+ * Carga JSON de rules de usuario (`type` + `enabled` / `count`).
+ */
+object JSONFormatterRulesConfigReader : FormatterRulesConfigReader {
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+        }
+
+    override fun read(path: Path): FormatterRulesConfig = read(path.readText())
+
+    override fun read(input: InputStream): FormatterRulesConfig = read(input.bufferedReader().use { it.readText() })
+
+    override fun read(text: String): FormatterRulesConfig = json.decodeFromString(FormatterRulesConfigSerializer, text)
+}

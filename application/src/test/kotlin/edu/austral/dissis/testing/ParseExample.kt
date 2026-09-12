@@ -6,9 +6,9 @@ import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.error.Error
-import printscript.infrastructure.reader.FileCodeReader
-import printscript.infrastructure.reader.JSONGrammarConfigReader
-import printscript.infrastructure.reader.JSONTypeSystemConfigReader
+import printscript.reader.FileCodeReader
+import printscript.reader.JSONGrammarConfigReader
+import printscript.reader.JSONTypeSystemConfigReader
 import printscript.syntax.SyntaxProgram
 import printscript.util.Report
 import usecases.TypecheckCode.typecheck

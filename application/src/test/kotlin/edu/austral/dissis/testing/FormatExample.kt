@@ -8,10 +8,10 @@ import printscript.domain.FormatterRulesConfig
 import printscript.domain.Grammar
 import printscript.error.Error
 import printscript.formatter.Formatter
-import printscript.infrastructure.reader.FileCodeReader
-import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
-import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
-import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.reader.FileCodeReader
+import printscript.reader.JSONFormatterLanguageConfigReader
+import printscript.reader.JSONFormatterRulesConfigReader
+import printscript.reader.JSONGrammarConfigReader
 import printscript.util.Report
 import printscript.util.Result
 import usecases.CheckFormat
@@ -22,13 +22,19 @@ object FormatExample {
     private val language = PrintScriptLanguage.config()
 
     private val grammar: Grammar =
-        JSONGrammarConfigReader.read(stream("grammar.config.v1.json"))
+        JSONGrammarConfigReader
+            .read(stream("grammar.config.v1.json"))
 
     private val formatter: Formatter = loadFormatter()
 
     fun format(example: String): Result<String, Error> {
         val path = file("examples/$example")
-        return FormatCode.formatCode(language, grammar, FileCodeReader(path), formatter)
+        return FormatCode.formatCode(
+            language,
+            grammar,
+            FileCodeReader(path),
+            formatter,
+        )
     }
 
     fun check(example: String): Report<Unit, Error> {

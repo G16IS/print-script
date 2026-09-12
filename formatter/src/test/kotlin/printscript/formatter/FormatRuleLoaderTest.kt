@@ -12,9 +12,9 @@ import printscript.error.UnknownRuleType
 import printscript.formatter.config.FormatRuleLoader
 import printscript.formatter.factories.FormatRuleFactories
 import printscript.formatter.support.spaceAroundOperator
-import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
-import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
-import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.reader.JSONFormatterLanguageConfigReader
+import printscript.reader.JSONFormatterRulesConfigReader
+import printscript.reader.JSONGrammarConfigReader
 import printscript.util.Result
 
 class FormatRuleLoaderTest {
