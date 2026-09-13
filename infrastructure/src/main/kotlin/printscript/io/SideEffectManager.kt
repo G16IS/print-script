@@ -8,7 +8,7 @@ class SideEffectManager(
     constructor() : this(
         listOf(
             ConsoleWriterHandler(),
-            //        ConsoleReaderHandler(),
+            ConsoleReaderHandler(),
         ),
     )
 

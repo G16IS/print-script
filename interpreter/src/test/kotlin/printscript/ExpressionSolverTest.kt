@@ -14,10 +14,10 @@ import printscript.expression.DefaultExpressionSolver
 import printscript.support.TEST_LOCATION
 import printscript.support.binary
 import printscript.support.call
+import printscript.support.defaultEvaluators
 import printscript.support.err
 import printscript.support.identifierNode
 import printscript.support.leaf
-import printscript.support.mockv1Evaluators
 import printscript.support.node
 import printscript.support.numberNode
 import printscript.support.ok
@@ -25,7 +25,7 @@ import printscript.support.stringNode
 import printscript.syntax.SyntaxNode
 
 class ExpressionSolverTest {
-    private val solver = DefaultExpressionSolver(mockv1Evaluators())
+    private val solver = DefaultExpressionSolver(defaultEvaluators())
 
     @Test
     fun `number literal evaluates to NumberValue`() {

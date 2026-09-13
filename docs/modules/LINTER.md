@@ -13,7 +13,7 @@ Análisis **estático de estilo y convenciones** sobre el árbol sintáctico (`S
 - Nueva regla de linting
 - Cambiar cómo se recorre el árbol o cómo se acumulan errores de lint
 - Extender formatos de nombres o tipos de `LintError`
-- **No** para prender/apagar una regla ya existente: eso es `linter.config.v1.json`
+- **No** para prender/apagar una regla ya existente: eso es `linter.config.v1.0.json`
 - **No** para reglas de trivia/whitespace (espacios alrededor de `:`, `=`): eso es el formatter, ya que `SyntaxNode` no conserva espacios inter-tokens
 
 ---
@@ -155,7 +155,7 @@ data class RuleConfig(
 )
 ```
 
-### `linter.config.v1.json` (`infrastructure`)
+### `linter.config.v1.0.json` (`infrastructure`)
 
 ```json
 {

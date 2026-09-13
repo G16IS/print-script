@@ -10,17 +10,17 @@ import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.reader.JSONTypeSystemConfigReader
 import printscript.syntax.SyntaxProgram
+import printscript.usecases.TypecheckCode.typecheck
 import printscript.util.Report
-import usecases.TypecheckCode.typecheck
 
 object ParseExample {
     private val language: LanguageConfig = PrintScriptLanguage.config()
 
     private val grammar: Grammar =
-        JSONGrammarConfigReader.read(stream("grammar.config.v1.json"))
+        JSONGrammarConfigReader.read(stream("grammar.config.v1.0.json"))
 
     private val typeSystem: TypeSystemConfig =
-        JSONTypeSystemConfigReader.read(stream("type-system.config.v1.json"))
+        JSONTypeSystemConfigReader.read(stream("type-system.config.v1.0.json"))
 
     fun parse(example: String): Report<SyntaxProgram, Error> =
         typecheck(

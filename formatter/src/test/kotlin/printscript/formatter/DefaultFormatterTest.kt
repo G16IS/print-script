@@ -27,8 +27,8 @@ import printscript.util.Result
 class DefaultFormatterTest {
     private val grammar =
         JSONGrammarConfigReader.read(
-            checkNotNull(javaClass.getResourceAsStream("/grammar.config.v1.json")) {
-                "Missing grammar.config.v1.json"
+            checkNotNull(javaClass.getResourceAsStream("/grammar.config.v1.0.json")) {
+                "Missing grammar.config.v1.0.json"
             },
         )
     private val lexemes =

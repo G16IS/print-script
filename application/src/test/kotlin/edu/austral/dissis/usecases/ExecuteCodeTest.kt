@@ -12,15 +12,15 @@ import printscript.domain.TypeSystemConfig
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.reader.JSONTypeSystemConfigReader
+import printscript.usecases.ExecuteCode
+import printscript.usecases.ExecutionFailure
 import printscript.util.Result
-import usecases.ExecuteCode
-import usecases.ExecutionFailure
 
 class ExecuteCodeTest {
     private val language = PrintScriptLanguage.config()
-    private val grammar: Grammar = JSONGrammarConfigReader.read(stream("grammar.config.v1.json"))
+    private val grammar: Grammar = JSONGrammarConfigReader.read(stream("grammar.config.v1.0.json"))
     private val typeSystem: TypeSystemConfig =
-        JSONTypeSystemConfigReader.read(stream("type-system.config.v1.json"))
+        JSONTypeSystemConfigReader.read(stream("type-system.config.v1.0.json"))
 
     @Test
     fun `declarations and prints emit printable side effects`() {
@@ -47,6 +47,24 @@ class ExecuteCodeTest {
 
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is ExecutionFailure.Types)
+    }
+
+    @Test
+    fun `execute with v11 kit still runs v1 programs`() {
+        val kit =
+            printscript.edition.LanguageCatalog
+                .of("1.1")
+                .let { (it as Result.Ok).value }
+        val result =
+            ExecuteCode.execute(
+                language,
+                grammar,
+                typeSystem,
+                FileCodeReader(file("examples/binary_expression.ps")),
+                kit,
+            )
+        assertTrue(result is Result.Ok)
+        assertEquals(listOf("7"), (result as Result.Ok).value.map { (it as PrintEffect).text })
     }
 
     private fun execute(example: String) =

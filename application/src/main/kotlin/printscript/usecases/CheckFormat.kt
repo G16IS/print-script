@@ -1,4 +1,4 @@
-package usecases
+package printscript.usecases
 
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig

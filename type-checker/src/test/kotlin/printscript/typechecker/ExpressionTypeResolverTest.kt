@@ -5,7 +5,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
-import printscript.application.factory.typechecker.V1KindHandlerFactory
 import printscript.domain.NodeConfig
 import printscript.domain.Token
 import printscript.domain.TypeSystemConfig
@@ -16,7 +15,7 @@ import printscript.util.Result
 
 class ExpressionTypeResolverTest {
     private val location = Location(CharPosition(2, 5), CharPosition(2, 8))
-    private val resolver = DefaultExpressionTypeResolver(V1KindHandlerFactory())
+    private val resolver = DefaultExpressionTypeResolver(DefaultKindHandlerFactory())
     private val config =
         TypeSystemConfig(
             types = listOf("number", "string"),

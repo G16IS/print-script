@@ -3,10 +3,10 @@ package printscript.cli
 import printscript.SideEffect
 import printscript.error.Error
 import printscript.io.SideEffectManager
+import printscript.usecases.ExecutionFailure
 import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
-import usecases.ExecutionFailure
 
 internal fun presentRun(block: () -> Result<List<SideEffect>, ExecutionFailure>): CommandResult =
     catching {

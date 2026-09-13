@@ -4,7 +4,7 @@ Dos archivos, dos formas. Mismo patrón que language/grammar/type-system: interf
 
 | Archivo | Quién lo escribe | Dominio | Reader |
 |---|---|---|---|
-| `formatter-language.v1.json` | el lenguaje (resource interno) | `FormatterLanguageConfig` | `JSONFormatterLanguageConfigReader` |
+| `formatter-language.v1.0.json` | el lenguaje (resource interno) | `FormatterLanguageConfig` | `JSONFormatterLanguageConfigReader` |
 | `formatter-user-defaults.json` | el lenguaje (resource interno) | `FormatterRulesConfig` | `JSONFormatterRulesConfigReader` |
 | `.printscript/formatter.yml` | el usuario | `FormatterRulesConfig` | `YAMLFormatterRulesConfigReader` |
 
@@ -17,13 +17,13 @@ val user = YAMLFormatterRulesConfigReader.read(userYamlPath)
 val formatter = DefaultFormatterFactory.createFromConfig(language, user, defaults, grammar, lexemes)
 ```
 
-Resources reales: `../../infrastructure/src/main/resources/formatter-language.v1.json` y `formatter-user-defaults.json`.
+Resources reales: `../../infrastructure/src/main/resources/formatter-language.v1.0.json` y `formatter-user-defaults.json`.
 
 Merge de usuario: YAML pisa defaults JSON por `type`; si no está en ninguno, vale el `default` del binding.
 
 ---
 
-## Lenguaje — `formatter-language.v1.json`
+## Lenguaje — `formatter-language.v1.0.json`
 
 ```json
 {

@@ -1,7 +1,7 @@
 package printscript.parse
 
 object RuleHandlers {
-    fun v1(): List<RuleHandler> =
+    fun defaults(): List<RuleHandler> =
         listOf(
             AtomRuleHandler(),
             SeqRuleHandler(),

@@ -1,7 +1,5 @@
-package printscript.application.factory.typechecker
+package printscript.typechecker
 
-import printscript.typechecker.ExpressionKindHandlerFactory
-import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.handlers.BinaryOrPrimaryHandler
 import printscript.typechecker.handlers.CallHandler
 import printscript.typechecker.handlers.ExpressionKindHandler
@@ -10,7 +8,7 @@ import printscript.typechecker.handlers.IdentifierHandler
 import printscript.typechecker.handlers.LiteralHandler
 import printscript.typechecker.handlers.PrimaryHandler
 
-class V1KindHandlerFactory : ExpressionKindHandlerFactory {
+class DefaultKindHandlerFactory : ExpressionKindHandlerFactory {
     override fun create(expressionTypeResolver: ExpressionTypeResolver): List<ExpressionKindHandler> =
         listOf(
             LiteralHandler(),

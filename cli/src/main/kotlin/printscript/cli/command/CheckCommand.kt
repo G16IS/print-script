@@ -10,7 +10,7 @@ import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.formatter.Formatter
 import printscript.reader.FileCodeReader
-import usecases.CheckFormat
+import printscript.usecases.CheckFormat
 
 class CheckCommand(
     private val lang: LanguageConfig,

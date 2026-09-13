@@ -3,23 +3,25 @@ package printscript.support
 import java.io.File
 import java.rmi.UnexpectedException
 import printscript.DefaultLexerFactory
+import printscript.DefaultParserFactory
 import printscript.Lexer
-import printscript.application.factory.parser.ParserFactory
 import printscript.domain.ExactRule
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.RegexRule
 import printscript.domain.Token
 import printscript.domain.TokenRule
+import printscript.edition.LanguageCatalog
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxProgram
 import printscript.util.Result
+import printscript.util.map
 
 /**
- * Parses PrintScript source with the real lexer/parser + grammar.config.v1.json.
+ * Parses PrintScript source with the real lexer/parser + grammar.config.v1.0.json.
  *
- * Same rules and `order` as language.config.v1.json. The lexer tries categories
+ * Same rules and `order` as language.config.v1.0.json. The lexer tries categories
  * from first to last, so keywords beat identifiers.
  */
 object LinterPsSupport {
@@ -27,12 +29,22 @@ object LinterPsSupport {
         val file = File.createTempFile("printscript-linter-test", ".ps").apply { writeText(code) }
         val codeReader = FileCodeReader(file.absolutePath)
         val lexer = DefaultLexerFactory.create(codeReader, language())
-        val parser = (ParserFactory.create(grammar(), "1") as Result.Ok).value
+        val parser =
+            (
+                (
+                    LanguageCatalog.of("1.0").map { kit ->
+                        DefaultParserFactory.create(grammar(), kit.parserHandlers)
+                    }
+                ) as Result.Ok
+            ).value
 
         var program = SyntaxProgram.empty()
         while (peekNextToken(lexer).type != "EOF") {
-            val parseResult = parser.parseNextStatement(lexer, program)
-            when (parseResult) {
+            when (
+                val parseResult =
+                    parser
+                        .parseNextStatement(lexer, program)
+            ) {
                 is Result.Err -> throw UnexpectedException(parseResult.error.message)
                 is Result.Ok -> program = parseResult.value
             }
@@ -62,8 +74,8 @@ object LinterPsSupport {
 
     private fun grammar(): Grammar {
         val stream =
-            requireNotNull(LinterPsSupport::class.java.getResourceAsStream("/grammar.config.v1.json")) {
-                "Missing resource grammar.config.v1.json"
+            requireNotNull(LinterPsSupport::class.java.getResourceAsStream("/grammar.config.v1.0.json")) {
+                "Missing resource grammar.config.v1.0.json"
             }
         return JSONGrammarConfigReader.read(stream)
     }

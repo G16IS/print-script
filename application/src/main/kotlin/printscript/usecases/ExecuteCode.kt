@@ -1,5 +1,6 @@
-package usecases
+package printscript.usecases
 
+import printscript.DefaultInterpreterFactory
 import printscript.ErrorHandler
 import printscript.InputChannel
 import printscript.Interpreter
@@ -7,11 +8,12 @@ import printscript.InterpreterContext
 import printscript.PrintChannel
 import printscript.PrintEffect
 import printscript.SideEffect
-import printscript.application.config.PrintScriptConfigs
-import printscript.application.factory.InterpreterFactory
+import printscript.config.PrintScriptConfigs
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
+import printscript.edition.LanguageCatalog
+import printscript.edition.LanguageKit
 import printscript.error.Error
 import printscript.error.FormatError
 import printscript.error.LexerError
@@ -32,28 +34,24 @@ object ExecuteCode {
         grammar: Grammar,
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
+        kit: LanguageKit = LanguageCatalog.v10,
     ): Result<List<SideEffect>, ExecutionFailure> {
-        val report = TypecheckCode.typecheck(langConfig, grammar, typeSystem, reader)
+        val report = TypecheckCode.typecheck(langConfig, grammar, typeSystem, reader, kit)
 
         if (!report.isOk) {
             return Result.Err(ExecutionFailure.Types(report.errors))
         }
 
-        return InterpreterFactory
-            .create("1")
+        return DefaultInterpreterFactory
+            .create(kit.evaluators, kit.executors)
+            .interpret(InterpreterContext(), report.value!!)
             .fold(
-                onOk = { interpreter ->
-                    interpreter
-                        .interpret(InterpreterContext(), report.value!!)
-                        .fold(
-                            onOk = { Result.Ok(it) },
-                            onErr = { Result.Err(ExecutionFailure.Runtime(it)) },
-                        )
-                },
+                onOk = { Result.Ok(it) },
                 onErr = { Result.Err(ExecutionFailure.Runtime(it)) },
             )
     }
 
+    @Suppress("UnusedParameter")
     fun executeForTck(
         version: String,
         configs: PrintScriptConfigs,
