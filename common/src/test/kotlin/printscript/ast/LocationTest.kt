@@ -3,6 +3,7 @@ package printscript.ast
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 
 class LocationTest {
     @Test

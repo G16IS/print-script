@@ -2,7 +2,6 @@ package printscript.syntax
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import printscript.ast.Location
 import printscript.support.loc
 
 class SyntaxProgramTest {
