@@ -22,19 +22,18 @@ object PrintScript {
         inputChannel: InputChannel,
     ) {
         val configs: PrintScriptConfigs = PrintScriptConfigsLoader.load(version)
+
+        val sideEffectManager = DefaultSideEffectManager(listAllSideEffectHandlers(printChannel, inputChannel))
+
         val languageKitResult =
-            when (val kit = LanguageCatalog.of(version)) {
+            when (val kit = LanguageCatalog.of(version, sideEffectManager)) {
                 is Result.Err -> return errorHandler.handleErrorMessage("version $version not found")
                 is Result.Ok -> kit
             }
 
-        val sideEffectManager = DefaultSideEffectManager(listAllSideEffectHandlers(printChannel, inputChannel))
-
         ExecuteCode.executeForTck(
-            version,
             configs,
             codeReader,
-            sideEffectManager = sideEffectManager,
             errorHandler,
             languageKitResult.value,
         )

@@ -8,7 +8,7 @@ import printscript.cli.formatError
 import printscript.cli.presentReport
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
-import printscript.edition.LanguageCatalog
+import printscript.edition.LanguageKit
 import printscript.formatter.Formatter
 import printscript.reader.FileCodeReader
 import printscript.usecases.CheckFormat
@@ -17,6 +17,7 @@ class CheckCommand(
     private val lang: LanguageConfig,
     private val grammar: Grammar,
     private val formatter: Formatter,
+    private val languageKit: LanguageKit,
 ) : SourceFileCommand("check", "Check that a PrintScript file matches the formatter") {
     override fun run() {
         emit(
@@ -28,7 +29,7 @@ class CheckCommand(
                         FileCodeReader(file),
                         Files.readString(Path.of(file)),
                         formatter,
-                        LanguageCatalog.v10,
+                        languageKit,
                     )
                 },
                 ::formatError,

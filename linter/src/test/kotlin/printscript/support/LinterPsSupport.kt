@@ -12,6 +12,7 @@ import printscript.domain.RegexRule
 import printscript.domain.Token
 import printscript.domain.TokenRule
 import printscript.edition.LanguageCatalog
+import printscript.io.DefaultSideEffectManager
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxProgram
@@ -32,7 +33,7 @@ object LinterPsSupport {
         val parser =
             (
                 (
-                    LanguageCatalog.of("1.0").map { kit ->
+                    LanguageCatalog.of("1.0", DefaultSideEffectManager()).map { kit ->
                         DefaultParserFactory.create(grammar(), kit.parserHandlers)
                     }
                 ) as Result.Ok

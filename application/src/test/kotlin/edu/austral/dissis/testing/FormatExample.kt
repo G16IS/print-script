@@ -9,6 +9,7 @@ import printscript.domain.Grammar
 import printscript.edition.LanguageCatalog
 import printscript.error.Error
 import printscript.formatter.Formatter
+import printscript.io.DefaultSideEffectManager
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONFormatterLanguageConfigReader
 import printscript.reader.JSONFormatterRulesConfigReader
@@ -35,7 +36,7 @@ object FormatExample {
             grammar,
             FileCodeReader(path),
             formatter,
-            LanguageCatalog.v10,
+            LanguageCatalog.v10(DefaultSideEffectManager()),
         )
     }
 
@@ -48,7 +49,7 @@ object FormatExample {
             FileCodeReader(path),
             source,
             formatter,
-            LanguageCatalog.v10,
+            LanguageCatalog.v10(DefaultSideEffectManager()),
         )
     }
 

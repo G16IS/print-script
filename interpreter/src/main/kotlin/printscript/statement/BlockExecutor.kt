@@ -9,5 +9,5 @@ fun interface BlockExecutor {
     fun execute(
         statements: List<SyntaxNode>,
         context: InterpreterContext,
-    ): Result<Unit, RuntimeError>
+    ): Result<InterpreterContext, RuntimeError>
 }

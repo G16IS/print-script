@@ -45,3 +45,15 @@ inline fun <T, E, R> Result<T, E>.fold(
         is Result.Ok -> onOk(value)
         is Result.Err -> onErr(error)
     }
+
+fun <T, E, F> Result<T, E>.mapError(transform: (E) -> F): Result<T, F> =
+    when (this) {
+        is Result.Ok -> Result.Ok(value)
+        is Result.Err -> Result.Err(transform(error))
+    }
+
+fun <T, E> Result<T, E>.unwrap(msg: String = "Called unwrap() on Result.Err"): T =
+    when (this) {
+        is Result.Ok -> value
+        is Result.Err -> throw IllegalStateException(msg)
+    }

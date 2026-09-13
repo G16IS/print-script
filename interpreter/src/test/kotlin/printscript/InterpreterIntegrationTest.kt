@@ -7,7 +7,7 @@ import printscript.error.DivisionByZero
 import printscript.error.UndeclaredIdentifier
 import printscript.support.PsSupport
 import printscript.support.createInterpreter
-import printscript.support.ok
+import printscript.support.interpretEffects
 import printscript.util.Result
 
 class InterpreterIntegrationTest {
@@ -23,11 +23,9 @@ class InterpreterIntegrationTest {
                 """.trimIndent(),
             )
 
-        val result = createInterpreter("1.0").interpret(InterpreterContext(), program)
-
         assertEquals(
             listOf(PrintEffect("Hello, World!"), PrintEffect("7")),
-            ok(result),
+            interpretEffects("1.0", program),
         )
     }
 
@@ -42,9 +40,7 @@ class InterpreterIntegrationTest {
                 println(b);
                 """.trimIndent(),
             )
-        val effects = ok(createInterpreter("1.0").interpret(InterpreterContext(), program))
-
-        assertEquals(listOf(PrintEffect("1.5"), PrintEffect("2")), effects)
+        assertEquals(listOf(PrintEffect("1.5"), PrintEffect("2")), interpretEffects("1.0", program))
     }
 
     @Test
@@ -57,17 +53,13 @@ class InterpreterIntegrationTest {
                 println(a + b);
                 """.trimIndent(),
             )
-        val effects = ok(createInterpreter("1.0").interpret(InterpreterContext(), program))
-
-        assertEquals(listOf(PrintEffect("holamundo")), effects)
+        assertEquals(listOf(PrintEffect("holamundo")), interpretEffects("1.0", program))
     }
 
     @Test
     fun `grouping overrides precedence`() {
         val program = PsSupport.parse("println((1 + 2) * 3);")
-        val effects = ok(createInterpreter("1.0").interpret(InterpreterContext(), program))
-
-        assertEquals(listOf(PrintEffect("9")), effects)
+        assertEquals(listOf(PrintEffect("9")), interpretEffects("1.0", program))
     }
 
     @Test

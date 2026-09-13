@@ -9,12 +9,16 @@ import printscript.edition.LanguageCatalog
 import printscript.edition.LanguageVersion
 import printscript.error.LanguageVersionNotFound
 import printscript.error.RuntimeError
+import printscript.io.DefaultSideEffectManager
 import printscript.util.Result
 import printscript.util.map
 
 class LanguageCatalogTest {
+    private val sideEffects = DefaultSideEffectManager()
+    private val v10 = LanguageCatalog.v10(sideEffects)
+
     fun getInterpreter(version: String): Result<Interpreter, RuntimeError> =
-        LanguageCatalog.of(version).map { kit ->
+        LanguageCatalog.of(version, sideEffects).map { kit ->
             DefaultInterpreterFactory.create(kit.evaluators, kit.executors)
         }
 
@@ -48,42 +52,42 @@ class LanguageCatalogTest {
 
     @Test
     fun `of 1 dot 0 returns the v10 kit`() {
-        val kit = LanguageCatalog.of("1.0")
+        val kit = LanguageCatalog.of("1.0", sideEffects)
         assertTrue(kit is Result.Ok)
         val value = (kit as Result.Ok).value
         assertEquals(LanguageVersion(1, 0), value.version)
         assertEquals("1.0", value.resourceSuffix)
-        assertEquals(LanguageCatalog.v10.evaluators.size, value.evaluators.size)
-        assertEquals(LanguageCatalog.v10.executors.size, value.executors.size)
+        assertEquals(v10.evaluators.size, value.evaluators.size)
+        assertEquals(v10.executors.size, value.executors.size)
     }
 
     @Test
     fun `of bare 1 is LanguageVersionNotFound`() {
-        val kit = LanguageCatalog.of("1")
+        val kit = LanguageCatalog.of("1", sideEffects)
         assertTrue(kit is Result.Err)
         assertTrue((kit as Result.Err).error is LanguageVersionNotFound)
     }
 
     @Test
     fun `of 1 dot 1 is a copy of v10 with version 1 dot 1`() {
-        val kit = (LanguageCatalog.of("1.1") as Result.Ok).value
+        val kit = (LanguageCatalog.of("1.1", sideEffects) as Result.Ok).value
         assertEquals(LanguageVersion(1, 1), kit.version)
         assertEquals("1.1", kit.resourceSuffix)
-        assertEquals(LanguageCatalog.v10.parserHandlers.size, kit.parserHandlers.size)
-        assertEquals(LanguageCatalog.v10.evaluators.size, kit.evaluators.size)
-        assertEquals(LanguageCatalog.v10.executors.size, kit.executors.size)
+        assertEquals(v10.parserHandlers.size, kit.parserHandlers.size)
+        assertEquals(v10.evaluators.size, kit.evaluators.size)
+        assertEquals(v10.executors.size, kit.executors.size)
     }
 
     @Test
     fun `of 2 dot 0 is LanguageVersionNotFound`() {
-        val kit = LanguageCatalog.of("2.0")
+        val kit = LanguageCatalog.of("2.0", sideEffects)
         assertTrue(kit is Result.Err)
         assertTrue((kit as Result.Err).error is LanguageVersionNotFound)
     }
 
     @Test
     fun `of 1 dot 9 is LanguageVersionNotFound`() {
-        val kit = LanguageCatalog.of("1.9")
+        val kit = LanguageCatalog.of("1.9", sideEffects)
         assertTrue(kit is Result.Err)
         assertTrue((kit as Result.Err).error is LanguageVersionNotFound)
     }

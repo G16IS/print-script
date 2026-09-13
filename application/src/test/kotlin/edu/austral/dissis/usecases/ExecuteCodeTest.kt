@@ -7,14 +7,16 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.PrintEffect
+import printscript.SideEffect
+import printscript.SideEffectManager
 import printscript.domain.Grammar
 import printscript.domain.TypeSystemConfig
 import printscript.edition.LanguageCatalog
+import printscript.error.ExecutionFailure
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.reader.JSONTypeSystemConfigReader
 import printscript.usecases.ExecuteCode
-import printscript.usecases.ExecutionFailure
 import printscript.util.Result
 
 class ExecuteCodeTest {
@@ -25,21 +27,20 @@ class ExecuteCodeTest {
 
     @Test
     fun `declarations and prints emit printable side effects`() {
-        val result = execute("declarations_and_prints.ps")
+        val seen = RecordingSideEffects()
+        val result = execute("declarations_and_prints.ps", seen)
 
         assertTrue(result is Result.Ok)
-        assertEquals(
-            listOf("Hello, World!", "42"),
-            (result as Result.Ok).value.map { (it as PrintEffect).text },
-        )
+        assertEquals(listOf("Hello, World!", "42"), seen.printed())
     }
 
     @Test
     fun `binary expression prints the evaluated result`() {
-        val result = execute("binary_expression.ps")
+        val seen = RecordingSideEffects()
+        val result = execute("binary_expression.ps", seen)
 
         assertTrue(result is Result.Ok)
-        assertEquals(listOf("7"), (result as Result.Ok).value.map { (it as PrintEffect).text })
+        assertEquals(listOf("7"), seen.printed())
     }
 
     @Test
@@ -52,9 +53,10 @@ class ExecuteCodeTest {
 
     @Test
     fun `execute with v11 kit still runs v1 programs`() {
+        val seen = RecordingSideEffects()
         val kit =
-            printscript.edition.LanguageCatalog
-                .of("1.1")
+            LanguageCatalog
+                .of("1.1", seen)
                 .let { (it as Result.Ok).value }
         val result =
             ExecuteCode.execute(
@@ -65,17 +67,30 @@ class ExecuteCodeTest {
                 kit,
             )
         assertTrue(result is Result.Ok)
-        assertEquals(listOf("7"), (result as Result.Ok).value.map { (it as PrintEffect).text })
+        assertEquals(listOf("7"), seen.printed())
     }
 
-    private fun execute(example: String) =
-        ExecuteCode.execute(
-            language,
-            grammar,
-            typeSystem,
-            FileCodeReader(file("examples/$example")),
-            LanguageCatalog.v10,
-        )
+    private fun execute(
+        example: String,
+        sideEffects: SideEffectManager = RecordingSideEffects(),
+    ) = ExecuteCode.execute(
+        language,
+        grammar,
+        typeSystem,
+        FileCodeReader(file("examples/$example")),
+        LanguageCatalog.v10(sideEffects),
+    )
+
+    private class RecordingSideEffects : SideEffectManager {
+        val effects = mutableListOf<SideEffect>()
+
+        override fun handle(effect: SideEffect): String? {
+            effects += effect
+            return null
+        }
+
+        fun printed(): List<String> = effects.map { (it as PrintEffect).text }
+    }
 
     private fun stream(name: String): InputStream =
         requireNotNull(loader().getResourceAsStream(name)) { "Missing resource $name" }

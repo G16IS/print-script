@@ -16,14 +16,14 @@ import printscript.statement.VariableDeclarationExecutor
 object DefaultInterpreterComponents {
     val typeConfiguration: TypeConfiguration = DefaultTypeConfiguration
 
-    val evaluators: List<ExpressionEvaluator> =
+    fun evaluators(sideEffectManager: SideEffectManager): List<ExpressionEvaluator> =
         listOf(
             NumberLiteralEvaluator,
             StringLiteralEvaluator,
             IdentifierEvaluator,
             GroupEvaluator,
             BinaryOperationEvaluator(typeConfiguration),
-            CallEvaluator(),
+            CallEvaluator(sideEffectManager = sideEffectManager),
         )
 
     val executors: List<StatementExecutor> =

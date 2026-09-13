@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import printscript.domain.Token
 import printscript.edition.LanguageCatalog
 import printscript.error.ParserError
+import printscript.io.DefaultSideEffectManager
 import printscript.support.MockLexer
 import printscript.support.PrintScriptGrammar
 import printscript.support.Tokens
@@ -27,7 +28,7 @@ class ParserTest {
         parser =
             (
                 (
-                    LanguageCatalog.of("1.0").map { kit ->
+                    LanguageCatalog.of("1.0", DefaultSideEffectManager()).map { kit ->
                         DefaultParserFactory.create(PrintScriptGrammar, kit.parserHandlers)
                     }
                 ) as Result.Ok

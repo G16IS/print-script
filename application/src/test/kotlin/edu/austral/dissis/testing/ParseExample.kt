@@ -7,6 +7,7 @@ import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.edition.LanguageCatalog
 import printscript.error.Error
+import printscript.io.DefaultSideEffectManager
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.reader.JSONTypeSystemConfigReader
@@ -29,7 +30,7 @@ object ParseExample {
             grammar,
             typeSystem,
             FileCodeReader(file("examples/$example")),
-            LanguageCatalog.v10,
+            LanguageCatalog.v10(DefaultSideEffectManager()),
         )
 
     private fun stream(name: String): InputStream =

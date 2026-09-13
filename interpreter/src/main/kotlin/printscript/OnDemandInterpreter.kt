@@ -4,7 +4,6 @@ import printscript.error.RuntimeError
 import printscript.error.UnresolvableExpression
 import printscript.expression.ExpressionSolver
 import printscript.statement.StatementExecutor
-import printscript.statement.StatementResult
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
@@ -15,7 +14,7 @@ class OnDemandInterpreter(
     fun executeStatement(
         statement: SyntaxNode,
         context: InterpreterContext,
-    ): Result<StatementResult, RuntimeError> {
+    ): Result<InterpreterContext, RuntimeError> {
         val executor =
             executorsByName[statement.name]
                 ?: return Result.Err(UnresolvableExpression(statement.name, statement.location))

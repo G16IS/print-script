@@ -1,5 +1,6 @@
 package printscript.edition
 
+import printscript.SideEffectManager
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.binaryoperation.TypeConfiguration
 import printscript.parse.RuleHandler
@@ -16,4 +17,5 @@ data class LanguageKit(
     val typeConfiguration: TypeConfiguration,
     val evaluators: List<ExpressionEvaluator>,
     val executors: List<StatementExecutor>,
+    val sideEffectManager: SideEffectManager,
 )

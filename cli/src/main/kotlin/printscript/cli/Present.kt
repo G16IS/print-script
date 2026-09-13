@@ -1,21 +1,15 @@
 package printscript.cli
 
-import printscript.SideEffect
 import printscript.error.Error
-import printscript.io.DefaultSideEffectManager
-import printscript.usecases.ExecutionFailure
+import printscript.error.ExecutionFailure
 import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
 
-internal fun presentRun(block: () -> Result<List<SideEffect>, ExecutionFailure>): CommandResult =
+internal fun presentRun(block: () -> Result<Unit, ExecutionFailure>): CommandResult =
     catching {
         block().fold(
-            onOk = { effects ->
-                effects.forEach { effect -> DefaultSideEffectManager().handle(effect) }
-
-                return@fold CommandResult.Ok
-            },
+            onOk = { CommandResult.Ok },
             onErr = { failure ->
                 when (failure) {
                     is ExecutionFailure.Types ->

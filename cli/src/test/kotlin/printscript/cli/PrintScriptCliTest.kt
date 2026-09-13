@@ -1,6 +1,8 @@
 package printscript.cli
 
 import com.github.ajalt.clikt.testing.test
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 import java.nio.file.Files
 import java.nio.file.Path
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,21 +14,29 @@ class PrintScriptCliTest {
     @TempDir
     lateinit var tempDir: Path
 
-//    @Test
-//    fun `run prints println output`() {
-//        val file =
-//            sourceFile(
-//                """
-//                let pepe: string = "Hello, World!";
-//                println(pepe);
-//                """.trimIndent(),
-//            )
-//
-//        val result = cli("run", file)
-//
-//        assertEquals(0, result.statusCode)
-//        assertEquals("Hello, World!\n", result.stdout)
-//    }
+    @Test
+    fun `run prints println output`() {
+        val file =
+            sourceFile(
+                """
+                let pepe: string = "Hello, World!";
+                println(pepe);
+                """.trimIndent(),
+            )
+
+        val captured = ByteArrayOutputStream()
+        val previous = System.out
+        System.setOut(PrintStream(captured))
+        val result =
+            try {
+                cli("run", file)
+            } finally {
+                System.setOut(previous)
+            }
+
+        assertEquals(0, result.statusCode)
+        assertEquals("Hello, World!\n", captured.toString())
+    }
 
     @Test
     fun `typecheck reports a type error`() {

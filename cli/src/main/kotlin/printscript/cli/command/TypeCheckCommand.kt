@@ -7,7 +7,7 @@ import printscript.cli.presentReport
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
-import printscript.edition.LanguageCatalog
+import printscript.edition.LanguageKit
 import printscript.reader.FileCodeReader
 import printscript.usecases.TypecheckCode
 
@@ -15,11 +15,12 @@ class TypeCheckCommand(
     private val lang: LanguageConfig,
     private val grammar: Grammar,
     private val typeSystem: TypeSystemConfig,
+    private val languageKit: LanguageKit,
 ) : SourceFileCommand("typecheck", "Type-check a PrintScript file") {
     override fun run() {
         emit(
             presentReport(
-                { TypecheckCode.typecheck(lang, grammar, typeSystem, FileCodeReader(file), LanguageCatalog.v10) },
+                { TypecheckCode.typecheck(lang, grammar, typeSystem, FileCodeReader(file), languageKit) },
                 ::formatError,
             ),
         )

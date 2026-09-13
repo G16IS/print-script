@@ -1,6 +1,7 @@
 package printscript.cli
 
 import printscript.error.Error
+import printscript.error.ExecutionFailure
 import printscript.error.FormatError
 import printscript.error.LexerError
 import printscript.error.LintError
@@ -22,6 +23,8 @@ internal fun formatError(error: Error): String =
         is ParserError -> formatLocated(error.message, error.location)
         is RuntimeError -> formatRuntimeError(error)
         is TypeError -> formatTypeError(error)
+        is ExecutionFailure.Runtime -> formatRuntimeError(error.error)
+        is ExecutionFailure.Types -> error.errors.joinToString("\n", transform = ::formatError)
     }
 
 internal fun formatTypeError(error: TypeError): String = formatLocated(error.message, error.location)
