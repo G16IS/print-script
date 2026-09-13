@@ -91,6 +91,13 @@ class TokenStreamTest {
         fun `peek on empty source is EOF`() {
             assertEquals("EOF", castTokenResult(lexer("").peek(null)).type)
         }
+
+        @Test
+        fun `peek surfaces an unexpected token`() {
+            val result = lexer("@").peek(null)
+
+            assertTrue(result is Result.Err && result.error is UnexpectedToken)
+        }
     }
 
     @Nested

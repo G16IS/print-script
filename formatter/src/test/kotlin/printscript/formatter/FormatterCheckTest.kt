@@ -131,6 +131,15 @@ class FormatterCheckTest {
     }
 
     @Test
+    fun `check reports a lexeme that is not in the source`() {
+        val program = program(addition(leftCol = 1, opCol = 2, rightCol = 3))
+        val report = operators.check(program, "1+")
+
+        assertFalse(report.isOk)
+        assertTrue(report.errors.any { it is printscript.error.MissingLexeme })
+    }
+
+    @Test
     fun `check accumulates a missing seq child instead of failing fast`() {
         val incomplete =
             SyntaxNode(
