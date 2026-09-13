@@ -1,6 +1,7 @@
 package printscript
 
 import printscript.error.RuntimeError
+import printscript.error.UnresolvableExpression
 import printscript.expression.ExpressionSolver
 import printscript.statement.BlockExecutor
 import printscript.statement.StatementExecutor
@@ -28,15 +29,26 @@ class DefaultInterpreter(
         val initial: Result<StatementResult, RuntimeError> =
             Result.Ok(StatementResult(emptyList(), context))
 
-        val onDemandInterpreter = OnDemandInterpreter(expressionSolver, statementExecutors)
-
         return statements
             .fold(initial) { acc, statement ->
                 acc.flatMap { state ->
-                    onDemandInterpreter.executeStatement(statement, state.newContext).map { next ->
+                    executeStatement(statement, state.newContext).map { next ->
                         StatementResult(state.sideEffects + next.sideEffects, next.newContext)
                     }
                 }
             }.map { it.sideEffects }
     }
+
+    override fun executeStatement(
+        statement: SyntaxNode,
+        context: InterpreterContext,
+    ): Result<StatementResult, RuntimeError> {
+        val executor =
+            executorsByName[statement.name]
+                ?: return Result.Err(UnresolvableExpression(statement.name, statement.location))
+        return executor.execute(statement, context, expressionSolver)
+    }
+
+    private val executorsByName: Map<String, StatementExecutor> =
+        statementExecutors.flatMap { executor -> executor.nodeNames.map { it to executor } }.toMap()
 }
