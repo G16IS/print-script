@@ -5,6 +5,7 @@ import java.io.InputStream
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
+import printscript.edition.LanguageCatalog
 import printscript.error.Error
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
@@ -28,6 +29,7 @@ object ParseExample {
             grammar,
             typeSystem,
             FileCodeReader(file("examples/$example")),
+            LanguageCatalog.v10,
         )
 
     private fun stream(name: String): InputStream =

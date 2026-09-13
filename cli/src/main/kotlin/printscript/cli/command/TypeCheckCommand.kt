@@ -7,6 +7,7 @@ import printscript.cli.presentReport
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
+import printscript.edition.LanguageCatalog
 import printscript.reader.FileCodeReader
 import printscript.usecases.TypecheckCode
 
@@ -18,7 +19,7 @@ class TypeCheckCommand(
     override fun run() {
         emit(
             presentReport(
-                { TypecheckCode.typecheck(lang, grammar, typeSystem, FileCodeReader(file)) },
+                { TypecheckCode.typecheck(lang, grammar, typeSystem, FileCodeReader(file), LanguageCatalog.v10) },
                 ::formatError,
             ),
         )

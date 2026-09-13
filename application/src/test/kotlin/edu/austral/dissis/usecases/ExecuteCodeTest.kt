@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import printscript.PrintEffect
 import printscript.domain.Grammar
 import printscript.domain.TypeSystemConfig
+import printscript.edition.LanguageCatalog
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.reader.JSONTypeSystemConfigReader
@@ -73,6 +74,7 @@ class ExecuteCodeTest {
             grammar,
             typeSystem,
             FileCodeReader(file("examples/$example")),
+            LanguageCatalog.v10,
         )
 
     private fun stream(name: String): InputStream =

@@ -42,6 +42,7 @@ class PrintScriptCli(
     companion object {
         fun create(): PrintScriptCli {
             val configs = PrintScriptConfigsLoader.load("1.0")
+
             return PrintScriptCli(
                 RunCommand(configs.lang, configs.grammar, configs.typeSystem),
                 LintCommand(configs.lang, configs.grammar, configs.linterConfig),

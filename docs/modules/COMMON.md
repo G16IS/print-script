@@ -34,6 +34,8 @@ common/src/main/kotlin/printscript/
     TypeSystemConfig.kt   types, literals, operations, nodes — valida refs de tipos
     FormatterRulesConfig.kt  YAML de usuario (type + enabled/count)
     FormatterLanguageConfig.kt  JSON de lenguaje: rules fijas + userBindings
+    LinterConfig.kt       rules + enabled()
+    TokenLexemes.kt       ExactRule de un matcher → lexema
   syntax/
     SyntaxNode.kt         árbol genérico de salida del parser
     SyntaxProgram.kt      lista de statements + location
@@ -44,6 +46,9 @@ common/src/main/kotlin/printscript/
     TypeError.kt          sealed con variantes (el checker usa otro TypeError, ver TYPE_CHECKER.md)
     RuntimeError.kt       sealed del interpreter (DivisionByZero, InvalidLiteral, …)
     FormatError.kt        sealed del formatter (MissingLexeme, UnrecognizedFormatNode, WhitespaceMismatch, …)
+    LexerError.kt         sealed del lexer (UnexpectedToken, UnexpectedEnfOfLine, …)
+    ParserError.kt        MissingToken / UnexpectedStart
+    LintError.kt          InvalidIdentifierFormat / InvalidPrintlnArgument (implementa Error)
   SideEffect.kt           PrintEffect — output observable del interpreter
   reader/
     CodeReader.kt         puerto: read / peek / currentPosition
@@ -53,8 +58,9 @@ common/src/main/kotlin/printscript/
     TypeSystemConfigReader.kt
     FormatterRulesConfigReader.kt
     FormatterLanguageConfigReader.kt
+    LinterConfigReader.kt
   util/
-    Result.kt             Result.Ok/Err + Report + map/flatMap/fold/isOk
+    Result.kt             Result.Ok/Err + Report + map/flatMap/fold/toReport/isOk
 ```
 
 ---
@@ -193,7 +199,7 @@ El type-checker recibe este objeto ya armado. Spec del JSON: [TYPE_SYSTEM_CONFIG
 
 ## Result / Report (`util/Result.kt`)
 
-`Result.Ok` / `Result.Err` + `map` / `fold` / `isOk`. `Report(value, errors)` con `isOk` si no hay errores. Lo usan type-checker y tests.
+`Result.Ok` / `Result.Err` + `map` / `flatMap` / `fold` / `toReport` / `isOk`. `Report(value, errors)` con `isOk` si no hay errores. Lo usan type-checker y tests.
 
 ---
 
@@ -211,6 +217,9 @@ interface CodeReader {
 interface LanguageConfigReader {  // Path / InputStream / String → LanguageConfig
 interface GrammarConfigReader {   // Path / InputStream / String → Grammar
 interface TypeSystemConfigReader {  // Path / InputStream / String → TypeSystemConfig
+interface FormatterRulesConfigReader
+interface FormatterLanguageConfigReader
+interface LinterConfigReader
 ```
 
 Implementaciones: `infrastructure` (`FileCodeReader`, `JSON*ConfigReader`). Tests del lexer tienen `MockReader`.
@@ -243,8 +252,15 @@ Nueva categoría de token: no hace falta tocar `common` (es un string más en `L
 
 ## Tests
 
-- `Result` / `Report` (`util/ResultTest`)
-- `TypeSystemConfig` (tipos referenciados)
-- sealed `printscript.error.TypeError` (`error/TypeErrorTest`)
+Viven en `common/src/test/kotlin`, `kotlin.test`, nombres en inglés entre backticks.
 
-El resto lo cubren `parser` (`GrammarTest`, `SyntaxNodeTest`) e `infrastructure` (deserialización).
+- `Result` / `Report`: `isOk`, `map`, `flatMap`, `fold`, `toReport`
+- `Grammar` / `GrammarRule` / `SeqStep`: start y refs, `rule()`, `references()`
+- `SyntaxNode` / `SyntaxProgram` / `Location.empty`
+- `TokenLexemes.from` (exacto de un matcher vs varios vs regex)
+- `FormatterLanguageConfig` / `TypeSystemConfig` validación
+- `LinterConfig.enabled` / `FormatterRulesConfig` defaults
+- sealed errors (`TypeError`, `RuntimeError`, `LexerError`, `ParserError`, `FormatError`, `LintError`) y `PrintEffect`
+- `TokenType` leftover: solo que el enum sigue existiendo
+
+Los puertos `CodeReader` / `*ConfigReader` no tienen tests acá: son interfaces sin implementación. `:parser` sigue teniendo `GrammarTest` / `SyntaxNodeTest` de integración con el parser; `:infrastructure` cubre la deserialización.

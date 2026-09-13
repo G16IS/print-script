@@ -9,7 +9,6 @@ import printscript.config.PrintScriptConfigs
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
-import printscript.edition.LanguageCatalog
 import printscript.edition.LanguageKit
 import printscript.error.Error
 import printscript.error.FormatError
@@ -29,7 +28,7 @@ object ExecuteCode {
         grammar: Grammar,
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
-        kit: LanguageKit = LanguageCatalog.v10,
+        kit: LanguageKit,
     ): Result<List<SideEffect>, ExecutionFailure> {
         val report = TypecheckCode.typecheck(langConfig, grammar, typeSystem, reader, kit)
 

@@ -4,7 +4,6 @@ import printscript.DefaultLexerFactory
 import printscript.DefaultParserFactory
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
-import printscript.edition.LanguageCatalog
 import printscript.edition.LanguageKit
 import printscript.error.Error
 import printscript.reader.CodeReader
@@ -18,7 +17,7 @@ internal object ParseProgram {
         langConfig: LanguageConfig,
         grammar: Grammar,
         reader: CodeReader,
-        kit: LanguageKit = LanguageCatalog.v10,
+        kit: LanguageKit,
     ): Result<SyntaxProgram, Error> {
         val lexer = DefaultLexerFactory.create(reader, langConfig)
         val parser = DefaultParserFactory.create(grammar, kit.parserHandlers)

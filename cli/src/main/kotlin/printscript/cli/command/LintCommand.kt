@@ -7,6 +7,7 @@ import printscript.cli.presentReport
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.LinterConfig
+import printscript.edition.LanguageCatalog
 import printscript.reader.FileCodeReader
 import printscript.usecases.LintProgram
 
@@ -18,7 +19,7 @@ class LintCommand(
     override fun run() {
         emit(
             presentReport(
-                { LintProgram.lint(lang, grammar, FileCodeReader(file), linterConfig) },
+                { LintProgram.lint(lang, grammar, FileCodeReader(file), linterConfig, LanguageCatalog.v10) },
                 ::formatError,
             ),
         )

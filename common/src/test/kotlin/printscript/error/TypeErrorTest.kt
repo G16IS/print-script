@@ -99,4 +99,12 @@ class TypeErrorTest {
         assertFalse(report.isOk)
         assertEquals(error, report.errors.single())
     }
+
+    @Test
+    fun `TypeErrorWithMessage keeps the given message`() {
+        val error = TypeErrorWithMessage(message = "custom", location = location)
+
+        assertEquals("custom", error.message)
+        assertEquals(location, error.location)
+    }
 }
