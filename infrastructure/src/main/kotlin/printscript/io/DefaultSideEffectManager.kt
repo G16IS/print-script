@@ -1,18 +1,20 @@
 package printscript.io
 
 import printscript.SideEffect
+import printscript.SideEffectHandler
+import printscript.SideEffectManager
 
-class SideEffectManager(
+class DefaultSideEffectManager(
     val handlers: List<SideEffectHandler>,
-) {
+) : SideEffectManager {
     constructor() : this(
         listOf(
-            ConsoleWriterHandler(),
-            ConsoleReaderHandler(),
+            PrintHandler(),
+            ReadInputHandler(),
         ),
     )
 
-    fun handle(effect: SideEffect): String? {
+    override fun handle(effect: SideEffect): String? {
         for (handler in handlers) {
             if (!handler.applies(effect)) continue
             return handler.handle(effect)

@@ -1,6 +1,4 @@
-package printscript.io
-
-import printscript.SideEffect
+package printscript
 
 interface SideEffectHandler {
     fun applies(effect: SideEffect): Boolean

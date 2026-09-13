@@ -10,7 +10,7 @@ interface Interpreter {
     fun interpret(
         context: InterpreterContext,
         program: SyntaxProgram,
-    ): Result<List<SideEffect>, RuntimeError>
+    ): Result<Unit, RuntimeError>
 
     fun executeStatement(
         statement: SyntaxNode,

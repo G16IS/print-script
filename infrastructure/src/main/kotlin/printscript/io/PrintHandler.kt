@@ -1,9 +1,14 @@
 package printscript.io
 
+import printscript.PrintChannel
 import printscript.PrintEffect
 import printscript.SideEffect
+import printscript.SideEffectHandler
+import printscript.io.channel.ConsolePrintChannel
 
-class ConsoleWriterHandler : SideEffectHandler {
+class PrintHandler(
+    val printChannel: PrintChannel = ConsolePrintChannel(),
+) : SideEffectHandler {
     override fun applies(effect: SideEffect) = effect is PrintEffect
 
     override fun handle(effect: SideEffect): String? {
@@ -13,7 +18,7 @@ class ConsoleWriterHandler : SideEffectHandler {
 
         val effect = effect as PrintEffect
 
-        println(effect.text)
+        printChannel.print(effect.text)
         return null
     }
 }

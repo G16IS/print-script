@@ -1,9 +1,14 @@
 package printscript.io
 
+import printscript.InputChannel
 import printscript.ReadInputEffect
 import printscript.SideEffect
+import printscript.SideEffectHandler
+import printscript.io.channel.ConsoleInputChannel
 
-class ConsoleReaderHandler : SideEffectHandler {
+class ReadInputHandler(
+    val inputChannel: InputChannel = ConsoleInputChannel(),
+) : SideEffectHandler {
     override fun applies(effect: SideEffect): Boolean = effect is ReadInputEffect
 
     override fun handle(effect: SideEffect): String? {
@@ -13,7 +18,6 @@ class ConsoleReaderHandler : SideEffectHandler {
 
         val effect = effect as ReadInputEffect
 
-        print(effect.prompt)
-        return readlnOrNull()
+        return inputChannel.input(effect.prompt)
     }
 }

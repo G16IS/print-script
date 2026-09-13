@@ -99,10 +99,4 @@ class LanguageCatalogTest {
         val result = getInterpreter("1.1")
         assertTrue(result is Result.Ok)
     }
-
-    @Test
-    fun `LoadInterpreter load 1 dot 1 is Ok`() {
-        val result = printscript.usecases.LoadInterpreter.load("1.1")
-        assertTrue(result is Result.Ok)
-    }
 }

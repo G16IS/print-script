@@ -2,12 +2,9 @@ package printscript.usecases
 
 import printscript.DefaultInterpreterFactory
 import printscript.ErrorHandler
-import printscript.InputChannel
-import printscript.Interpreter
 import printscript.InterpreterContext
-import printscript.PrintChannel
-import printscript.PrintEffect
 import printscript.SideEffect
+import printscript.SideEffectManager
 import printscript.config.PrintScriptConfigs
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
@@ -22,11 +19,9 @@ import printscript.error.ParserError
 import printscript.error.RuntimeError
 import printscript.error.TypeError
 import printscript.reader.CodeReader
-import printscript.syntax.SyntaxNode
-import printscript.syntax.SyntaxProgram
-import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
+import printscript.util.isOk
 
 object ExecuteCode {
     fun execute(
@@ -53,64 +48,27 @@ object ExecuteCode {
 
     @Suppress("UnusedParameter")
     fun executeForTck(
-        version: String,
         configs: PrintScriptConfigs,
         codeReader: CodeReader,
-        printChannel: PrintChannel,
+        sideEffectManager: SideEffectManager,
         errorHandler: ErrorHandler,
-        inputChannel: InputChannel,
-    ): Result<Unit, ExecutionFailure> {
-        val report = TypecheckCode.typecheck(configs.lang, configs.grammar, configs.typeSystem, codeReader, version)
+        languageKit: LanguageKit,
+    ) {
+        val report = TypecheckCode.typecheck(configs.lang, configs.grammar, configs.typeSystem, codeReader, languageKit)
 
         if (!report.isOk) {
             report.errors.forEach { reportError(it, errorHandler) }
-            return Result.Err(ExecutionFailure.Types(report.errors))
         }
 
-        return InterpreterFactory
-            .create(version)
-            .fold(
-                onOk = { interpreter ->
-                    interpretByLine(interpreter, report, printChannel, errorHandler)
-                },
-                onErr = { error ->
-                    reportError(error, errorHandler)
-                    Result.Err(ExecutionFailure.Runtime(error))
-                },
-            )
-    }
-}
+        val evaluators = languageKit.evaluators
+        val statementExecutors = languageKit.executors
 
-private fun interpretByLine(
-    interpreter: Interpreter,
-    report: Report<SyntaxProgram, Error>,
-    printChannel: PrintChannel,
-    errorHandler: ErrorHandler,
-): Result<Unit, ExecutionFailure.Runtime> {
-    // TODO: Finish this implementation
-    val statements: List<SyntaxNode> = report.value!!.statements
-    var context = InterpreterContext()
+        val interpreterResult: Result<List<SideEffect>, RuntimeError> =
+            DefaultInterpreterFactory
+                .create(evaluators, statementExecutors, sideEffectManager)
+                .interpret(InterpreterContext(), report.value!!)
 
-    for (statement in statements) {
-        interpreter.executeStatement(statement, context).fold(
-            onOk = { statementResult ->
-                statementResult.sideEffects.forEach { runEffect(it, printChannel) }
-            },
-            onErr = { error ->
-                reportError(error, errorHandler)
-                Result.Err(ExecutionFailure.Runtime(error))
-            },
-        )
-    }
-    return Result.Ok(Unit)
-}
-
-private fun runEffect(
-    effect: SideEffect,
-    printChannel: PrintChannel,
-) {
-    when (effect) {
-        is PrintEffect -> printChannel.print(effect.text)
+        if (interpreterResult is Result.Err) reportError((interpreterResult).error, errorHandler)
     }
 }
 

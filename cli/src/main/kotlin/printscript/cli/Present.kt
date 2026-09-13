@@ -2,7 +2,7 @@ package printscript.cli
 
 import printscript.SideEffect
 import printscript.error.Error
-import printscript.io.SideEffectManager
+import printscript.io.DefaultSideEffectManager
 import printscript.usecases.ExecutionFailure
 import printscript.util.Report
 import printscript.util.Result
@@ -12,7 +12,7 @@ internal fun presentRun(block: () -> Result<List<SideEffect>, ExecutionFailure>)
     catching {
         block().fold(
             onOk = { effects ->
-                effects.forEach { effect -> SideEffectManager().handle(effect) }
+                effects.forEach { effect -> DefaultSideEffectManager().handle(effect) }
 
                 return@fold CommandResult.Ok
             },
