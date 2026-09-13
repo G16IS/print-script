@@ -33,7 +33,7 @@ infrastructure/src/main/
     serializer/config/
       JsonCodecs.kt              asJsonDecoder / asJsonEncoder
       LanguageConfigSerializer.kt
-      TokenRuleSerializer.kt     type: exact | regex
+      TokenRuleSerializer.kt     type: exact | regex (decode y encode)
       ExactRuleSerializer.kt
       RegexRuleSerializer.kt
       GrammarSerializer.kt
@@ -200,6 +200,12 @@ JSON, docs y tests coinciden: **primero gana**. Keywords antes que identifiers p
 `FormatterRulesConfigReaderTest`: YAML de usuario (`enabled` / `count`) + resource `formatter-user-defaults.json`. JSON y YAML de usuario comparten `FormatterRulesConfigSerializer`.
 
 `JSONLanguageConfigReaderTest` lee el resource real (`order`, LET, STRING_LITERAL). El pipeline del CLI (`run` / `typecheck` / `format` / `check` + parse inválido → `ERROR`) vive en `PrintScriptCliTest` (`:cli`). No hay test de `FileCodeReader`.
+
+Serializers (`printscript.serializer.config`):
+
+- `ProductionConfigRoundTripTest`: decode→encode→decode de cada JSON de `src/main/resources` (language, grammar, type-system, formatter-language, formatter-user-defaults, linter; v1.0 y v1.1). Igualdad de dominio, no de string JSON.
+- `TokenRuleSerializer` escribe `"type": "exact" | "regex"` al serializar. Sin eso el round-trip de language config pierde el discriminador.
+- Tests extra: `repeat`, keys de grammar desconocidas, seq steps inválidos, `commutative: false`.
 
 ---
 

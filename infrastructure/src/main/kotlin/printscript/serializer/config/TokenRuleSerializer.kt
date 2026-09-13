@@ -6,6 +6,8 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import printscript.domain.ExactRule
@@ -26,7 +28,13 @@ object TokenRuleSerializer : KSerializer<TokenRule> {
         value: TokenRule,
     ) {
         val json = encoder.asJsonEncoder()
-        json.encodeJsonElement(json.json.encodeToJsonElement(select(value), value))
+        val encoded = json.json.encodeToJsonElement(select(value), value).jsonObject
+        val type =
+            when (value) {
+                is ExactRule -> "exact"
+                is RegexRule -> "regex"
+            }
+        json.encodeJsonElement(JsonObject(mapOf("type" to JsonPrimitive(type)) + encoded))
     }
 
     private fun select(element: JsonElement): KSerializer<out TokenRule> {
