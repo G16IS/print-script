@@ -471,7 +471,7 @@ Nuevo subcomando: clase en `cli/command/` que carga el `.ps`, llama al use case 
 | `interpreter` | contexto (scope/shadow/assign), evaluators (literales/binarios/calls/div-cero), executors, integración lex+parse+interpret con `SideEffect` |
 | `formatter` | `format`/`check` de `1+2`, gap/indent render, walker con dos hijos del mismo nombre, loader (bindings + defaults JSON / type desconocido / `count` inválido), JSON real |
 | `infrastructure` | `JSONLanguageConfigReader` / `JSONGrammarConfigReader` / `JSONTypeSystemConfigReader` contra el resource real; readers del formatter y del linter |
-| `common` | `Result`/`Report`, `TypeSystemConfig` / `FormatterLanguageConfig` (validación), variantes de `TypeError` / `FormatError` |
+| `common` | `Result`/`Report`, `Grammar`/`SyntaxNode`/`SyntaxProgram`, `TokenLexemes`, configs (`TypeSystem` / formatter / linter), sealed errors, `PrintEffect` |
 | `application` | `.ps` end-to-end lex+parse+type-check (`Report`); `ExecuteCode` (prints); format/check de `1+2;` y `let x:number=1;` (`Result`/`Report`) |
 | `cli` | pipeline real vía `PrintScriptCli.create()` (run/format/check/typecheck + `ERROR` de parse + `--version` / help) |
 
