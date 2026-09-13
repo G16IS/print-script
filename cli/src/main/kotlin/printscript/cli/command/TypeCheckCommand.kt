@@ -8,7 +8,7 @@ import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.reader.FileCodeReader
-import usecases.TypecheckCode
+import printscript.usecases.TypecheckCode
 
 class TypeCheckCommand(
     private val lang: LanguageConfig,

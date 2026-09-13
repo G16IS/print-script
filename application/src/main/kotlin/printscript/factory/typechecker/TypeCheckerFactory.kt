@@ -1,4 +1,4 @@
-package printscript.application.factory.typechecker
+package printscript.factory.typechecker
 
 import printscript.domain.TypeSystemConfig
 import printscript.error.LanguageVersionNotFound

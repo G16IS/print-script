@@ -1,4 +1,4 @@
-package usecases
+package printscript.usecases
 
 import printscript.domain.FormatterLanguageConfig
 import printscript.domain.FormatterRulesConfig

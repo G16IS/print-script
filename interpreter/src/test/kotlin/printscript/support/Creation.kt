@@ -1,7 +1,6 @@
 package printscript.support
 
 import printscript.Interpreter
-import printscript.application.factory.InterpreterFactory
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.GroupEvaluator
 import printscript.expression.binaryoperation.BinaryOperationEvaluator
@@ -10,6 +9,7 @@ import printscript.expression.call.CallEvaluator
 import printscript.expression.literal.IdentifierEvaluator
 import printscript.expression.literal.NumberLiteralEvaluator
 import printscript.expression.literal.StringLiteralEvaluator
+import printscript.factory.InterpreterFactory
 import printscript.statement.ExpressionStatementExecutor
 import printscript.statement.StatementExecutor
 import printscript.statement.VariableDeclarationExecutor

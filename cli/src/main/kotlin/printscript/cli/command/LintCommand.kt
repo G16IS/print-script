@@ -8,7 +8,7 @@ import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.LinterConfig
 import printscript.reader.FileCodeReader
-import usecases.LintProgram
+import printscript.usecases.LintProgram
 
 class LintCommand(
     private val lang: LanguageConfig,

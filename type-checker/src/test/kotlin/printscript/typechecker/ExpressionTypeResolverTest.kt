@@ -5,10 +5,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
-import printscript.application.factory.typechecker.V1KindHandlerFactory
 import printscript.domain.NodeConfig
 import printscript.domain.Token
 import printscript.domain.TypeSystemConfig
+import printscript.factory.typechecker.V1KindHandlerFactory
 import printscript.reader.CharPosition
 import printscript.syntax.Location
 import printscript.syntax.SyntaxNode

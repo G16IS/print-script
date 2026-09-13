@@ -7,7 +7,7 @@ import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.formatter.Formatter
 import printscript.reader.FileCodeReader
-import usecases.FormatCode
+import printscript.usecases.FormatCode
 
 class FormatCommand(
     private val lang: LanguageConfig,

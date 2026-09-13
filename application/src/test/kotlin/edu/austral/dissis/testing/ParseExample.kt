@@ -10,8 +10,8 @@ import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.reader.JSONTypeSystemConfigReader
 import printscript.syntax.SyntaxProgram
+import printscript.usecases.TypecheckCode.typecheck
 import printscript.util.Report
-import usecases.TypecheckCode.typecheck
 
 object ParseExample {
     private val language: LanguageConfig = PrintScriptLanguage.config()

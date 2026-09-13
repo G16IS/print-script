@@ -12,11 +12,11 @@ import printscript.reader.FileCodeReader
 import printscript.reader.JSONFormatterLanguageConfigReader
 import printscript.reader.JSONFormatterRulesConfigReader
 import printscript.reader.JSONGrammarConfigReader
+import printscript.usecases.CheckFormat
+import printscript.usecases.FormatCode
+import printscript.usecases.LoadFormatter
 import printscript.util.Report
 import printscript.util.Result
-import usecases.CheckFormat
-import usecases.FormatCode
-import usecases.LoadFormatter
 
 object FormatExample {
     private val language = PrintScriptLanguage.config()

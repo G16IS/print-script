@@ -3,7 +3,7 @@ package printscript.tck
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import printscript.application.config.PrintScriptConfigs
+import printscript.config.PrintScriptConfigs
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
@@ -14,8 +14,8 @@ import printscript.reader.JSONLanguageConfigReader
 import printscript.reader.JSONLinterConfigReader
 import printscript.reader.JSONTypeSystemConfigReader
 import printscript.reader.YAMLFormatterRulesConfigReader
+import printscript.usecases.LoadFormatter
 import printscript.util.fold
-import usecases.LoadFormatter
 
 object PrintScriptConfigsLoader {
     private const val USER_YAML_PATH = ".printscript/formatter.yml"

@@ -1,10 +1,10 @@
-package usecases
+package printscript.usecases
 
 import printscript.DefaultLexerFactory
-import printscript.application.factory.parser.ParserFactory
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.error.Error
+import printscript.factory.parser.ParserFactory
 import printscript.reader.CodeReader
 import printscript.syntax.SyntaxProgram
 import printscript.util.Result

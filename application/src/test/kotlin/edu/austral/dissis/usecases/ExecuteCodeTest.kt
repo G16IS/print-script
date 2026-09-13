@@ -12,9 +12,9 @@ import printscript.domain.TypeSystemConfig
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.reader.JSONTypeSystemConfigReader
+import printscript.usecases.ExecuteCode
+import printscript.usecases.ExecutionFailure
 import printscript.util.Result
-import usecases.ExecuteCode
-import usecases.ExecutionFailure
 
 class ExecuteCodeTest {
     private val language = PrintScriptLanguage.config()

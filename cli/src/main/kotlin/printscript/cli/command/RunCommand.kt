@@ -7,7 +7,7 @@ import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.reader.FileCodeReader
-import usecases.ExecuteCode
+import printscript.usecases.ExecuteCode
 
 class RunCommand(
     private val lang: LanguageConfig,

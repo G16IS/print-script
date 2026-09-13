@@ -1,4 +1,4 @@
-package printscript.application.factory.parser.handlers
+package printscript.factory.parser.handlers
 
 import printscript.parse.RuleHandler
 

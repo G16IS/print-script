@@ -1,17 +1,17 @@
-package usecases
+package printscript.usecases
 
 import printscript.ErrorHandler
 import printscript.InputChannel
 import printscript.InterpreterContext
 import printscript.PrintChannel
 import printscript.SideEffect
-import printscript.application.config.PrintScriptConfigs
-import printscript.application.factory.InterpreterFactory
+import printscript.config.PrintScriptConfigs
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.error.Error
 import printscript.error.RuntimeError
+import printscript.factory.InterpreterFactory
 import printscript.reader.CodeReader
 import printscript.util.Result
 import printscript.util.fold

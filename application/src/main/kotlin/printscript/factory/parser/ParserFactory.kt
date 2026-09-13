@@ -1,4 +1,4 @@
-package printscript.application.factory.parser
+package printscript.factory.parser
 
 import printscript.DefaultParserFactory
 import printscript.Parser

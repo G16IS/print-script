@@ -1,4 +1,4 @@
-package printscript.application.config
+package printscript.config
 
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig

@@ -1,4 +1,4 @@
-package printscript.application.factory.typechecker
+package printscript.factory.typechecker
 
 import printscript.typechecker.ExpressionKindHandlerFactory
 import printscript.typechecker.ExpressionTypeResolver

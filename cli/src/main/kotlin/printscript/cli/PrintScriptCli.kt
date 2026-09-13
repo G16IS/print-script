@@ -6,12 +6,12 @@ import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
-import printscript.application.config.PrintScriptConfigs
 import printscript.cli.command.CheckCommand
 import printscript.cli.command.FormatCommand
 import printscript.cli.command.LintCommand
 import printscript.cli.command.RunCommand
 import printscript.cli.command.TypeCheckCommand
+import printscript.config.PrintScriptConfigs
 import printscript.tck.PrintScriptConfigsLoader
 
 class PrintScriptCli(

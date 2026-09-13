@@ -1,11 +1,11 @@
-package usecases
+package printscript.usecases
 
-import printscript.application.factory.typechecker.TypeCheckerFactory
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.error.Error
 import printscript.error.TypeErrorWithMessage
+import printscript.factory.typechecker.TypeCheckerFactory
 import printscript.reader.CodeReader
 import printscript.syntax.SyntaxProgram
 import printscript.typechecker.TypeChecker

@@ -4,9 +4,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import printscript.application.factory.parser.ParserFactory
 import printscript.domain.Token
 import printscript.error.ParserError
+import printscript.factory.parser.ParserFactory
 import printscript.support.MockLexer
 import printscript.support.PrintScriptGrammar
 import printscript.support.Tokens

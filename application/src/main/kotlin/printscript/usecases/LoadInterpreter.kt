@@ -1,9 +1,9 @@
-package usecases
+package printscript.usecases
 
 import printscript.Interpreter
-import printscript.application.factory.InterpreterFactory
 import printscript.error.LanguageVersionNotFound
 import printscript.error.RuntimeError
+import printscript.factory.InterpreterFactory
 import printscript.util.Result
 
 object LoadInterpreter {
