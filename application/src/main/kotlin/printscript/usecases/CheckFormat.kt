@@ -2,6 +2,7 @@ package printscript.usecases
 
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
+import printscript.edition.LanguageKit
 import printscript.error.Error
 import printscript.formatter.Formatter
 import printscript.reader.CodeReader
@@ -15,10 +16,11 @@ object CheckFormat {
         reader: CodeReader,
         source: String,
         formatter: Formatter,
+        kit: LanguageKit,
     ): Report<Unit, Error> {
         val program =
             when (
-                val result = ParseProgram.parse(langConfig, grammar, reader)
+                val result = ParseProgram.parse(langConfig, grammar, reader, kit)
             ) {
                 is Result.Err -> return Report(errors = listOf(result.error))
                 is Result.Ok -> result.value

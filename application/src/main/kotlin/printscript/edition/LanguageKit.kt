@@ -6,6 +6,8 @@ import printscript.parse.RuleHandler
 import printscript.statement.StatementExecutor
 import printscript.typechecker.ExpressionKindHandlerFactory
 
+// LanguageKit is a data class that contains all the components
+// needed for a specific version of the PrintScript language.
 data class LanguageKit(
     val version: LanguageVersion,
     val resourceSuffix: String,

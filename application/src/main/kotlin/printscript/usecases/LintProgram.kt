@@ -3,6 +3,7 @@ package printscript.usecases
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.LinterConfig
+import printscript.edition.LanguageKit
 import printscript.error.Error
 import printscript.factory.DefaultLinterFactory
 import printscript.reader.CodeReader
@@ -17,12 +18,14 @@ object LintProgram {
         grammar: Grammar,
         reader: CodeReader,
         linterConfig: LinterConfig,
+        kit: LanguageKit,
     ): Report<SyntaxProgram, Error> =
-        when (val program = ParseProgram.parse(langConfig, grammar, reader)) {
+        when (val program = ParseProgram.parse(langConfig, grammar, reader, kit)) {
             is Result.Ok -> {
                 val linted = DefaultLinterFactory.create(linterConfig).lint(program.value)
                 Report(value = linted.value, errors = linted.errors)
             }
+
             is Result.Err -> program.toReport()
         }
 }

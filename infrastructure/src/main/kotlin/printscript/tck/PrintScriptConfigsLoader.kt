@@ -21,13 +21,23 @@ object PrintScriptConfigsLoader {
     private const val USER_YAML_PATH = ".printscript/formatter.yml"
 
     fun load(version: String): PrintScriptConfigs {
-        val lang = JSONLanguageConfigReader.read(resource("language.config.v$version.json"))
-        val grammar = JSONGrammarConfigReader.read(resource("grammar.config.v$version.json"))
+        val lang =
+            JSONLanguageConfigReader.read(resource("language.config.v$version.json"))
+
+        val grammar =
+            JSONGrammarConfigReader.read(resource("grammar.config.v$version.json"))
+
+        val typeSystem =
+            JSONTypeSystemConfigReader.read(resource("type-system.config.v$version.json"))
+
+        val linterConfig =
+            JSONLinterConfigReader.read(resource("linter.config.v$version.json"))
+
         return PrintScriptConfigs(
             lang = lang,
             grammar = grammar,
-            typeSystem = JSONTypeSystemConfigReader.read(resource("type-system.config.v$version.json")),
-            linterConfig = JSONLinterConfigReader.read(resource("linter.config.v$version.json")),
+            typeSystem = typeSystem,
+            linterConfig = linterConfig,
             formatter = loadFormatter(lang, grammar, version),
         )
     }
