@@ -84,6 +84,16 @@ class PrintScriptCliTest {
     }
 
     @Test
+    fun `version 1 dot 1 is accepted`() {
+        val file = sourceFile("1+2;")
+
+        val result = cli("--version", "1.1", "format", file)
+
+        assertEquals(0, result.statusCode)
+        assertEquals("1 + 2;\n", result.stdout)
+    }
+
+    @Test
     fun `missing subcommand prints help`() {
         val result = cli()
 

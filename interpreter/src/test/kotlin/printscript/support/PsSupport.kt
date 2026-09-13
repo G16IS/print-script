@@ -3,6 +3,7 @@ package printscript.support
 import java.io.File
 import java.rmi.UnexpectedException
 import printscript.DefaultLexerFactory
+import printscript.DefaultParserFactory
 import printscript.Lexer
 import printscript.domain.ExactRule
 import printscript.domain.Grammar
@@ -10,14 +11,15 @@ import printscript.domain.LanguageConfig
 import printscript.domain.RegexRule
 import printscript.domain.Token
 import printscript.domain.TokenRule
-import printscript.factory.parser.ParserFactory
+import printscript.edition.LanguageCatalog
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxProgram
 import printscript.util.Result
+import printscript.util.map
 
 /**
- * Parses PrintScript source with the real lexer/parser + grammar.config.v1.json,
+ * Parses PrintScript source with the real lexer/parser + grammar.config.v1.0.json,
  * mirroring the application module's interpretCode flow.
  */
 object PsSupport {
@@ -31,12 +33,20 @@ object PsSupport {
         val file = File.createTempFile("printscript-interpreter-test", ".ps").apply { writeText(code) }
         val codeReader = FileCodeReader(file.absolutePath)
         val lexer = DefaultLexerFactory.create(codeReader, langConfig)
-        val parser = (ParserFactory.create(grammar, "1") as Result.Ok).value
+        val parser =
+            (
+                LanguageCatalog.of("1.0").map { kit ->
+                    DefaultParserFactory.create(grammar, kit.parserHandlers)
+                } as Result.Ok
+            ).value
 
         var program = SyntaxProgram.empty()
         while (peekNextToken(lexer).type != "EOF") {
-            val parseResult = parser.parseNextStatement(lexer, program)
-            when (parseResult) {
+            when (
+                val parseResult =
+                    parser
+                        .parseNextStatement(lexer, program)
+            ) {
                 is Result.Err -> throw UnexpectedException(parseResult.error.message)
                 is Result.Ok -> program = parseResult.value
             }
@@ -52,7 +62,7 @@ object PsSupport {
     }
 
     /**
-     * Same rules and `order` as language.config.v1.json. The lexer tries categories
+     * Same rules and `order` as language.config.v1.0.json. The lexer tries categories
      * from first to last, so keywords beat identifiers.
      */
     private fun language(): LanguageConfig =
@@ -70,8 +80,8 @@ object PsSupport {
 
     private fun grammar(): Grammar {
         val stream =
-            requireNotNull(PsSupport::class.java.getResourceAsStream("/grammar.config.v1.json")) {
-                "Missing resource grammar.config.v1.json"
+            requireNotNull(PsSupport::class.java.getResourceAsStream("/grammar.config.v1.0.json")) {
+                "Missing resource grammar.config.v1.0.json"
             }
         return JSONGrammarConfigReader.read(stream)
     }
@@ -99,7 +109,7 @@ object PsSupport {
         listOf(
             RegexRule(listOf("^\"[^\"]*\""), "STRING_LITERAL", true, "^\"[^\"]*$"),
             // Partial accepts the dot mid-lexeme so decimals like 1.5 tokenize
-            // (language.config.v1.json's `^[0-9]` splits them; pre-existing lexer gap).
+            // (language.config.v1.0.json's `^[0-9]` splits them; pre-existing lexer gap).
             RegexRule(listOf("^[0-9]+(\\.[0-9]+)?"), "NUMBER_LITERAL", true, "^[0-9]+(\\.[0-9]*)?$"),
         )
 

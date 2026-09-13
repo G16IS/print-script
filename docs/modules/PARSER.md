@@ -1,6 +1,6 @@
 # Módulo `parser`
 
-Dependencias: `common`, `lexer`. Tests también tiran de `infrastructure` para cargar `grammar.config.v1.json`.
+Dependencias: `common`, `lexer`. Tests también tiran de `infrastructure` para cargar `grammar.config.v1.0.json`.
 
 Análisis **sintáctico** solamente. Tokens → `SyntaxProgram`. No chequea tipos ni declaraciones.
 
@@ -158,7 +158,7 @@ Si una iteración matchea **sin** avanzar el cursor → `IllegalStateException` 
 
 Location: span de los items, o la location del token actual si la lista está vacía.
 
-`repeat` no está en el `grammar.config.v1.json` v1. Tests del parser cubren bloques `{ stmt* }` a mano. Listo para `if`.
+`repeat` no está en el `grammar.config.v1.0.json` v1. Tests del parser cubren bloques `{ stmt* }` a mano. Listo para `if`.
 
 ---
 

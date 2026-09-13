@@ -16,8 +16,8 @@ import printscript.support.LinterPsSupport
 class LinterIntegrationTest {
     private val defaultConfig =
         JSONLinterConfigReader.read(
-            checkNotNull(javaClass.getResourceAsStream("/linter.config.v1.json")) {
-                "Missing linter.config.v1.json"
+            checkNotNull(javaClass.getResourceAsStream("/linter.config.v1.0.json")) {
+                "Missing linter.config.v1.0.json"
             },
         )
 

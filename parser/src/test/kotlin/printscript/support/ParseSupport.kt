@@ -9,7 +9,7 @@ import printscript.syntax.SyntaxNode
 import printscript.token.LexerTokenSource
 import printscript.token.TokenSource
 
-fun evaluator(grammar: Grammar): RuleEvaluator = RuleEvaluator(grammar, RuleHandlers.v1())
+fun evaluator(grammar: Grammar): RuleEvaluator = RuleEvaluator(grammar, RuleHandlers.defaults())
 
 fun source(vararg tokens: Token): TokenSource = LexerTokenSource(MockLexer(tokens.toList()))
 

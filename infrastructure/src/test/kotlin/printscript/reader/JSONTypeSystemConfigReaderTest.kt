@@ -122,7 +122,7 @@ class JSONTypeSystemConfigReaderTest {
         )
 
     private fun resource() =
-        checkNotNull(javaClass.getResourceAsStream("/type-system.config.v1.json")) {
-            "Missing type-system.config.v1.json"
+        checkNotNull(javaClass.getResourceAsStream("/type-system.config.v1.0.json")) {
+            "Missing type-system.config.v1.0.json"
         }
 }

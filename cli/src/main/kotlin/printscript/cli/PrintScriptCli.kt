@@ -12,7 +12,9 @@ import printscript.cli.command.LintCommand
 import printscript.cli.command.RunCommand
 import printscript.cli.command.TypeCheckCommand
 import printscript.config.PrintScriptConfigs
+import printscript.edition.LanguageCatalog
 import printscript.tck.PrintScriptConfigsLoader
+import printscript.util.Result
 
 class PrintScriptCli(
     vararg commands: CliktCommand,
@@ -31,7 +33,7 @@ class PrintScriptCli(
     override fun help(context: Context): String = "PrintScript command line interface"
 
     override fun run() {
-        if (version != DEFAULT_VERSION) {
+        if (LanguageCatalog.of(version) is Result.Err) {
             echo("ERROR", err = true)
             throw ProgramResult(1)
         }
@@ -39,7 +41,7 @@ class PrintScriptCli(
 
     companion object {
         fun create(): PrintScriptCli {
-            val configs = PrintScriptConfigsLoader.load("1")
+            val configs = PrintScriptConfigsLoader.load("1.0")
             return PrintScriptCli(
                 RunCommand(configs.lang, configs.grammar, configs.typeSystem),
                 LintCommand(configs.lang, configs.grammar, configs.linterConfig),

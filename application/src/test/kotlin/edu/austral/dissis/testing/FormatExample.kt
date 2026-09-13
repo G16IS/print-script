@@ -23,7 +23,7 @@ object FormatExample {
 
     private val grammar: Grammar =
         JSONGrammarConfigReader
-            .read(stream("grammar.config.v1.json"))
+            .read(stream("grammar.config.v1.0.json"))
 
     private val formatter: Formatter = loadFormatter()
 
@@ -45,7 +45,7 @@ object FormatExample {
 
     private fun loadFormatter(): Formatter {
         val languageConfig =
-            JSONFormatterLanguageConfigReader.read(stream("formatter-language.v1.json"))
+            JSONFormatterLanguageConfigReader.read(stream("formatter-language.v1.0.json"))
         val defaults =
             JSONFormatterRulesConfigReader.read(stream("formatter-user-defaults.json"))
         val loaded =

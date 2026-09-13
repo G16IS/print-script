@@ -3,11 +3,13 @@ package printscript.usecases
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
+import printscript.edition.LanguageCatalog
+import printscript.edition.LanguageKit
 import printscript.error.Error
 import printscript.error.TypeErrorWithMessage
-import printscript.factory.typechecker.TypeCheckerFactory
 import printscript.reader.CodeReader
 import printscript.syntax.SyntaxProgram
+import printscript.typechecker.DefaultTypeCheckerFactory
 import printscript.typechecker.TypeChecker
 import printscript.util.Report
 import printscript.util.Result
@@ -19,16 +21,11 @@ object TypecheckCode {
         grammar: Grammar,
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
-        version: String = "1",
+        kit: LanguageKit = LanguageCatalog.v10,
     ): Report<SyntaxProgram, Error> =
-        when (val program = ParseProgram.parse(langConfig, grammar, reader, version)) {
+        when (val program = ParseProgram.parse(langConfig, grammar, reader, kit)) {
             is Result.Ok -> {
-                val typeCheckerFactoryResult = TypeCheckerFactory.create(typeSystem, version)
-                val typeChecker: TypeChecker =
-                    when (typeCheckerFactoryResult) {
-                        is Result.Err -> return typeCheckerFactoryResult.toReport()
-                        is Result.Ok -> typeCheckerFactoryResult.value
-                    }
+                val typeChecker = DefaultTypeCheckerFactory.create(typeSystem, kit.kindHandlerFactory)
                 checkTypes(typeChecker, program.value)
             }
             is Result.Err -> program.toReport()
