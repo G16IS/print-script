@@ -66,6 +66,53 @@ class ResultTest {
 
         assertEquals(4, folded)
     }
+
+    @Test
+    fun `flatMap transforms Ok into the inner Result`() {
+        val result = Result.Ok(2).flatMap { Result.Ok(it * 3) }
+
+        assertEquals(Result.Ok(6), result)
+    }
+
+    @Test
+    fun `flatMap can turn Ok into Err`() {
+        val result = (Result.Ok(2) as Result<Int, String>).flatMap { Result.Err("nope") }
+
+        assertEquals(Result.Err("nope"), result)
+    }
+
+    @Test
+    fun `flatMap leaves Err unchanged and does not invoke transform`() {
+        val err: Result<Int, String> = Result.Err("boom")
+        var called = false
+
+        val result =
+            err.flatMap {
+                called = true
+                Result.Ok(it * 3)
+            }
+
+        assertEquals(Result.Err("boom"), result)
+        assertFalse(called)
+    }
+
+    @Test
+    fun `toReport on Ok keeps the value and no errors`() {
+        val report = Result.Ok(7).toReport()
+
+        assertEquals(7, report.value)
+        assertEquals(emptyList(), report.errors)
+        assertTrue(report.isOk)
+    }
+
+    @Test
+    fun `toReport on Err has null value and the error`() {
+        val report = Result.Err("boom").toReport()
+
+        assertEquals(null, report.value)
+        assertEquals(listOf("boom"), report.errors)
+        assertFalse(report.isOk)
+    }
 }
 
 class ReportTest {
