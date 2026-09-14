@@ -1,0 +1,82 @@
+name: Version Tag
+
+# Se dispara con CUALQUIER push a main (merges de PR y pushes directos).
+# Determina si el commit viene de una PR mergeada (bump de MINOR) o fue un
+# push directo (bump de PATCH), calcula la siguiente versión en base al
+# último tag existente, y crea+pushea el tag nuevo.
+#
+# Ese push de tag es lo que dispara el workflow de Publish.
+
+on:
+    push:
+        branches: [main]
+
+concurrency:
+    group: version-tag-main
+    cancel-in-progress: false
+
+permissions:
+    contents: write
+
+jobs:
+    tag-version:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  ref: main
+
+            - name: Determinar si el commit viene de una PR mergeada
+              id: check-pr
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  PR_COUNT=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" \
+                    --jq 'map(select(.merged_at != null and .base.ref == "main")) | length')
+
+                  if [ "$PR_COUNT" -gt 0 ]; then
+                    echo "Commit asociado a una PR mergeada -> bump de MINOR"
+                    echo "bump=minor" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "Push directo a main -> bump de PATCH"
+                    echo "bump=patch" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Buscar último tag
+              id: last-tag
+              run: |
+                  LAST_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+                  if [ -z "$LAST_TAG" ]; then
+                    LAST_TAG="v0.0.0"
+                    echo "No hay tags previos, arrancando desde $LAST_TAG"
+                  else
+                    echo "Último tag: $LAST_TAG"
+                  fi
+                  echo "tag=$LAST_TAG" >> "$GITHUB_OUTPUT"
+
+            - name: Calcular nueva versión
+              id: new-version
+              run: |
+                  VERSION="${{ steps.last-tag.outputs.tag }}"
+                  VERSION="${VERSION#v}"
+                  IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+                  if [ "${{ steps.check-pr.outputs.bump }}" = "minor" ]; then
+                    MINOR=$((MINOR + 1))
+                    PATCH=0
+                  else
+                    PATCH=$((PATCH + 1))
+                  fi
+
+                  NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+                  echo "Nueva versión: $NEW_TAG"
+                  echo "tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
+
+            - name: Crear y pushear el tag
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git tag -a "${{ steps.new-version.outputs.tag }}" -m "Release ${{ steps.new-version.outputs.tag }}"
+                  git push origin "${{ steps.new-version.outputs.tag }}"

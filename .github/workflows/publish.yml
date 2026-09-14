@@ -1,9 +1,18 @@
 name: Publish
 
+# Se dispara al pushear un tag vX.Y.Z (ya sea creado automáticamente por
+# Version Tag para minor/patch, o creado manualmente al publicar un
+# GitHub Release para major -- publicar un Release también pushea su tag,
+# así que este único trigger cubre los tres casos sin duplicar el deploy.
+
 on:
-    release:
-        types: [published]
+    push:
+        tags: ["v*"]
     workflow_dispatch:
+        inputs:
+            tag:
+                description: "Tag a republicar (ej: v1.4.3). Vacío = usa el tag del push."
+                required: false
 
 permissions:
     packages: write
@@ -13,7 +22,22 @@ jobs:
     publish:
         runs-on: ubuntu-latest
         steps:
+            - name: Resolver tag a publicar
+              id: resolve-tag
+              run: |
+                  if [ -n "${{ inputs.tag }}" ]; then
+                    TAG="${{ inputs.tag }}"
+                  else
+                    TAG="${GITHUB_REF_NAME}"
+                  fi
+                  VERSION="${TAG#v}"
+                  echo "Publicando versión: $VERSION"
+                  echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
             - uses: actions/checkout@v4
+              with:
+                  ref: ${{ steps.resolve-tag.outputs.tag }}
 
             - uses: actions/setup-java@v4
               with:
@@ -21,7 +45,7 @@ jobs:
                   java-version: 21
 
             - name: Publish packages
-              run: ./gradlew publish -Pversion=${GITHUB_REF_NAME#v}
+              run: ./gradlew publish -Pversion=${{ steps.resolve-tag.outputs.version }}
               env:
                   GITHUB_ACTOR: ${{ github.actor }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
