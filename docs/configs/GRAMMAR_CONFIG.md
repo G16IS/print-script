@@ -27,7 +27,7 @@ Nombre de la regla que evalúa cada `parseNextStatement`.
 
 ### `rules`
 
-Mapa nombre → definición. Cada definición usa **una** clave de tipo (`or`, `seq`, `left`, `atom`, `repeat`).
+Mapa nombre → definición. Cada definición usa **una** clave de tipo (`or`, `seq`, `left`, `atom`, `repeat`, `optional`).
 
 ---
 
@@ -40,6 +40,7 @@ Mapa nombre → definición. Cada definición usa **una** clave de tipo (`or`, `
 | `{ "seq": [ ... ] }` | `SeqRule` | `SeqRuleSerializer` |
 | `{ "left": "term", "op": { "token": "OPERATOR", "values": ["+","-"] } }` | `LeftRule` | `LeftRuleSerializer` |
 | `{ "repeat": "statement" }` | `RepeatRule` | `RepeatRuleSerializer` |
+| `{ "optional": "var-init" }` | `OptionalRule` | `OptionalRuleSerializer` |
 
 Los tipos de token (`LET`, `ID`, `OPERATOR`, …) son strings y tienen que coincidir con `language.config.v1.0.json`.
 
@@ -59,12 +60,39 @@ Igual que el lexer (`ExactRuleSerializer` / `RegexRuleSerializer`):
 
 - El dominio (`Grammar`, `GrammarRule`, …) vive en `common` y **no** tiene `@Serializable`.
 - Cada tipo tiene un `KSerializer` con surrogate en `infrastructure/serializer/config`.
-- `GrammarRuleSerializer` elige el serializer según la clave JSON (`or`, `seq`, `left`, `atom`, `repeat`). No hay campo `type`.
+- `GrammarRuleSerializer` elige el serializer según la clave JSON (`or`, `seq`, `left`, `atom`, `repeat`, `optional`). No hay campo `type`.
 - `JSONGrammarConfigReader` implementa `GrammarConfigReader` y registra los serializers en un `SerializersModule` polimórfico.
 
 Para agregar un tipo de regla: data class en `common` + serializer + registrarlo en el module + handler en el parser.
 
 ---
+
+## Inicializador opcional (v1)
+
+`variable` no exige `=`. El combinador `optional` envuelve siempre:
+
+- ausente → nodo `initializer` con 0 hijos (`let x: string;`)
+- presente → 1 hijo `var-init` (seq de `ASSIGN` + `expression`)
+
+```json
+"variable": {
+  "seq": [
+    "LET",
+    { "capture": "ID" },
+    "COLON",
+    { "capture": "TYPE" },
+    { "rule": "initializer" },
+    "SEMICOLON"
+  ]
+},
+"initializer": { "optional": "var-init" },
+"var-init": {
+  "seq": [
+    "ASSIGN",
+    { "rule": "expression" }
+  ]
+}
+```
 
 ## Bloques (listo, no usado en v1)
 

@@ -91,17 +91,29 @@ Matching por expresión regular.
 
 **Ejemplo de parcial (STRING_LITERAL):**
 
+Hay **dos** reglas `STRING_LITERAL` en el JSON de producción: dobles y simples. Mismo `token`, `partial` independiente.
+
 ```json
 {
   "type": "regex",
-  "matcher": ["^\".*?\""],
+  "matcher": ["^\"[^\"]*\""],
   "token": "STRING_LITERAL",
   "capture": true,
-  "partial": "^\""
+  "partial": "^\"[^\"]*$"
 }
 ```
 
-`"hola` matchea parcialmente porque empieza con `"`.
+```json
+{
+  "type": "regex",
+  "matcher": ["^'[^']*'"],
+  "token": "STRING_LITERAL",
+  "capture": true,
+  "partial": "^'[^']*$"
+}
+```
+
+`"hola` y `'hola` matchean parcialmente. El value del token **incluye** las comillas. No hay escapes.
 
 ---
 

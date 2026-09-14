@@ -56,15 +56,16 @@ class OptionalRuleHandlerTest {
         val g =
             grammar(
                 "if",
-                "if" to seq(
-                    expect("IF"),
-                    expect("LEFT_PAREN"),
-                    ref("id"),
-                    expect("RIGHT_PAREN"),
-                    expect("LEFT_BRACE"),
-                    expect("RIGHT_BRACE"),
-                    ref("else-opt"),
-                ),
+                "if" to
+                    seq(
+                        expect("IF"),
+                        expect("LEFT_PAREN"),
+                        ref("id"),
+                        expect("RIGHT_PAREN"),
+                        expect("LEFT_BRACE"),
+                        expect("RIGHT_BRACE"),
+                        ref("else-opt"),
+                    ),
                 "else-opt" to optional("else-clause"),
                 "else-clause" to seq(expect("ELSE"), expect("LEFT_BRACE"), expect("RIGHT_BRACE")),
                 "id" to atom("ID"),

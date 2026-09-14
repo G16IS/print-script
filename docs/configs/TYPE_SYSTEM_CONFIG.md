@@ -102,7 +102,7 @@ Las claves son los **nombres de regla** que produce el parser. `kind` elige el h
 
 | Kind | Handler | Campos extra |
 |---|---|---|
-| `declaration` | `DeclarationHandler` | `id`, `declaredType`, `expression` |
+| `declaration` | `DeclarationHandler` | `id`, `declaredType`, `expression` (`find`; ausente = let sin `=`) |
 | `expression` | `ExpressionStmtHandler` | `expression` |
 | `binary-or-primary` | `BinaryOrPrimaryHandler` | — (3 hijos = binario; 1 hijo = primario) |
 | `primary` | `PrimaryHandler` | — (un hijo) |

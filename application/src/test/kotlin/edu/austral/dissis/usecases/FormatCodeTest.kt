@@ -22,4 +22,12 @@ class FormatCodeTest {
         assertTrue(formatted is Result.Ok)
         assertEquals("let x : number = 1;\n", (formatted as Result.Ok).value)
     }
+
+    @Test
+    fun `formats an uninitialized declaration without assign`() {
+        val formatted = FormatExample.format("unformatted_uninitialized.ps")
+
+        assertTrue(formatted is Result.Ok)
+        assertEquals("let x : string;\n", (formatted as Result.Ok).value)
+    }
 }

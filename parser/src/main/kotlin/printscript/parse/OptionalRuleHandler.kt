@@ -14,13 +14,15 @@ class OptionalRuleHandler : RuleHandler {
     ): ParseResult<SyntaxNode> {
         val item = (rule as OptionalRule).item
         return when (val inner = ctx.tryEvaluate(item)) {
-            is ParseResult.Matched -> ParseResult.Matched(
-                SyntaxNode(name, children = listOf(inner.node), location = inner.node.location),
-            )
+            is ParseResult.Matched ->
+                ParseResult.Matched(
+                    SyntaxNode(name, children = listOf(inner.node), location = inner.node.location),
+                )
 
-            ParseResult.Missing -> ParseResult.Matched(
-                SyntaxNode(name, children = emptyList(), location = ctx.tokens.peek().location),
-            )
+            ParseResult.Missing ->
+                ParseResult.Matched(
+                    SyntaxNode(name, children = emptyList(), location = ctx.tokens.peek().location),
+                )
 
             is ParseResult.Failed -> inner
         }
