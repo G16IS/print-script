@@ -4,6 +4,7 @@ import edu.austral.dissis.testing.PrintScriptLanguage
 import java.io.File
 import java.io.InputStream
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.PrintEffect
@@ -12,7 +13,7 @@ import printscript.SideEffectManager
 import printscript.domain.Grammar
 import printscript.domain.TypeSystemConfig
 import printscript.edition.LanguageCatalog
-import printscript.error.ExecutionFailure
+import printscript.error.TypeErrorWithMessage
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.reader.JSONTypeSystemConfigReader
@@ -30,7 +31,7 @@ class ExecuteCodeTest {
         val seen = RecordingSideEffects()
         val result = execute("declarations_and_prints.ps", seen)
 
-        assertTrue(result is Result.Ok)
+        assertTrue(result.isOk)
         assertEquals(listOf("Hello, World!", "42"), seen.printed())
     }
 
@@ -39,7 +40,7 @@ class ExecuteCodeTest {
         val seen = RecordingSideEffects()
         val result = execute("binary_expression.ps", seen)
 
-        assertTrue(result is Result.Ok)
+        assertTrue(result.isOk)
         assertEquals(listOf("7"), seen.printed())
     }
 
@@ -47,8 +48,8 @@ class ExecuteCodeTest {
     fun `type mismatch does not run the interpreter`() {
         val result = execute("type_mismatch.ps")
 
-        assertTrue(result is Result.Err)
-        assertTrue((result as Result.Err).error is ExecutionFailure.Types)
+        assertFalse(result.isOk)
+        assertTrue(result.errors.first() is TypeErrorWithMessage)
     }
 
     @Test
@@ -66,7 +67,7 @@ class ExecuteCodeTest {
                 FileCodeReader(file("examples/binary_expression.ps")),
                 kit,
             )
-        assertTrue(result is Result.Ok)
+        assertTrue(result.isOk)
         assertEquals(listOf("7"), seen.printed())
     }
 
