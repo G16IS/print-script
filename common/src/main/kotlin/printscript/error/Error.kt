@@ -1,3 +1,5 @@
 package printscript.error
 
-sealed interface Error
+sealed interface Error {
+    val message: String
+}

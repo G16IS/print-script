@@ -1,24 +1,18 @@
 package printscript.cli
 
 import printscript.error.Error
-import printscript.error.ExecutionFailure
 import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
 
-internal fun presentRun(block: () -> Result<Unit, ExecutionFailure>): CommandResult =
+internal fun presentRun(block: () -> Report<Unit, Error>): CommandResult =
     catching {
-        block().fold(
-            onOk = { CommandResult.Ok },
-            onErr = { failure ->
-                when (failure) {
-                    is ExecutionFailure.Types ->
-                        CommandResult.Failed(failure.errors.map { formatError(it) })
-                    is ExecutionFailure.Runtime ->
-                        CommandResult.Failed(listOf(formatRuntimeError(failure.error)))
-                }
-            },
-        )
+        val report = block()
+        if (report.isOk) {
+            CommandResult.Ok
+        } else {
+            CommandResult.Failed(report.errors.map(::formatError))
+        }
     }
 
 internal fun presentFormat(block: () -> Result<String, Error>): CommandResult =

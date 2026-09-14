@@ -4,7 +4,7 @@ import printscript.reader.CharPosition
 import printscript.syntax.Location
 
 sealed interface RuntimeError : Error {
-    val message: String
+    override val message: String
     val location: Location
 }
 

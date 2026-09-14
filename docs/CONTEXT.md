@@ -291,7 +291,7 @@ Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 ### `application` — orquestación
 
 - `InterpretCode.interpretCode(...)` — lex + parse + type-check → `Report`
-- `ExecuteCode.execute(...)` — lo anterior + interpreter → `Result<List<SideEffect>, ExecutionFailure>`
+- `ExecuteCode.execute(...)` — lo anterior + interpreter → `Report<Unit, Error>`
 - `FormatCode` / `CheckFormat` / `LintProgram` — reciben `CodeReader` + configs/formatter ya armados
 - `LoadFormatter` arma el `Formatter` a partir de configs parseadas (no lee archivos). Lo llama el CLI al arrancar
 - No hay `Main.kt` acá: el CLI vive en `:cli`

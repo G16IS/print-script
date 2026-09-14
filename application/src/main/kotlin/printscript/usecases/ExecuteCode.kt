@@ -9,8 +9,8 @@ import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.edition.LanguageKit
 import printscript.error.Error
-import printscript.error.ExecutionFailure
 import printscript.reader.CodeReader
+import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
 import printscript.util.isOk
@@ -22,19 +22,19 @@ object ExecuteCode {
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
         kit: LanguageKit,
-    ): Result<Unit, ExecutionFailure> {
+    ): Report<Unit, Error> {
         val report = TypecheckCode.typecheck(langConfig, grammar, typeSystem, reader, kit)
 
         if (!report.isOk) {
-            return Result.Err(ExecutionFailure.Types(report.errors))
+            return Report(errors = report.errors)
         }
 
         return DefaultInterpreterFactory
             .create(kit.evaluators, kit.executors)
             .interpret(InterpreterContext(), report.value!!)
             .fold(
-                onOk = { Result.Ok(Unit) },
-                onErr = { Result.Err(ExecutionFailure.Runtime(it)) },
+                onOk = { Report(value = Unit) },
+                onErr = { Report(errors = listOf(it)) },
             )
     }
 
@@ -47,8 +47,8 @@ object ExecuteCode {
         val report = TypecheckCode.typecheck(configs.lang, configs.grammar, configs.typeSystem, codeReader, languageKit)
 
         if (!report.isOk) {
-            report.errors.forEach { reportError(it) }
-            errorHandler.handleErrorMessage("Typechecking failed with errors: ${report.errors}")
+            report.errors.forEach { reportError(it, errorHandler) }
+            return
         }
 
         val evaluators = languageKit.evaluators
@@ -59,9 +59,11 @@ object ExecuteCode {
                 .create(evaluators, statementExecutors)
                 .interpret(InterpreterContext(), report.value!!)
 
-        if (interpreterResult is Result.Err) reportError((interpreterResult).error)
+        if (interpreterResult is Result.Err) reportError((interpreterResult).error, errorHandler)
     }
 }
 
-private fun reportError(error: Error): Unit =
-    throw IllegalArgumentException("Error reporting is not implemented yet. Error: $error")
+private fun reportError(
+    error: Error,
+    errorHandler: ErrorHandler,
+): Unit = errorHandler.handleErrorMessage(error.message)
