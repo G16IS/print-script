@@ -20,7 +20,12 @@ import printscript.util.fold
 object PrintScriptConfigsLoader {
     private const val USER_YAML_PATH = ".printscript/formatter.yml"
 
-    fun load(version: String): PrintScriptConfigs {
+    fun load(version: String): PrintScriptConfigs = load(version, userRules())
+
+    fun load(
+        version: String,
+        user: FormatterRulesConfig,
+    ): PrintScriptConfigs {
         val lang =
             JSONLanguageConfigReader.read(resource("language.config.v$version.json"))
 
@@ -38,7 +43,7 @@ object PrintScriptConfigsLoader {
             grammar = grammar,
             typeSystem = typeSystem,
             linterConfig = linterConfig,
-            formatter = loadFormatter(lang, grammar, version),
+            formatter = loadFormatter(lang, grammar, version, user),
         )
     }
 
@@ -46,12 +51,13 @@ object PrintScriptConfigsLoader {
         lang: LanguageConfig,
         grammar: Grammar,
         version: String,
+        user: FormatterRulesConfig,
     ) = LoadFormatter
         .load(
             grammar,
             lang,
             JSONFormatterLanguageConfigReader.read(resource("formatter-language.v$version.json")),
-            userRules(),
+            user,
             JSONFormatterRulesConfigReader.read(resource("formatter-user-defaults.json")),
         ).fold(
             onOk = { it },

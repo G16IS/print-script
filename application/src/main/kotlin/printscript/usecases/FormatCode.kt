@@ -1,5 +1,7 @@
 package printscript.usecases
 
+import java.io.Writer
+import printscript.config.PrintScriptConfigs
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.edition.LanguageKit
@@ -22,4 +24,25 @@ object FormatCode {
             is Result.Ok -> formatter.format(program.value)
             is Result.Err -> Result.Err(program.error)
         }
+
+    fun formatForTck(
+        configs: PrintScriptConfigs,
+        codeReader: CodeReader,
+        writer: Writer,
+        languageKit: LanguageKit,
+    ) {
+        when (
+            val result =
+                formatCode(
+                    configs.lang,
+                    configs.grammar,
+                    codeReader,
+                    configs.formatter,
+                    languageKit,
+                )
+        ) {
+            is Result.Ok -> writer.write(result.value)
+            is Result.Err -> Unit
+        }
+    }
 }
