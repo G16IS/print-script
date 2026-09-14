@@ -31,6 +31,8 @@ class JSONGrammarConfigReaderTest {
     fun `reads seq steps including captures and rule refs`() {
         val variable = grammar.rules.getValue("variable") as SeqRule
         assertEquals(expectedVariableSteps(), variable.steps)
+        val initializer = grammar.rules.getValue("initializer") as OptionalRule
+        assertEquals("var-init", initializer.item)
     }
 
     @Test
@@ -90,8 +92,7 @@ class JSONGrammarConfigReaderTest {
             TokenStep("ID", true),
             TokenStep("COLON", false),
             TokenStep("TYPE", true),
-            TokenStep("ASSIGN", false),
-            RuleRefStep("expression"),
+            RuleRefStep("initializer"),
             TokenStep("SEMICOLON", false),
         )
 
