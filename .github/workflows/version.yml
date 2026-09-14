@@ -3,9 +3,12 @@ name: Version Tag
 # Se dispara con CUALQUIER push a main (merges de PR y pushes directos).
 # Determina si el commit viene de una PR mergeada (bump de MINOR) o fue un
 # push directo (bump de PATCH), calcula la siguiente versión en base al
-# último tag existente, y crea+pushea el tag nuevo.
+# último tag semver, y crea+pushea el tag nuevo.
 #
-# Ese push de tag es lo que dispara el workflow de Publish.
+# Publish se llama en este mismo run (workflow_call). No depende de que el
+# push del tag dispare otro workflow: GitHub no encola eventos creados con
+# GITHUB_TOKEN, y el PAT en la URL del remote no gana al extraheader que
+# deja actions/checkout.
 
 on:
     push:
@@ -18,10 +21,13 @@ concurrency:
 permissions:
     contents: write
     pull-requests: read
+    packages: write
 
 jobs:
     tag-version:
         runs-on: ubuntu-latest
+        outputs:
+            tag: ${{ steps.new-version.outputs.tag }}
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -48,7 +54,9 @@ jobs:
             - name: Buscar último tag
               id: last-tag
               run: |
-                  LAST_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+                  LAST_TAG=$(git tag --list 'v*' --sort=-v:refname \
+                    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+                    | head -n1 || true)
                   if [ -z "$LAST_TAG" ]; then
                     LAST_TAG="v0.0.0"
                     echo "No hay tags previos, arrancando desde $LAST_TAG"
@@ -77,14 +85,23 @@ jobs:
 
             - name: Crear y pushear el tag
               env:
-                  RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+                  NEW_TAG: ${{ steps.new-version.outputs.tag }}
               run: |
                   git config user.name "github-actions[bot]"
                   git config user.email "github-actions[bot]@users.noreply.github.com"
-                  git tag -a "${{ steps.new-version.outputs.tag }}" -m "Release ${{ steps.new-version.outputs.tag }}"
-                  # Usamos un PAT en vez del GITHUB_TOKEN default: los eventos creados
-                  # con el GITHUB_TOKEN por defecto NO disparan otros workflows
-                  # (protección anti-loop de GitHub), así que con el token default
-                  # el push del tag nunca activaría publish.yml.
-                  git remote set-url origin "https://x-access-token:${RELEASE_TOKEN}@github.com/${{ github.repository }}.git"
-                  git push origin "${{ steps.new-version.outputs.tag }}"
+                  if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+                    echo "Tag $NEW_TAG ya existe, skip create/push"
+                  else
+                    git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
+                    git push origin "$NEW_TAG"
+                  fi
+
+    publish:
+        needs: tag-version
+        uses: ./.github/workflows/publish.yml
+        with:
+            tag: ${{ needs.tag-version.outputs.tag }}
+        secrets: inherit
+        permissions:
+            contents: read
+            packages: write

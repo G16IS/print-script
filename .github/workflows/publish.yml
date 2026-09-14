@@ -1,18 +1,29 @@
 name: Publish
 
-# Se dispara al pushear un tag vX.Y.Z (ya sea creado automáticamente por
-# Version Tag para minor/patch, o creado manualmente al publicar un
-# GitHub Release para major -- publicar un Release también pushea su tag,
-# así que este único trigger cubre los tres casos sin duplicar el deploy.
+# Tres formas de dispararlo, todas en el mismo run (no hay que esperar un
+# segundo workflow):
+#   - workflow_call  ← Version Tag lo llama al terminar el bump patch/minor
+#   - release        ← GitHub Release publicado (major: tipear el tag vX.0.0)
+#   - workflow_dispatch ← republicar a mano
+#
+# No usamos `on: push: tags`. Un Release crea el tag Y el release: si
+# también escucháramos el push, Publish correría dos veces y el segundo
+# muere en 409 de GitHub Packages.
 
 on:
-    push:
-        tags: ["v*"]
+    workflow_call:
+        inputs:
+            tag:
+                required: true
+                type: string
+    release:
+        types: [published]
     workflow_dispatch:
         inputs:
             tag:
-                description: "Tag a republicar (ej: v1.4.3). Vacío = usa el tag del push."
+                description: "Tag a republicar (ej: v1.4.3). Vacío en un release = tag del release."
                 required: false
+                type: string
 
 permissions:
     packages: write
@@ -26,9 +37,13 @@ jobs:
               id: resolve-tag
               env:
                   INPUT_TAG: ${{ inputs.tag }}
+                  EVENT_NAME: ${{ github.event_name }}
+                  RELEASE_TAG: ${{ github.event.release.tag_name }}
               run: |
                   if [ -n "$INPUT_TAG" ]; then
                     TAG="$INPUT_TAG"
+                  elif [ "$EVENT_NAME" = "release" ]; then
+                    TAG="$RELEASE_TAG"
                   else
                     TAG="${GITHUB_REF_NAME}"
                   fi
