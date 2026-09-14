@@ -76,8 +76,15 @@ jobs:
                   echo "tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
 
             - name: Crear y pushear el tag
+              env:
+                  RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
               run: |
                   git config user.name "github-actions[bot]"
                   git config user.email "github-actions[bot]@users.noreply.github.com"
                   git tag -a "${{ steps.new-version.outputs.tag }}" -m "Release ${{ steps.new-version.outputs.tag }}"
+                  # Usamos un PAT en vez del GITHUB_TOKEN default: los eventos creados
+                  # con el GITHUB_TOKEN por defecto NO disparan otros workflows
+                  # (protección anti-loop de GitHub), así que con el token default
+                  # el push del tag nunca activaría publish.yml.
+                  git remote set-url origin "https://x-access-token:${RELEASE_TOKEN}@github.com/${{ github.repository }}.git"
                   git push origin "${{ steps.new-version.outputs.tag }}"
