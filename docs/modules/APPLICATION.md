@@ -28,6 +28,11 @@ application/src/main/kotlin/
   usecases/CheckFormat.kt         checkFormat(...) — `Formatter.check`, lista mismatches
   usecases/LintProgram.kt         lint sobre el árbol parseado
   usecases/LoadFormatter.kt       arma Formatter desde configs ya parseadas
+  printscript/edition/
+    LanguageVersion.kt      parse "1.0" | "1.1" (no hay "1")
+    LanguageKit.kt          listas de handlers de cada módulo
+    LanguageCatalog.kt      of("1.0"|"1.1") → kit
+  printscript/factory/      wrappers de una línea sobre el catálogo
 
 application/src/test/
   kotlin/edu/austral/dissis/
@@ -57,7 +62,7 @@ application/src/test/
     formatted_declaration.ps
 ```
 
-`grammar.config.json` y `type-system.config.json` de test salen del **classpath de infrastructure**. Los `.ps` sí son de application.
+`grammar.config.v1.0.json` y `type-system.config.v1.0.json` de test salen del **classpath de infrastructure**. Los `.ps` sí son de application.
 
 ---
 
@@ -114,11 +119,11 @@ Tests:
 `ParseExample.parse("foo.ps")`:
 
 - Lenguaje: `PrintScriptLanguage.config()` (**no** el JSON del lexer)
-- Gramática: resource `grammar.config.json`
-- Type-system: resource `type-system.config.json`
+- Gramática: resource `grammar.config.v1.0.json`
+- Type-system: resource `type-system.config.v1.0.json`
 - Path: resource `examples/foo.ps` resuelto a `File` absoluto
 
-`PrintScriptLanguage` duplica las reglas de `language.config.json` con el mismo `order` (keywords primero). Si agregás un token, actualizá JSON **y** esta clase **y** el `PrintScriptLanguage` del lexer (y `PsSupport` del interpreter).
+`PrintScriptLanguage` duplica las reglas de `language.config.v1.0.json` con el mismo `order` (keywords primero). Si agregás un token, actualizá JSON **y** esta clase **y** el `PrintScriptLanguage` del lexer (y `PsSupport` del interpreter).
 
 `InterpretCodeTest` aserta la **forma** del árbol, no locations:
 
@@ -175,6 +180,9 @@ Son el contrato de integración del lenguaje v1. Si cambiás la gramática de fo
 ---
 
 ## Cómo extender
+
+Nueva minor: plugins en su módulo (`RuleHandlers.defaults`, `DefaultKindHandlerFactory`, `DefaultInterpreterComponents`). En `LanguageCatalog` un `v1x = v10.copy(...)` y entrada en `kits`. JSON en `infrastructure` (`*.v1.0.json` y `*.v1.1.json`; hoy el 1.1 es copia del 1.0).
+Major 2: otro kit en el mapa `kits` de `LanguageCatalog`.
 
 ### CLI
 

@@ -6,40 +6,56 @@ import java.nio.file.Files
 import java.nio.file.Path
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.Grammar
+import printscript.edition.LanguageCatalog
 import printscript.error.Error
 import printscript.formatter.Formatter
-import printscript.infrastructure.reader.FileCodeReader
-import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
-import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
-import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.io.DefaultSideEffectManager
+import printscript.reader.FileCodeReader
+import printscript.reader.JSONFormatterLanguageConfigReader
+import printscript.reader.JSONFormatterRulesConfigReader
+import printscript.reader.JSONGrammarConfigReader
+import printscript.usecases.CheckFormat
+import printscript.usecases.FormatCode
+import printscript.usecases.LoadFormatter
 import printscript.util.Report
 import printscript.util.Result
-import usecases.CheckFormat
-import usecases.FormatCode
-import usecases.LoadFormatter
 
 object FormatExample {
     private val language = PrintScriptLanguage.config()
 
     private val grammar: Grammar =
-        JSONGrammarConfigReader.read(stream("grammar.config.json"))
+        JSONGrammarConfigReader
+            .read(stream("grammar.config.v1.0.json"))
 
     private val formatter: Formatter = loadFormatter()
 
     fun format(example: String): Result<String, Error> {
         val path = file("examples/$example")
-        return FormatCode.formatCode(language, grammar, FileCodeReader(path), formatter)
+        return FormatCode.formatCode(
+            language,
+            grammar,
+            FileCodeReader(path),
+            formatter,
+            LanguageCatalog.v10(DefaultSideEffectManager()),
+        )
     }
 
     fun check(example: String): Report<Unit, Error> {
         val path = file("examples/$example")
         val source = Files.readString(Path.of(path))
-        return CheckFormat.checkFormat(language, grammar, FileCodeReader(path), source, formatter)
+        return CheckFormat.checkFormat(
+            language,
+            grammar,
+            FileCodeReader(path),
+            source,
+            formatter,
+            LanguageCatalog.v10(DefaultSideEffectManager()),
+        )
     }
 
     private fun loadFormatter(): Formatter {
         val languageConfig =
-            JSONFormatterLanguageConfigReader.read(stream("formatter-language.json"))
+            JSONFormatterLanguageConfigReader.read(stream("formatter-language.v1.0.json"))
         val defaults =
             JSONFormatterRulesConfigReader.read(stream("formatter-user-defaults.json"))
         val loaded =

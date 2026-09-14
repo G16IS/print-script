@@ -1,8 +1,8 @@
 package printscript
 
-import printscript.ast.Location
 import printscript.domain.Token
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 
 class TokenRegistry(
     val wordMap: Map<String, (Location) -> Token>,

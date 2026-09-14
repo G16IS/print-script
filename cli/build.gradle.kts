@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     application
+
+    // Continuous Deployment
+    id("printscript.publishing-conventions")
 }
 
 repositories {

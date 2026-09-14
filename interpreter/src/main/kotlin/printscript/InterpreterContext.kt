@@ -1,8 +1,8 @@
 package printscript
 
-import printscript.ast.Location
 import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
+import printscript.syntax.Location
 import printscript.util.Result
 import printscript.util.map
 

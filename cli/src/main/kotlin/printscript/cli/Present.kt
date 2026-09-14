@@ -1,34 +1,18 @@
 package printscript.cli
 
-import printscript.PrintEffect
-import printscript.SideEffect
 import printscript.error.Error
 import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
-import usecases.ExecutionFailure
 
-internal fun presentRun(block: () -> Result<List<SideEffect>, ExecutionFailure>): CommandResult =
+internal fun presentRun(block: () -> Report<Unit, Error>): CommandResult =
     catching {
-        block().fold(
-            onOk = { effects ->
-                CommandResult.Output(
-                    effects.joinToString("") { effect ->
-                        when (effect) {
-                            is PrintEffect -> effect.text + "\n"
-                        }
-                    },
-                )
-            },
-            onErr = { failure ->
-                when (failure) {
-                    is ExecutionFailure.Types ->
-                        CommandResult.Failed(failure.errors.map { formatError(it) })
-                    is ExecutionFailure.Runtime ->
-                        CommandResult.Failed(listOf(formatRuntimeError(failure.error)))
-                }
-            },
-        )
+        val report = block()
+        if (report.isOk) {
+            CommandResult.Ok
+        } else {
+            CommandResult.Failed(report.errors.map(::formatError))
+        }
     }
 
 internal fun presentFormat(block: () -> Result<String, Error>): CommandResult =

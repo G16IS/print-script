@@ -5,7 +5,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import printscript.ast.Location
 import printscript.domain.Token
 import printscript.error.InvalidIdentifierFormat
 import printscript.error.InvalidPrintlnArgument
@@ -13,6 +12,7 @@ import printscript.reader.CharPosition
 import printscript.rule.IdentifierFormatRule
 import printscript.rule.LetterCase
 import printscript.rule.PrintlnArgumentRule
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
 

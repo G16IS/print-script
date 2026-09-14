@@ -3,7 +3,6 @@ package printscript.formatter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.ast.Location
 import printscript.domain.FormatRuleSpec
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.TokenLexemes
@@ -13,17 +12,18 @@ import printscript.formatter.support.leaf
 import printscript.formatter.support.number
 import printscript.formatter.support.program
 import printscript.formatter.support.wrap
-import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
-import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
-import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.reader.JSONFormatterLanguageConfigReader
+import printscript.reader.JSONFormatterRulesConfigReader
+import printscript.reader.JSONGrammarConfigReader
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
 class PrintScriptLayoutTest {
     private val grammar =
         JSONGrammarConfigReader.read(
-            checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
-                "Missing grammar.config.json"
+            checkNotNull(javaClass.getResourceAsStream("/grammar.config.v1.0.json")) {
+                "Missing grammar.config.v1.0.json"
             },
         )
     private val lexemes =
@@ -138,8 +138,8 @@ class PrintScriptLayoutTest {
     }
 
     private fun languageResource() =
-        checkNotNull(javaClass.getResourceAsStream("/formatter-language.json")) {
-            "Missing formatter-language.json"
+        checkNotNull(javaClass.getResourceAsStream("/formatter-language.v1.0.json")) {
+            "Missing formatter-language.v1.0.json"
         }
 
     private fun defaultsResource() =

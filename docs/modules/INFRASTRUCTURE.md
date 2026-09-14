@@ -33,7 +33,7 @@ infrastructure/src/main/
     serializer/config/
       JsonCodecs.kt              asJsonDecoder / asJsonEncoder
       LanguageConfigSerializer.kt
-      TokenRuleSerializer.kt     type: exact | regex
+      TokenRuleSerializer.kt     type: exact | regex (decode y encode)
       ExactRuleSerializer.kt
       RegexRuleSerializer.kt
       GrammarSerializer.kt
@@ -157,7 +157,7 @@ El CLI (`PrintScriptCli`) y los tests de application le pasan un **path de files
 
 ## Resources actuales (v1)
 
-### `language.config.json`
+### `language.config.v1.0.json`
 
 Categorías: `keywords`, `types`, `operators`, `literals`, `identifiers`.
 
@@ -169,11 +169,11 @@ Tokens: `LET`, `CALL` (`println`, capture), `TYPE` (`string`/`number`, capture),
 
 Partial de string en este JSON: `"^\"[^\"]*$"` (permite tokenizar `"hola"`). Números siguen con `^[0-9]` (el `1.5` se parte).
 
-### `grammar.config.json`
+### `grammar.config.v1.0.json`
 
 `start: statement`. Producciones: `statement`, `variable`, `expression-stmt`, `expression`, `term`, `factor`, `number`, `string`, `identifier`, `call`, `group`. Sin `repeat`. `call` tiene un solo argumento.
 
-### `type-system.config.json`
+### `type-system.config.v1.0.json`
 
 `types`: `number`, `string`. Literales `NUMBER_LITERAL` / `STRING_LITERAL`. Operaciones `+ - * /` (el `+` también string+string y string+number). `nodes` con kinds `declaration`, `expression`, `binary-or-primary`, `primary`, `call`, `group`, `literal`, `identifier`.
 
@@ -195,11 +195,17 @@ JSON, docs y tests coinciden: **primero gana**. Keywords antes que identifiers p
 
 `JSONTypeSystemConfigReaderTest`: resource canónico, `commutative: false`, rechaza tipos inexistentes.
 
-`FormatterLanguageConfigReaderTest`: resource `formatter-language.json` (`rules` + `userBindings`).
+`FormatterLanguageConfigReaderTest`: resource `formatter-language.v1.0.json` (`rules` + `userBindings`).
 
 `FormatterRulesConfigReaderTest`: YAML de usuario (`enabled` / `count`) + resource `formatter-user-defaults.json`. JSON y YAML de usuario comparten `FormatterRulesConfigSerializer`.
 
 `JSONLanguageConfigReaderTest` lee el resource real (`order`, LET, STRING_LITERAL). El pipeline del CLI (`run` / `typecheck` / `format` / `check` + parse inválido → `ERROR`) vive en `PrintScriptCliTest` (`:cli`). No hay test de `FileCodeReader`.
+
+Serializers (`printscript.serializer.config`):
+
+- `ProductionConfigRoundTripTest`: decode→encode→decode de cada JSON de `src/main/resources` (language, grammar, type-system, formatter-language, formatter-user-defaults, linter; v1.0 y v1.1). Igualdad de dominio, no de string JSON.
+- `TokenRuleSerializer` escribe `"type": "exact" | "regex"` al serializar. Sin eso el round-trip de language config pierde el discriminador.
+- Tests extra: `repeat`, keys de grammar desconocidas, seq steps inválidos, `commutative: false`.
 
 ---
 

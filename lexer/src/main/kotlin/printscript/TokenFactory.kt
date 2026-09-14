@@ -1,9 +1,9 @@
 package printscript
 
 import java.util.Optional
-import printscript.ast.Location
 import printscript.domain.Token
 import printscript.domain.TokenRule
+import printscript.syntax.Location
 import printscript.util.Result
 
 object TokenFactory {

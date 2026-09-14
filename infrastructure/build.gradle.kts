@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
+
+    // Continuous Deployment
+    id("printscript.publishing-conventions")
 }
 
 repositories {
@@ -9,6 +12,8 @@ repositories {
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":application"))
+    implementation(project(":formatter"))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kaml)
 

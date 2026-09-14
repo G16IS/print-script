@@ -92,6 +92,33 @@ class TypeSystemConfigTest {
         assertEquals(emptyList(), literal.args)
     }
 
+    @Test
+    fun `keeps commutative false when it is set`() {
+        val op = Operation("+", listOf("number", "number"), "number", commutative = false)
+
+        val config = TypeSystemConfig(types = listOf("number"), operations = listOf(op))
+
+        assertEquals(false, config.operations.single().commutative)
+    }
+
+    @Test
+    fun `lists each unknown type only once across operations`() {
+        val error =
+            assertFailsWith<IllegalArgumentException> {
+                TypeSystemConfig(
+                    types = listOf("number"),
+                    operations =
+                        listOf(
+                            Operation("+", listOf("boolean", "boolean"), "boolean"),
+                        ),
+                )
+            }
+
+        val message = error.message!!
+        assertTrue(message.contains("Unknown types in operations"))
+        assertEquals(1, Regex("boolean").findAll(message).count())
+    }
+
     private fun canonicalTypeSystem(): TypeSystemConfig =
         TypeSystemConfig(
             types = listOf("number", "string"),

@@ -1,9 +1,29 @@
 name: Publish
 
+# Tres formas de dispararlo, todas en el mismo run (no hay que esperar un
+# segundo workflow):
+#   - workflow_call  ← Version Tag lo llama al terminar el bump patch/minor
+#   - release        ← GitHub Release publicado (major: tipear el tag vX.0.0)
+#   - workflow_dispatch ← republicar a mano
+#
+# No usamos `on: push: tags`. Un Release crea el tag Y el release: si
+# también escucháramos el push, Publish correría dos veces y el segundo
+# muere en 409 de GitHub Packages.
+
 on:
+    workflow_call:
+        inputs:
+            tag:
+                required: true
+                type: string
     release:
         types: [published]
     workflow_dispatch:
+        inputs:
+            tag:
+                description: "Tag a republicar (ej: v1.4.3). Vacío en un release = tag del release."
+                required: false
+                type: string
 
 permissions:
     packages: write
@@ -13,7 +33,36 @@ jobs:
     publish:
         runs-on: ubuntu-latest
         steps:
+            - name: Resolver tag a publicar
+              id: resolve-tag
+              env:
+                  INPUT_TAG: ${{ inputs.tag }}
+                  EVENT_NAME: ${{ github.event_name }}
+                  RELEASE_TAG: ${{ github.event.release.tag_name }}
+              run: |
+                  if [ -n "$INPUT_TAG" ]; then
+                    TAG="$INPUT_TAG"
+                  elif [ "$EVENT_NAME" = "release" ]; then
+                    TAG="$RELEASE_TAG"
+                  else
+                    TAG="${GITHUB_REF_NAME}"
+                  fi
+
+                  if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "ERROR: '$TAG' no es un tag de versión válido."
+                    echo "Esperaba algo como v1.4.3"
+                    exit 1
+                  fi
+
+                  VERSION="${TAG#v}"
+
+                  echo "Publicando versión: $VERSION"
+                  echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
             - uses: actions/checkout@v4
+              with:
+                  ref: ${{ steps.resolve-tag.outputs.tag }}
 
             - uses: actions/setup-java@v4
               with:
@@ -21,7 +70,7 @@ jobs:
                   java-version: 21
 
             - name: Publish packages
-              run: ./gradlew publish -Pversion=${GITHUB_REF_NAME#v}
+              run: ./gradlew publish -Pversion=${{ steps.resolve-tag.outputs.version }}
               env:
                   GITHUB_ACTOR: ${{ github.actor }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

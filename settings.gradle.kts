@@ -67,3 +67,4 @@ if (originalTaskNames.isNotEmpty()) {
         gradle.startParameter.setProjectProperties(properties)
     }
 }
+

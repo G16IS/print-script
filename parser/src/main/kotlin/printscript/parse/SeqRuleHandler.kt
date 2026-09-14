@@ -1,6 +1,5 @@
 package printscript.parse
 
-import printscript.ast.Location
 import printscript.domain.GrammarRule
 import printscript.domain.RuleRefStep
 import printscript.domain.SeqRule
@@ -10,6 +9,7 @@ import printscript.error.ParseErrors
 import printscript.error.ParserError
 import printscript.parse.step.StepEvaluator
 import printscript.parse.step.StepOutcome
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 
 class SeqRuleHandler(

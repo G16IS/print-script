@@ -1,9 +1,9 @@
 package printscript.support
 
 import java.util.Optional
-import printscript.ast.Location
 import printscript.domain.Token
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 
 val TEST_LOCATION: Location = Location(CharPosition(1, 1), CharPosition(1, 1))

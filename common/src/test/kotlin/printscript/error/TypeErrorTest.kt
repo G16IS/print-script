@@ -4,8 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
-import printscript.ast.Location
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
@@ -98,5 +98,13 @@ class TypeErrorTest {
 
         assertFalse(report.isOk)
         assertEquals(error, report.errors.single())
+    }
+
+    @Test
+    fun `TypeErrorWithMessage keeps the given message`() {
+        val error = TypeErrorWithMessage(message = "custom", location = location)
+
+        assertEquals("custom", error.message)
+        assertEquals(location, error.location)
     }
 }

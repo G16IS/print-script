@@ -8,119 +8,156 @@
 #   Format (ktlint)             ktlintCheck — estilo, no reescribe
 #   Lint (detekt)               análisis estático
 #   Build + tests               assemble (JARs) y después test
+#   Coverage                    job aparte: recompila + test + coverage por módulo (80% mínimo)
+#                               separado de "Build + tests" para que un fallo no tape al otro
 
 name: CI
 
 on: # los eventos que lo disparan
-  push:
-    branches: [main]
-  pull_request:
-  workflow_dispatch:
+    push:
+        branches: [main]
+    pull_request:
+    workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
 
 permissions:
-  contents: read
+    contents: read
 
 jobs:
-  wrapper:
-    name: Gradle Wrapper
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    wrapper:
+        name: Gradle Wrapper
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/actions/wrapper-validation@v4
+            - name: Validate Gradle Wrapper
+              uses: gradle/actions/wrapper-validation@v4
 
-  format:
-    name: Format (ktlint)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    format:
+        name: Format (ktlint)
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
+            - name: Set up JDK 21
+              uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: "21"
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v4
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+            - name: Grant execute permission for gradlew
+              run: chmod +x gradlew
 
-      # Verifica estilo; no reescribe. Para arreglar: ./gradlew ktlintFormat
-      - name: Check formatting (ktlintCheck)
-        run: ./gradlew ktlintCheck --continue
+            # Verifica estilo; no reescribe. Para arreglar: ./gradlew ktlintFormat
+            - name: Check formatting (ktlintCheck)
+              run: ./gradlew ktlintCheck --continue
 
-  lint:
-    name: Lint (detekt)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    lint:
+        name: Lint (detekt)
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
+            - name: Set up JDK 21
+              uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: "21"
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v4
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+            - name: Grant execute permission for gradlew
+              run: chmod +x gradlew
 
-      # Findings por consola (reportes archivo apagados en printscript.quality).
-      - name: Run detekt
-        run: ./gradlew detekt --continue
+            # Findings por consola (reportes archivo apagados en printscript.quality).
+            - name: Run detekt
+              run: ./gradlew detekt --continue
 
-  build:
-    name: Build + tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    build:
+        name: Build + tests
+        runs-on: ubuntu-latest
+        timeout-minutes: 25
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
+            - name: Set up JDK 21
+              uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: "21"
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v4
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+            - name: Grant execute permission for gradlew
+              run: chmod +x gradlew
 
-      - name: Build (assemble)
-        id: build
-        run: ./gradlew assemble --continue
+            - name: Build (assemble)
+              id: build
+              run: ./gradlew assemble --continue
 
-      # Mismo runner que assemble: compileKotlin queda UP-TO-DATE.
-      - name: Run tests
-        id: test
-        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: ./gradlew test --continue
+            # Mismo runner que assemble: compileKotlin queda UP-TO-DATE.
+            - name: Run tests
+              id: test
+              if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+              run: ./gradlew test --continue
 
-      - name: Upload test reports
-        if: ${{ failure() && steps.test.outcome == 'failure' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports
-          path: |
-            **/build/reports/tests/
-            **/build/test-results/
-          if-no-files-found: ignore
-          retention-days: 7
+            - name: Upload test reports
+              if: ${{ failure() && steps.test.outcome == 'failure' }}
+              uses: actions/upload-artifact@v4
+              with:
+                  name: test-reports
+                  path: |
+                      **/build/reports/tests/
+                      **/build/test-results/
+                  if-no-files-found: ignore
+                  retention-days: 7
+    
+    coverage:
+        name: Coverage (80% por módulo)
+        runs-on: ubuntu-latest
+        timeout-minutes: 25
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up JDK 21
+              uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: "21"
+
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v4
+
+            - name: Grant execute permission for gradlew
+              run: chmod +x gradlew
+
+            # coverageReport (informativo, siempre imprime la tabla) +
+            # verifyAllCoverage (falla si algún módulo < 80%).
+            - name: Coverage report + threshold
+              id: coverage
+              run: ./gradlew coverageReport verifyAllCoverage --continue
+
+            - name: Upload coverage reports
+              if: ${{ failure() && steps.coverage.outcome == 'failure' }}
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-reports
+                  path: "**/build/reports/kover/"
+                  if-no-files-found: ignore
+                  retention-days: 7

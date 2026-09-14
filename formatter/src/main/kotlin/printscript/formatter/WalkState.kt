@@ -1,8 +1,8 @@
 package printscript.formatter
 
-import printscript.ast.Location
 import printscript.error.FormatError
 import printscript.error.WhitespaceMismatch
+import printscript.syntax.Location
 
 internal data class Emitted(
     val tokenType: String,

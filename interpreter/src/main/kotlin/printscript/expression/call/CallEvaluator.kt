@@ -1,6 +1,7 @@
 package printscript.expression.call
 
 import printscript.InterpreterContext
+import printscript.SideEffectManager
 import printscript.error.RuntimeError
 import printscript.error.UnresolvableCall
 import printscript.expression.EvalResult
@@ -12,10 +13,12 @@ import printscript.node.tokenValue
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 import printscript.util.flatMap
+import printscript.util.map
 import printscript.zip
 
 class CallEvaluator(
     handlers: List<CallHandler> = listOf(PrintlnHandler),
+    private val sideEffectManager: SideEffectManager,
 ) : ExpressionEvaluator {
     override val nodeNames = setOf(AstNames.CALL)
 
@@ -28,8 +31,15 @@ class CallEvaluator(
     ): Result<EvalResult, RuntimeError> =
         calleeAndArgument(node).flatMap { (callee, argument) ->
             solver.solve(argument, context).flatMap { result ->
-                handlersByCallee[callee]?.handle(result, node)
-                    ?: Result.Err(UnresolvableCall(callee, node.location))
+                val handler =
+                    handlersByCallee[callee]
+                        ?: return@flatMap Result.Err(UnresolvableCall(callee, node.location))
+                handler.handle(result, node).map { evalResult ->
+                    evalResult.sideEffects
+                        .drop(result.sideEffects.size)
+                        .forEach { sideEffectManager.handle(it) }
+                    evalResult
+                }
             }
         }
 

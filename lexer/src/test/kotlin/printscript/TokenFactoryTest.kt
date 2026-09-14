@@ -3,10 +3,10 @@ package printscript
 import java.util.Optional
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import printscript.ast.Location
 import printscript.domain.ExactRule
 import printscript.domain.RegexRule
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 
 class TokenFactoryTest {
     private val location = Location(CharPosition(0, 1), CharPosition(0, 3))

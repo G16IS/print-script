@@ -6,7 +6,7 @@ Ejecuta un `SyntaxProgram` ya parseado y produce efectos observables (`SideEffec
 
 **Está cableado** en `ExecuteCode` (CLI `run`). `interpretCode` sigue cortando en el type-checker. Los tests de integración del interpreter hacen lex+parse (sin type-check) y después `interpret`.
 
-Mismo principio que lexer y parser: agregar una construcción nueva no toca el motor de dispatch, solo registra un `StatementExecutor`, `ExpressionEvaluator`, `BinaryOperationRule` o `CallHandler`. La tabla de operadores **sí** está hardcodeada (`DefaultTypeConfiguration`); no lee `type-system.config.json`.
+Mismo principio que lexer y parser: agregar una construcción nueva no toca el motor de dispatch, solo registra un `StatementExecutor`, `ExpressionEvaluator`, `BinaryOperationRule` o `CallHandler`. La tabla de operadores **sí** está hardcodeada (`DefaultTypeConfiguration`); no lee `type-system.config.v1.0.json`.
 
 ---
 
@@ -83,7 +83,7 @@ interpreter/src/main/kotlin/printscript/
 
 ## Dispatch
 
-Un nivel: `node.name` es el nombre de regla de `grammar.config.json`. `DefaultInterpreter` y `DefaultExpressionSolver` indexan handlers por `nodeNames`. Nombre sin handler → `UnresolvableExpression`. Call desconocido → `UnresolvableCall`.
+Un nivel: `node.name` es el nombre de regla de `grammar.config.v1.0.json`. `DefaultInterpreter` y `DefaultExpressionSolver` indexan handlers por `nodeNames`. Nombre sin handler → `UnresolvableExpression`. Call desconocido → `UnresolvableCall`.
 
 Un evaluator puede declarar más de un nombre (`BinaryOperationEvaluator` cubre `expression` y `term`, la misma forma de `LeftRule`). Nombre duplicado: last-wins.
 
@@ -146,7 +146,7 @@ Helpers de test: `support/Results.kt` (`ok` / `err`), `support/Programs.kt` (`pr
 
 Correr: `./gradlew :interpreter:test`.
 
-Nota: los tests usan su propio `LanguageConfig` (`support/PsSupport`) con `partial` de número que soporta decimales. El `partial` de `language.config.json` corta `1.5` — gap del lexer.
+Nota: los tests usan su propio `LanguageConfig` (`support/PsSupport`) con `partial` de número que soporta decimales. El `partial` de `language.config.v1.0.json` corta `1.5` — gap del lexer.
 
 ---
 

@@ -109,7 +109,7 @@ findHighestPriorityCategory = minBy { order.indexOf(category) }  // ausente → 
 - Si la categoría ganadora tiene **más de una** regla matching → `IllegalArgumentException`.
 - Si la regla no está en `config` → `IllegalStateException`.
 
-Coincide con `language.config.json`:
+Coincide con `language.config.v1.0.json`:
 
 ```json
 "order": ["keywords", "types", "operators", "literals", "identifiers"]
@@ -175,7 +175,7 @@ JUnit 5. Harness en `lexer/src/test/kotlin/printscript/support/`:
 - `lexer` / `lex` / `assertLex` / `assertTypes` / `tok` — agregar un caso es una línea: `assertLex("letter", tok("ID", "letter"), tok("EOF"))`.
 - `MockReader` — `CodeReader` in-memory. Locations línea 0.
 
-Los tests **no** cargan `language.config.json`. Van por `DefaultLexerFactory`.
+Los tests **no** cargan `language.config.v1.0.json`. Van por `DefaultLexerFactory`.
 
 | Clase | Qué cubre |
 |---|---|

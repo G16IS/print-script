@@ -1,9 +1,10 @@
 package printscript.error
 
-import printscript.ast.Location
+import printscript.reader.CharPosition
+import printscript.syntax.Location
 
 sealed interface RuntimeError : Error {
-    val message: String
+    override val message: String
     val location: Location
 }
 
@@ -36,4 +37,14 @@ data class UnresolvableCall(
 ) : RuntimeError {
     override val message: String
         get() = "Llamada desconocida '$callee'"
+}
+
+data class LanguageVersionNotFound(
+    val version: String,
+) : RuntimeError {
+    override val message: String
+        get() = "La version $version de PrintScript no se encontro"
+    val charPos = CharPosition(0, 0)
+    override val location: Location
+        get() = Location(charPos, charPos)
 }

@@ -12,17 +12,17 @@ import printscript.error.UnknownRuleType
 import printscript.formatter.config.FormatRuleLoader
 import printscript.formatter.factories.FormatRuleFactories
 import printscript.formatter.support.spaceAroundOperator
-import printscript.infrastructure.reader.JSONFormatterLanguageConfigReader
-import printscript.infrastructure.reader.JSONFormatterRulesConfigReader
-import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.reader.JSONFormatterLanguageConfigReader
+import printscript.reader.JSONFormatterRulesConfigReader
+import printscript.reader.JSONGrammarConfigReader
 import printscript.util.Result
 
 class FormatRuleLoaderTest {
     private val loader = FormatRuleLoader(FormatRuleFactories.defaults())
     private val grammar =
         JSONGrammarConfigReader.read(
-            checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
-                "Missing grammar.config.json"
+            checkNotNull(javaClass.getResourceAsStream("/grammar.config.v1.0.json")) {
+                "Missing grammar.config.v1.0.json"
             },
         )
     private val lexemes =
@@ -111,8 +111,8 @@ class FormatRuleLoaderTest {
     }
 
     private fun languageResource() =
-        checkNotNull(javaClass.getResourceAsStream("/formatter-language.json")) {
-            "Missing formatter-language.json"
+        checkNotNull(javaClass.getResourceAsStream("/formatter-language.v1.0.json")) {
+            "Missing formatter-language.v1.0.json"
         }
 
     private fun defaultsResource() =

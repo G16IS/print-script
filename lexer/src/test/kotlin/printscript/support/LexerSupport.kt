@@ -3,12 +3,12 @@ package printscript.support
 import org.junit.jupiter.api.Assertions.assertEquals
 import printscript.DefaultLexerFactory
 import printscript.Lexer
-import printscript.ast.Location
 import printscript.domain.LanguageConfig
 import printscript.domain.Token
 import printscript.error.Error
 import printscript.error.LexerError
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 import printscript.util.Result
 
 fun lexer(

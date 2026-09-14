@@ -1,7 +1,7 @@
 package printscript.domain
 
 import java.util.Optional
-import printscript.ast.Location
+import printscript.syntax.Location
 
 data class Token(
     val type: String,

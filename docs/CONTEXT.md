@@ -45,9 +45,9 @@ Ninguno: el pipeline de v1 está cableado. El interpreter se llama desde `Execut
 
 | Archivo | Qué cubre |
 |---|---|
-| [LANGUAGE_CONFIG.md](configs/LANGUAGE_CONFIG.md) | Forma de `language.config.json` (reglas exact/regex del lexer) |
-| [GRAMMAR_CONFIG.md](configs/GRAMMAR_CONFIG.md) | Forma de `grammar.config.json` (producciones del parser) |
-| [TYPE_SYSTEM_CONFIG.md](configs/TYPE_SYSTEM_CONFIG.md) | Forma de `type-system.config.json` (tipos, ops, nodos) |
+| [LANGUAGE_CONFIG.md](configs/LANGUAGE_CONFIG.md) | Forma de `language.config.v1.0.json` (reglas exact/regex del lexer) |
+| [GRAMMAR_CONFIG.md](configs/GRAMMAR_CONFIG.md) | Forma de `grammar.config.v1.0.json` (producciones del parser) |
+| [TYPE_SYSTEM_CONFIG.md](configs/TYPE_SYSTEM_CONFIG.md) | Forma de `type-system.config.v1.0.json` (tipos, ops, nodos) |
 | [FORMATTER_CONFIG.md](configs/FORMATTER_CONFIG.md) | JSON de lenguaje (rules + bindings) y YAML de usuario (`type` + value) |
 
 Los JSON reales están en `infrastructure/src/main/resources/`.
@@ -168,8 +168,8 @@ application     ← common, lexer, parser, type-checker, interpreter, formatter,
 
 Dependencias extra de **test**:
 
-- `parser` testImplementation `infrastructure` (carga `grammar.config.json`)
-- `formatter` testImplementation `infrastructure` (carga `formatter-language.json`)
+- `parser` testImplementation `infrastructure` (carga `grammar.config.v1.0.json`)
+- `formatter` testImplementation `infrastructure` (carga `formatter-language.v1.0.json`)
 - `interpreter` testImplementation `lexer`, `parser`, `infrastructure` (lex+parse+interpret)
 - `application` tests usan `JSONGrammarConfigReader` + `JSONTypeSystemConfigReader` + `FileCodeReader` + un `LanguageConfig` armado en código (`PrintScriptLanguage`), no el JSON del lexer tal cual
 - `cli` tests arman un `.ps` temporal y llaman `PrintScriptCli.create().test(...)` (pipeline real)
@@ -242,7 +242,7 @@ Chequea:
 - initializer compatible con la anotación (`number` / `string`)
 - redeclaración
 - identificador no declarado
-- operandos de `+ - * /` según `type-system.config.json` (`+` number+number, string+string, string+number; permutación si `commutative`)
+- operandos de `+ - * /` según `type-system.config.v1.0.json` (`+` number+number, string+string, string+number; permutación si `commutative`)
 - argumentos de calls (el call no tiene tipo de retorno)
 
 `check` acumula; `checkStrict` corta en el primero. No lanza: `application` traduce el `Report`.
@@ -253,7 +253,7 @@ Ver [modules/TYPE_CHECKER.md](modules/TYPE_CHECKER.md).
 
 Módulo Gradle `:interpreter` (`implementation` solo `common`). Recorre el `SyntaxProgram` y devuelve `Result<List<SideEffect>, RuntimeError>` (fail-fast, Result end-to-end). **Está cableado** en `ExecuteCode` (CLI `run`). `interpretCode` sigue cortando en el type-checker.
 
-Dispatch por `node.name` (el nombre de regla de `grammar.config.json`). `DefaultInterpreter` despacha statements; `DefaultExpressionSolver` despacha expresiones. Un handler declara `nodeNames`; no hay enum ni mapping aparte.
+Dispatch por `node.name` (el nombre de regla de `grammar.config.v1.0.json`). `DefaultInterpreter` despacha statements; `DefaultExpressionSolver` despacha expresiones. Un handler declara `nodeNames`; no hay enum ni mapping aparte.
 
 `println` es una **expresión** (`factor → call`), no un statement. Los efectos viajan en `EvalResult(value, sideEffects)` y se combinan de hijos a padres. `PrintlnHandler` emite `PrintEffect`.
 
@@ -261,7 +261,7 @@ Valores: `NumberValue(Double)`, `StringValue` (sin comillas), `UnitValue` (resul
 
 Contexto: `InterpreterContext` inmutable copy-on-write, con `parent` y `childScope()`. `declareVariable` sombrea en el scope actual; `assignVariable` reconstruye la cadena dueña. V1 no tiene asignaciones sueltas ni bloques, así que `assignVariable` / `childScope` están listos y sin usar en el walk de statements.
 
-Tipos en runtime: `DefaultTypeConfiguration` es una tabla **hardcodeada** (no lee `type-system.config.json`). Tiene `number` con `+ - * /` y `string + string`. **No** tiene `string + number` (el type-checker sí). División por cero: guard explícito → `DivisionByZero`. El interpreter **no** chequea la anotación `TYPE` de un `let`: confía en el programa validado.
+Tipos en runtime: `DefaultTypeConfiguration` es una tabla **hardcodeada** (no lee `type-system.config.v1.0.json`). Tiene `number` con `+ - * /` y `string + string`. **No** tiene `string + number` (el type-checker sí). División por cero: guard explícito → `DivisionByZero`. El interpreter **no** chequea la anotación `TYPE` de un `let`: confía en el programa validado.
 
 Ver [modules/INTERPRETER.md](modules/INTERPRETER.md).
 
@@ -284,14 +284,14 @@ Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 - `JSONLanguageConfigReader` / `JSONGrammarConfigReader` / `JSONTypeSystemConfigReader` / `JSONFormatterLanguageConfigReader` / `JSONFormatterRulesConfigReader` / `YAMLFormatterRulesConfigReader` / `JSONLinterConfigReader` implementan los ports de `common`
 - Serializers **surrogate** en `serializer/config`: el dominio no lleva `@Serializable`. `LanguageConfigSerializer` + `TokenRuleSerializer` (discrimina `type: exact|regex`)
 - Discriminación de `GrammarRule` por **clave JSON** (`or`, `seq`, `left`, `atom`, `repeat`), no por campo `type`
-- Resources: `language.config.json`, `grammar.config.json`, `type-system.config.json`, `formatter-language.json`, `formatter-user-defaults.json`, `linter.config.json`
+- Resources: `language.config.v1.0.json` / `v1.1.json` (hoy iguales), igual para grammar, type-system, formatter-language, linter; `formatter-user-defaults.json` sin versión
 
 Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 
 ### `application` — orquestación
 
 - `InterpretCode.interpretCode(...)` — lex + parse + type-check → `Report`
-- `ExecuteCode.execute(...)` — lo anterior + interpreter → `Result<List<SideEffect>, ExecutionFailure>`
+- `ExecuteCode.execute(...)` — lo anterior + interpreter → `Report<Unit, Error>`
 - `FormatCode` / `CheckFormat` / `LintProgram` — reciben `CodeReader` + configs/formatter ya armados
 - `LoadFormatter` arma el `Formatter` a partir de configs parseadas (no lee archivos). Lo llama el CLI al arrancar
 - No hay `Main.kt` acá: el CLI vive en `:cli`
@@ -394,8 +394,8 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 | `interpretCode` no ejecuta | `InterpretCode.kt` | El CLI `run` usa `ExecuteCode`; `interpretCode` sigue siendo solo type-check |
 | Lexer/parser tiran excepciones | lexer, parser | El CLI las atrapa y imprime `ERROR`; el resto del pipeline usa `Result`/`Report` |
 | `string + number` diverge | type-system JSON vs `DefaultTypeConfiguration` | El type-checker acepta `"a" + 1`; el interpreter responde `InvalidOperands` |
-| Tabla de ops del interpreter hardcodeada | `interpreter/.../DefaultTypeConfiguration.kt` | No comparte `type-system.config.json` con el type-checker |
-| `partial` de números en el JSON | `language.config.json` (`^[0-9]`) | `1.5` no tokeniza con el resource; strings sí (`partial` `^"[^"]*$`) |
+| Tabla de ops del interpreter hardcodeada | `interpreter/.../DefaultTypeConfiguration.kt` | No comparte `type-system.config.v1.0.json` con el type-checker |
+| `partial` de números en el JSON | `language.config.v1.0.json` (`^[0-9]`) | `1.5` no tokeniza con el resource; strings sí (`partial` `^"[^"]*$`) |
 | Dos `TypeError` | `common/.../error/TypeError.kt` vs `type-checker/.../TypeError.kt` | El pipeline de application usa el data class del módulo; el sealed de common lo usa el interpreter (variantes compartidas) |
 | `TokenType` enum | `common/.../TokenType.kt` | No lo usa nadie |
 | `TokenRegistry` | `lexer/.../TokenRegistry.kt` | No lo usa el `TokenStream` |
@@ -406,16 +406,18 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 
 ## Cómo extender (recetas cortas)
 
+Versión de lenguaje / kits: `LanguageCatalog` en `:application` — detalle en [modules/APPLICATION.md](modules/APPLICATION.md).
+
 ### Nuevo token (keyword, operador, literal)
 
-1. Agregar regla en `language.config.json` (y en los `LanguageConfig` de test: `lexer`/`application` `PrintScriptLanguage`, `PsSupport` del interpreter) + un caso en `PrintScriptLexerTest`.
+1. Agregar regla en `language.config.v1.0.json` (y en los `LanguageConfig` de test: `lexer`/`application` `PrintScriptLanguage`, `PsSupport` del interpreter) + un caso en `PrintScriptLexerTest`.
 2. Poner la categoría en `order` **al principio si tiene que ganar** (el resolver usa índice mínimo). Keywords tienen que estar **antes** de identifiers.
-3. Si el parser lo consume: usarlo en `grammar.config.json` (`"LET"` o `{ "capture": "ID" }`).
+3. Si el parser lo consume: usarlo en `grammar.config.v1.0.json` (`"LET"` o `{ "capture": "ID" }`).
 4. Ver [LANGUAGE_CONFIG.md](configs/LANGUAGE_CONFIG.md).
 
 ### Nueva producción de gramática
 
-1. Editar `grammar.config.json`.
+1. Editar `grammar.config.v1.0.json`.
 2. Si alcanza con `or`/`seq`/`left`/`atom`/`repeat`, no hay código Kotlin nuevo.
 3. Tests: `parser` (handlers + `ParserTest`) y un `.ps` en application si es de integración.
 4. Ver [GRAMMAR_CONFIG.md](configs/GRAMMAR_CONFIG.md).
@@ -429,8 +431,8 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 
 ### Nuevo tipo u operador (sin kind nuevo)
 
-1. Editar `type-system.config.json` (`types`, `literals`, `operations`) — eso alimenta al **type-checker**.
-2. Si el lenguaje lo escribe: token en `language.config.json` + producción en grammar.
+1. Editar `type-system.config.v1.0.json` (`types`, `literals`, `operations`) — eso alimenta al **type-checker**.
+2. Si el lenguaje lo escribe: token en `language.config.v1.0.json` + producción en grammar.
 3. Si el interpreter tiene que ejecutarlo: regla en `DefaultTypeConfiguration` (hoy no lee el JSON).
 4. Ver [TYPE_SYSTEM_CONFIG.md](configs/TYPE_SYSTEM_CONFIG.md).
 
@@ -444,7 +446,7 @@ Módulo existente. Nueva construcción → executor/evaluator con `nodeNames` = 
 
 ### Formatter (rule nueva)
 
-1. Si entra en space/newline: `rules` o `userBindings` en `formatter-language.json`. El YAML de usuario sigue siendo `type` + `enabled`/`count`.
+1. Si entra en space/newline: `rules` o `userBindings` en `formatter-language.v1.0.json`. El YAML de usuario sigue siendo `type` + `enabled`/`count`.
 2. Si no: `FormatRule` + `FormatRuleFactory` en `:formatter`.
 3. Tests de `format` y `check`. Detalle: [modules/FORMATTER.md](modules/FORMATTER.md), [configs/FORMATTER_CONFIG.md](configs/FORMATTER_CONFIG.md).
 4. Bloques / `if`: no hace falta otro combiner. Gramática + `newline-after`/`newline-before` en el JSON, y en `emitSyntheticToken` subir/bajar `WalkState.indentLevel` alrededor de `{` `}`. Receta en [modules/FORMATTER.md](modules/FORMATTER.md).
@@ -469,7 +471,7 @@ Nuevo subcomando: clase en `cli/command/` que carga el `.ps`, llama al use case 
 | `interpreter` | contexto (scope/shadow/assign), evaluators (literales/binarios/calls/div-cero), executors, integración lex+parse+interpret con `SideEffect` |
 | `formatter` | `format`/`check` de `1+2`, gap/indent render, walker con dos hijos del mismo nombre, loader (bindings + defaults JSON / type desconocido / `count` inválido), JSON real |
 | `infrastructure` | `JSONLanguageConfigReader` / `JSONGrammarConfigReader` / `JSONTypeSystemConfigReader` contra el resource real; readers del formatter y del linter |
-| `common` | `Result`/`Report`, `TypeSystemConfig` / `FormatterLanguageConfig` (validación), variantes de `TypeError` / `FormatError` |
+| `common` | `Result`/`Report`, `Grammar`/`SyntaxNode`/`SyntaxProgram`, `TokenLexemes`, configs (`TypeSystem` / formatter / linter), sealed errors, `PrintEffect` |
 | `application` | `.ps` end-to-end lex+parse+type-check (`Report`); `ExecuteCode` (prints); format/check de `1+2;` y `let x:number=1;` (`Result`/`Report`) |
 | `cli` | pipeline real vía `PrintScriptCli.create()` (run/format/check/typecheck + `ERROR` de parse + `--version` / help) |
 
@@ -495,10 +497,10 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/ci.yml`
 
 | Tarea | Leer primero | Tocar |
 |---|---|---|
-| Cambiar qué tokens existen | LANGUAGE_CONFIG + lexer + infrastructure JSON | `language.config.json`, tests de lexer/application/interpreter |
-| Cambiar sintaxis | GRAMMAR_CONFIG + parser | `grammar.config.json`, `ParserTest`, ejemplos `.ps` |
+| Cambiar qué tokens existen | LANGUAGE_CONFIG + lexer + infrastructure JSON | `language.config.v1.0.json`, tests de lexer/application/interpreter |
+| Cambiar sintaxis | GRAMMAR_CONFIG + parser | `grammar.config.v1.0.json`, `ParserTest`, ejemplos `.ps` |
 | Nuevo combinador de gramática | parser + infrastructure serializers + common domain | 3 módulos a la vez |
-| Tipos / variables no declaradas | TYPE_CHECKER + TYPE_SYSTEM_CONFIG | `:type-checker` + `type-system.config.json` |
+| Tipos / variables no declaradas | TYPE_CHECKER + TYPE_SYSTEM_CONFIG | `:type-checker` + `type-system.config.v1.0.json` |
 | Ejecutar el programa | INTERPRETER | ya existe `:interpreter`; cablear en `application/InterpretCode.kt` |
 | Nueva construcción a ejecutar | INTERPRETER | executor/evaluator con `nodeNames` + registro en factory |
 | Reglas de estilo | LINTER | módulo a futuro |

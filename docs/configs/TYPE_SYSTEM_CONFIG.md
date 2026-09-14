@@ -1,15 +1,15 @@
-# Type-system Configuration — `type-system.config.json`
+# Type-system Configuration — `type-system.config.v1.0.json`
 
 Configuración declarativa del type-checker. Define **tipos**, **literales**, **operaciones** y **cómo se interpretan los nodos** del parse tree (`SyntaxNode.name`).
 
 Se carga igual que language/grammar: interface en `common`, serializers en `infrastructure`. El type-checker **no** lee el JSON: recibe un `TypeSystemConfig` ya armado.
 
 ```kotlin
-val typeSystem = JSONTypeSystemConfigReader.read(Path.of("type-system.config.json"))
+val typeSystem = JSONTypeSystemConfigReader.read(Path.of("type-system.config.v1.0.json"))
 val checker = DefaultTypeCheckerFactory.create(typeSystem)
 ```
 
-El archivo real está en `infrastructure/src/main/resources/type-system.config.json`.
+El archivo real está en `../../infrastructure/src/main/resources/type-system.config.v1.0.json`.
 
 ---
 
