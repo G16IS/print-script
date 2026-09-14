@@ -25,6 +25,22 @@ object PrintScriptConfigsLoader {
     fun load(
         version: String,
         user: FormatterRulesConfig,
+    ): PrintScriptConfigs =
+        loadConfigs(
+            version,
+            user,
+            JSONFormatterRulesConfigReader.read(resource("formatter-user-defaults.json")),
+        )
+
+    fun loadForTck(
+        version: String,
+        user: FormatterRulesConfig,
+    ): PrintScriptConfigs = loadConfigs(version, user, FormatterRulesConfig())
+
+    private fun loadConfigs(
+        version: String,
+        user: FormatterRulesConfig,
+        defaults: FormatterRulesConfig,
     ): PrintScriptConfigs {
         val lang =
             JSONLanguageConfigReader.read(resource("language.config.v$version.json"))
@@ -43,7 +59,7 @@ object PrintScriptConfigsLoader {
             grammar = grammar,
             typeSystem = typeSystem,
             linterConfig = linterConfig,
-            formatter = loadFormatter(lang, grammar, version, user),
+            formatter = loadFormatter(lang, grammar, version, user, defaults),
         )
     }
 
@@ -52,13 +68,14 @@ object PrintScriptConfigsLoader {
         grammar: Grammar,
         version: String,
         user: FormatterRulesConfig,
+        defaults: FormatterRulesConfig,
     ) = LoadFormatter
         .load(
             grammar,
             lang,
             JSONFormatterLanguageConfigReader.read(resource("formatter-language.v$version.json")),
             user,
-            JSONFormatterRulesConfigReader.read(resource("formatter-user-defaults.json")),
+            defaults,
         ).fold(
             onOk = { it },
             onErr = { error("Could not load formatter: ${it.message}") },

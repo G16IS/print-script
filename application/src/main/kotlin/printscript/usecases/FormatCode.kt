@@ -42,7 +42,7 @@ object FormatCode {
                 )
         ) {
             is Result.Ok -> writer.write(result.value)
-            is Result.Err -> Unit
+            is Result.Err -> error("TCK format failed: ${result.error.message}")
         }
     }
 }
