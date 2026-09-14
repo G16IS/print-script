@@ -24,13 +24,23 @@ jobs:
         steps:
             - name: Resolver tag a publicar
               id: resolve-tag
+              env:
+                  INPUT_TAG: ${{ inputs.tag }}
               run: |
-                  if [ -n "${{ inputs.tag }}" ]; then
-                    TAG="${{ inputs.tag }}"
+                  if [ -n "$INPUT_TAG" ]; then
+                    TAG="$INPUT_TAG"
                   else
                     TAG="${GITHUB_REF_NAME}"
                   fi
+
+                  if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "ERROR: '$TAG' no es un tag de versión válido."
+                    echo "Esperaba algo como v1.4.3"
+                    exit 1
+                  fi
+
                   VERSION="${TAG#v}"
+
                   echo "Publicando versión: $VERSION"
                   echo "tag=$TAG" >> "$GITHUB_OUTPUT"
                   echo "version=$VERSION" >> "$GITHUB_OUTPUT"
