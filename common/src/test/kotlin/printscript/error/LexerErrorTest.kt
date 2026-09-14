@@ -2,9 +2,9 @@ package printscript.error
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import printscript.ast.Location
 import printscript.domain.ExactRule
 import printscript.support.loc
+import printscript.syntax.Location
 
 class LexerErrorTest {
     private val location = loc(3, 4, 3, 5)

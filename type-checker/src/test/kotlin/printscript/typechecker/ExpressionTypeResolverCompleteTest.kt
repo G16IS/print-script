@@ -5,19 +5,19 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
-import printscript.ast.Location
 import printscript.domain.NodeConfig
 import printscript.domain.Operation
 import printscript.domain.Token
 import printscript.domain.TypeSystemConfig
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 import printscript.util.isOk
 
 class ExpressionTypeResolverCompleteTest {
     private val location = Location(CharPosition(1, 1), CharPosition(1, 2))
-    private val resolver = DefaultExpressionTypeResolver()
+    private val resolver = DefaultExpressionTypeResolver(DefaultKindHandlerFactory())
     private val config = canonicalConfig()
 
     @Test

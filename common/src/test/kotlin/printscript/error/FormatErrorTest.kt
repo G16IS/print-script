@@ -2,8 +2,8 @@ package printscript.error
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import printscript.ast.Location
 import printscript.support.loc
+import printscript.syntax.Location
 
 class FormatErrorTest {
     private val location = loc(1, 1, 1, 2)

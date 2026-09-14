@@ -6,12 +6,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
-import printscript.ast.Location
 import printscript.domain.NodeConfig
 import printscript.domain.Operation
 import printscript.domain.Token
 import printscript.domain.TypeSystemConfig
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
 import printscript.util.Result
@@ -19,7 +19,7 @@ import printscript.util.Result
 class TypeCheckerTest {
     private val location = Location(CharPosition(1, 1), CharPosition(1, 2))
     private val config = canonicalConfig()
-    private val checker = DefaultTypeCheckerFactory.create(config)
+    private val checker = DefaultTypeCheckerFactory.create(config, DefaultKindHandlerFactory())
 
     @Test
     fun `number declaration matches the initializer`() {
@@ -150,7 +150,7 @@ class TypeCheckerTest {
                 location = location,
             )
 
-        assertTrue(DefaultTypeCheckerFactory.create(local).check(program(stmt)).isOk)
+        assertTrue(DefaultTypeCheckerFactory.create(local, DefaultKindHandlerFactory()).check(program(stmt)).isOk)
     }
 
     @Test

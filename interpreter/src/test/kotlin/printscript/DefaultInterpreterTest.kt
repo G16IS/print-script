@@ -12,11 +12,15 @@ import printscript.expression.ExpressionSolver
 import printscript.node.AstNames
 import printscript.statement.ExpressionStatementExecutor
 import printscript.statement.StatementExecutor
-import printscript.statement.StatementResult
 import printscript.statement.VariableDeclarationExecutor
+import printscript.support.RecordingSideEffectManager
 import printscript.support.call
+import printscript.support.createInterpreter
+import printscript.support.defaultEvaluators
+import printscript.support.defaultExecutors
 import printscript.support.err
 import printscript.support.identifierNode
+import printscript.support.interpretEffects
 import printscript.support.leaf
 import printscript.support.node
 import printscript.support.numberNode
@@ -27,18 +31,14 @@ import printscript.syntax.SyntaxProgram
 import printscript.util.Result
 
 class DefaultInterpreterTest {
-    private val interpreter = DefaultInterpreterFactory.create()
-
     @Test
     fun `declaration threads the new context into later statements`() {
         val effects =
-            ok(
-                interpreter.interpret(
-                    InterpreterContext(),
-                    program(
-                        declaration("x", numberNode("1")),
-                        expressionStatement(call(identifierNode("x"))),
-                    ),
+            interpretEffects(
+                "1.0",
+                program(
+                    declaration("x", numberNode("1")),
+                    expressionStatement(call(identifierNode("x"))),
                 ),
             )
 
@@ -48,14 +48,12 @@ class DefaultInterpreterTest {
     @Test
     fun `redeclaration in the same scope shadows the previous value`() {
         val effects =
-            ok(
-                interpreter.interpret(
-                    InterpreterContext(),
-                    program(
-                        declaration("x", numberNode("1")),
-                        declaration("x", numberNode("2")),
-                        expressionStatement(call(identifierNode("x"))),
-                    ),
+            interpretEffects(
+                "1.0",
+                program(
+                    declaration("x", numberNode("1")),
+                    declaration("x", numberNode("2")),
+                    expressionStatement(call(identifierNode("x"))),
                 ),
             )
 
@@ -65,14 +63,12 @@ class DefaultInterpreterTest {
     @Test
     fun `effects accumulate in execution order`() {
         val effects =
-            ok(
-                interpreter.interpret(
-                    InterpreterContext(),
-                    program(
-                        expressionStatement(call(numberNode("1"))),
-                        expressionStatement(call(numberNode("2"))),
-                        declaration("unused", numberNode("3")),
-                    ),
+            interpretEffects(
+                "1.0",
+                program(
+                    expressionStatement(call(numberNode("1"))),
+                    expressionStatement(call(numberNode("2"))),
+                    declaration("unused", numberNode("3")),
                 ),
             )
 
@@ -82,7 +78,7 @@ class DefaultInterpreterTest {
     @Test
     fun `first runtime error aborts execution with Err`() {
         val result =
-            interpreter.interpret(
+            createInterpreter("1.0").interpret(
                 InterpreterContext(),
                 program(
                     expressionStatement(call(numberNode("1"))),
@@ -95,16 +91,15 @@ class DefaultInterpreterTest {
 
     @Test
     fun `empty program produces no effects`() {
-        val result = interpreter.interpret(InterpreterContext(), SyntaxProgram.empty())
-
-        assertEquals(emptyList<SideEffect>(), ok(result))
+        assertEquals(emptyList<SideEffect>(), interpretEffects("1.0", SyntaxProgram.empty()))
     }
 
     @Test
     fun `registering two executors for the same node name uses the last one`() {
+        val manager = RecordingSideEffectManager()
         val interpreter =
             DefaultInterpreter(
-                solver(),
+                DefaultExpressionSolver(defaultEvaluators(manager)),
                 listOf(
                     FailingDeclarationExecutor,
                     VariableDeclarationExecutor,
@@ -112,30 +107,29 @@ class DefaultInterpreterTest {
                 ),
             )
 
-        val effects =
-            ok(
-                interpreter.interpret(
-                    InterpreterContext(),
-                    program(
-                        declaration("x", numberNode("1")),
-                        expressionStatement(call(identifierNode("x"))),
-                    ),
+        ok(
+            interpreter.interpret(
+                InterpreterContext(),
+                program(
+                    declaration("x", numberNode("1")),
+                    expressionStatement(call(identifierNode("x"))),
                 ),
-            )
+            ),
+        )
 
-        assertEquals(listOf(PrintEffect("1")), effects)
+        assertEquals(listOf(PrintEffect("1")), manager.effects)
     }
 
     @Test
     fun `call without evaluator fails with UnresolvableExpression`() {
         val solverWithoutCall =
             DefaultExpressionSolver(
-                DefaultInterpreterFactory.defaultEvaluators().filterNot { AstNames.CALL in it.nodeNames },
+                defaultEvaluators().filterNot { AstNames.CALL in it.nodeNames },
             )
         val interpreter =
             DefaultInterpreter(
                 solverWithoutCall,
-                DefaultInterpreterFactory.defaultStatementExecutors(),
+                defaultExecutors(),
             )
 
         val result =
@@ -161,8 +155,6 @@ class DefaultInterpreterTest {
     private fun expressionStatement(expression: SyntaxNode): SyntaxNode =
         node("expression-stmt", node("expression", expression))
 
-    private fun solver(): ExpressionSolver = DefaultExpressionSolver(DefaultInterpreterFactory.defaultEvaluators())
-
     private object FailingDeclarationExecutor : StatementExecutor {
         override val nodeNames = setOf(AstNames.VARIABLE)
 
@@ -170,6 +162,6 @@ class DefaultInterpreterTest {
             node: SyntaxNode,
             context: InterpreterContext,
             solver: ExpressionSolver,
-        ): Result<StatementResult, RuntimeError> = Result.Err(UnrecognizedNode(node.name, node.location))
+        ): Result<InterpreterContext, RuntimeError> = Result.Err(UnrecognizedNode(node.name, node.location))
     }
 }

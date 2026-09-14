@@ -4,7 +4,6 @@ import java.util.Optional
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.ast.Location
 import printscript.domain.TokenLexemes
 import printscript.error.FormatError
 import printscript.error.MissingLexeme
@@ -20,15 +19,16 @@ import printscript.formatter.support.star
 import printscript.formatter.support.term
 import printscript.formatter.support.token
 import printscript.formatter.support.wrap
-import printscript.infrastructure.reader.JSONGrammarConfigReader
+import printscript.reader.JSONGrammarConfigReader
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
 class DefaultFormatterTest {
     private val grammar =
         JSONGrammarConfigReader.read(
-            checkNotNull(javaClass.getResourceAsStream("/grammar.config.json")) {
-                "Missing grammar.config.json"
+            checkNotNull(javaClass.getResourceAsStream("/grammar.config.v1.0.json")) {
+                "Missing grammar.config.v1.0.json"
             },
         )
     private val lexemes =

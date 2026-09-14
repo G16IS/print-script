@@ -6,10 +6,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
-import printscript.ast.Location
 import printscript.domain.Token
 import printscript.error.InvalidIdentifierFormat
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 
 class IdentifierFormatRuleTest {

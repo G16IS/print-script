@@ -1,6 +1,5 @@
 package printscript.syntax
 
-import printscript.ast.Location
 import printscript.reader.CharPosition
 
 data class SyntaxProgram(

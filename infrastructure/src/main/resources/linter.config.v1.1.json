@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "identifier-format": {
+      "enabled": true,
+      "options": {
+        "format": "camelCase"
+      }
+    },
+    "println-simple-argument": {
+      "enabled": true,
+      "options": {
+        "callee": "println"
+      }
+    }
+  }
+}

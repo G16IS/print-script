@@ -5,50 +5,64 @@ import printscript.error.UnresolvableExpression
 import printscript.expression.ExpressionSolver
 import printscript.statement.BlockExecutor
 import printscript.statement.StatementExecutor
-import printscript.statement.StatementResult
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
 import printscript.util.Result
-import printscript.util.flatMap
-import printscript.util.map
 
 class DefaultInterpreter(
     private val expressionSolver: ExpressionSolver,
     statementExecutors: List<StatementExecutor>,
 ) : Interpreter,
     BlockExecutor {
-    private val executorsByName: Map<String, StatementExecutor> =
-        statementExecutors.flatMap { executor -> executor.nodeNames.map { it to executor } }.toMap()
-
     override fun interpret(
         context: InterpreterContext,
         program: SyntaxProgram,
-    ): Result<List<SideEffect>, RuntimeError> = execute(program.statements, context)
+    ): Result<InterpreterContext, RuntimeError> = execute(program.statements, context)
 
     override fun execute(
         statements: List<SyntaxNode>,
         context: InterpreterContext,
-    ): Result<List<SideEffect>, RuntimeError> {
-        val initial: Result<StatementResult, RuntimeError> =
-            Result.Ok(StatementResult(emptyList(), context))
-
-        return statements
-            .fold(initial) { acc, statement ->
-                acc.flatMap { state ->
-                    executeSingle(statement, state.newContext).map { next ->
-                        StatementResult(state.sideEffects + next.sideEffects, next.newContext)
-                    }
+    ): Result<InterpreterContext, RuntimeError> {
+        var contextCopy: InterpreterContext = context
+        for (statement in statements) {
+            contextCopy =
+                when (val r = executeStatement(statement, contextCopy)) {
+                    is Result.Ok -> r.value
+                    is Result.Err -> return Result.Err(r.error)
                 }
-            }.map { it.sideEffects }
+        }
+        return Result.Ok(contextCopy)
     }
 
-    private fun executeSingle(
+    override fun executeStatement(
         statement: SyntaxNode,
         context: InterpreterContext,
-    ): Result<StatementResult, RuntimeError> {
+    ): Result<InterpreterContext, RuntimeError> {
         val executor =
-            executorsByName[statement.name]
-                ?: return Result.Err(UnresolvableExpression(statement.name, statement.location))
-        return executor.execute(statement, context, expressionSolver)
+            executorsByName[statement.name] ?: return Result
+                .Err(
+                    UnresolvableExpression(
+                        statement.name,
+                        statement.location,
+                    ),
+                )
+
+        val executeResult =
+            executor.execute(
+                statement,
+                context,
+                expressionSolver,
+            )
+
+        return when (executeResult) {
+            is Result.Ok -> Result.Ok(executeResult.value)
+            is Result.Err -> Result.Err(executeResult.error)
+        }
     }
+
+    private val executorsByName: Map<String, StatementExecutor> =
+        statementExecutors
+            .flatMap { executor ->
+                executor.nodeNames.map { it to executor }
+            }.toMap()
 }

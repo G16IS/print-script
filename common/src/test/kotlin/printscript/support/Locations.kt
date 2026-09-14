@@ -1,7 +1,7 @@
 package printscript.support
 
-import printscript.ast.Location
 import printscript.reader.CharPosition
+import printscript.syntax.Location
 
 fun loc(
     startLine: Int = 1,

@@ -10,14 +10,14 @@ import printscript.domain.RuleConfig
 import printscript.error.InvalidIdentifierFormat
 import printscript.error.InvalidPrintlnArgument
 import printscript.factory.DefaultLinterFactory
-import printscript.infrastructure.reader.JSONLinterConfigReader
+import printscript.reader.JSONLinterConfigReader
 import printscript.support.LinterPsSupport
 
 class LinterIntegrationTest {
     private val defaultConfig =
         JSONLinterConfigReader.read(
-            checkNotNull(javaClass.getResourceAsStream("/linter.config.json")) {
-                "Missing linter.config.json"
+            checkNotNull(javaClass.getResourceAsStream("/linter.config.v1.0.json")) {
+                "Missing linter.config.v1.0.json"
             },
         )
 

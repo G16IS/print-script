@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import printscript.domain.Token
+import printscript.edition.LanguageCatalog
 import printscript.error.ParserError
+import printscript.io.DefaultSideEffectManager
 import printscript.support.MockLexer
 import printscript.support.PrintScriptGrammar
 import printscript.support.Tokens
@@ -15,6 +17,7 @@ import printscript.support.rhs
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
 import printscript.util.Result
+import printscript.util.map
 
 class ParserTest {
     private lateinit var parser: Parser
@@ -22,7 +25,14 @@ class ParserTest {
     @BeforeEach
     fun setUp() {
         Tokens.reset()
-        parser = DefaultParserFactory.create(PrintScriptGrammar)
+        parser =
+            (
+                (
+                    LanguageCatalog.of("1.0", DefaultSideEffectManager()).map { kit ->
+                        DefaultParserFactory.create(PrintScriptGrammar, kit.parserHandlers)
+                    }
+                ) as Result.Ok
+            ).value
     }
 
     @Test

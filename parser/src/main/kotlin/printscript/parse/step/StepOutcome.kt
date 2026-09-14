@@ -1,7 +1,7 @@
 package printscript.parse.step
 
-import printscript.ast.Location
 import printscript.error.ParserError
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 
 sealed interface StepOutcome {

@@ -25,13 +25,10 @@ object VariableDeclarationExecutor : StatementExecutor {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<StatementResult, RuntimeError> =
+    ): Result<InterpreterContext, RuntimeError> =
         nameAndExpression(node).flatMap { (name, expression) ->
             solver.solve(expression, context).map { result ->
-                StatementResult(
-                    sideEffects = result.sideEffects,
-                    newContext = context.declareVariable(name, result.value),
-                )
+                context.declareVariable(name, result.value)
             }
         }
 

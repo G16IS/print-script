@@ -1,9 +1,9 @@
 package printscript.parse
 
-import printscript.ast.Location
 import printscript.domain.GrammarRule
 import printscript.domain.RepeatRule
 import printscript.error.ParserError
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.util.Locations
 

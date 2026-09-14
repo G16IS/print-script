@@ -1,25 +1,15 @@
 package printscript.cli
 
-import printscript.PrintEffect
-import printscript.SideEffect
 import printscript.error.Error
+import printscript.error.ExecutionFailure
 import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
-import usecases.ExecutionFailure
 
-internal fun presentRun(block: () -> Result<List<SideEffect>, ExecutionFailure>): CommandResult =
+internal fun presentRun(block: () -> Result<Unit, ExecutionFailure>): CommandResult =
     catching {
         block().fold(
-            onOk = { effects ->
-                CommandResult.Output(
-                    effects.joinToString("") { effect ->
-                        when (effect) {
-                            is PrintEffect -> effect.text + "\n"
-                        }
-                    },
-                )
-            },
+            onOk = { CommandResult.Ok },
             onErr = { failure ->
                 when (failure) {
                     is ExecutionFailure.Types ->

@@ -1,6 +1,8 @@
 package printscript.cli
 
 import com.github.ajalt.clikt.testing.test
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 import java.nio.file.Files
 import java.nio.file.Path
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -22,10 +24,18 @@ class PrintScriptCliTest {
                 """.trimIndent(),
             )
 
-        val result = cli("run", file)
+        val captured = ByteArrayOutputStream()
+        val previous = System.out
+        System.setOut(PrintStream(captured))
+        val result =
+            try {
+                cli("run", file)
+            } finally {
+                System.setOut(previous)
+            }
 
         assertEquals(0, result.statusCode)
-        assertEquals("Hello, World!\n", result.stdout)
+        assertEquals("Hello, World!\n", captured.toString())
     }
 
     @Test
@@ -81,6 +91,16 @@ class PrintScriptCliTest {
 
         assertEquals(1, result.statusCode)
         assertTrue(result.stderr.contains("ERROR"))
+    }
+
+    @Test
+    fun `version 1 dot 1 is accepted`() {
+        val file = sourceFile("1+2;")
+
+        val result = cli("--version", "1.1", "format", file)
+
+        assertEquals(0, result.statusCode)
+        assertEquals("1 + 2;\n", result.stdout)
     }
 
     @Test

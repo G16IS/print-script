@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+
+# Post-commit: muestra un reporte de coverage por módulo, informativo.
+# Nunca falla ni afecta al commit (post-commit no puede abortarlo).
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+# Archivos tocados en el commit que se acaba de hacer
+changed="$(git diff-tree --no-commit-id --name-only -r HEAD || true)"
+
+if ! printf '%s\n' "$changed" | grep -qE '\.(kt|kts)$'; then
+  exit 0
+fi
+
+echo ""
+echo "📊  Generando reporte de coverage..."
+echo ""
+
+./gradlew coverageReport --quiet || echo "   ⚠️  No se pudo generar el reporte de coverage (no bloquea el commit)"
+
+echo ""

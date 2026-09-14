@@ -6,18 +6,20 @@ import printscript.cli.presentRun
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
-import printscript.infrastructure.reader.FileCodeReader
-import usecases.ExecuteCode
+import printscript.edition.LanguageKit
+import printscript.reader.FileCodeReader
+import printscript.usecases.ExecuteCode
 
 class RunCommand(
     private val lang: LanguageConfig,
     private val grammar: Grammar,
     private val typeSystem: TypeSystemConfig,
+    private val languageKit: LanguageKit,
 ) : SourceFileCommand("run", "Execute a PrintScript file") {
     override fun run() {
         emit(
             presentRun {
-                ExecuteCode.execute(lang, grammar, typeSystem, FileCodeReader(file))
+                ExecuteCode.execute(lang, grammar, typeSystem, FileCodeReader(file), languageKit)
             },
             printOk = false,
         )

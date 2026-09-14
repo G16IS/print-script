@@ -77,7 +77,7 @@ data class Token(
 )
 ```
 
-`type` es un string libre. Tiene que coincidir entre `language.config.json` (`token`) y `grammar.config.json` (`atom`, steps de `seq`, `op.token` de `left`).
+`type` es un string libre. Tiene que coincidir entre `language.config.v1.0.json` (`token`) y `grammar.config.v1.0.json` (`atom`, steps de `seq`, `op.token` de `left`).
 
 `TokenType` (enum) es un leftover de un diseño anterior. Nadie lo usa. Código nuevo: strings, igual que el JSON.
 
@@ -185,7 +185,7 @@ Un `let` es un nodo `name = "variable"` cuyos hijos salen de los steps capturado
 
 ## Type-system (`domain/TypeSystemConfig.kt`)
 
-Modelo de `type-system.config.json`, sin JSON. Al construirse exige que los tipos de `literals` y `operations` existan en `types`.
+Modelo de `type-system.config.v1.0.json`, sin JSON. Al construirse exige que los tipos de `literals` y `operations` existan en `types`.
 
 ```kotlin
 TypeSystemConfig(types, literals, operations, nodes)

@@ -1,0 +1,69 @@
+{
+  "types": ["number", "string"],
+
+  "literals": {
+    "NUMBER_LITERAL": "number",
+    "STRING_LITERAL": "string"
+  },
+
+  "operations": [
+    {
+      "op": "+",
+      "operands": ["number", "number"],
+      "result": "number"
+    },
+    {
+      "op": "+",
+      "operands": ["string", "string"],
+      "result": "string"
+    },
+    {
+      "op": "+",
+      "operands": ["string", "number"],
+      "result": "string"
+    },
+    {
+      "op": "-",
+      "operands": ["number", "number"],
+      "result": "number"
+    },
+    {
+      "op": "*",
+      "operands": ["number", "number"],
+      "result": "number"
+    },
+    {
+      "op": "/",
+      "operands": ["number", "number"],
+      "result": "number"
+    }
+  ],
+
+  "nodes": {
+    "variable": {
+      "kind": "declaration",
+      "id": "ID",
+      "declaredType": "TYPE",
+      "expression": "expression"
+    },
+    "expression-stmt": {
+      "kind": "expression",
+      "expression": "expression"
+    },
+    "expression": { "kind": "binary-or-primary" },
+    "term": { "kind": "binary-or-primary" },
+    "factor": { "kind": "primary" },
+    "call": {
+      "kind": "call",
+      "callee": "CALL",
+      "args": ["expression"]
+    },
+    "group": {
+      "kind": "group",
+      "expression": "expression"
+    },
+    "number": { "kind": "literal" },
+    "string": { "kind": "literal" },
+    "identifier": { "kind": "identifier" }
+  }
+}

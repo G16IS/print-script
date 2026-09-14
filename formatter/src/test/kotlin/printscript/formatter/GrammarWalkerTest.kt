@@ -3,11 +3,11 @@ package printscript.formatter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.ast.Location
 import printscript.domain.AtomRule
 import printscript.domain.Grammar
 import printscript.domain.RuleRefStep
 import printscript.domain.SeqRule
+import printscript.domain.SeqStep
 import printscript.domain.TokenLexemes
 import printscript.domain.TokenStep
 import printscript.error.FormatError
@@ -15,6 +15,7 @@ import printscript.formatter.rules.TokenSpaceRule
 import printscript.formatter.support.leaf
 import printscript.formatter.support.program
 import printscript.formatter.support.wrap
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
@@ -81,6 +82,72 @@ class GrammarWalkerTest {
 
         assertEquals("let x", ok(formatter.format(program(decl))))
     }
+
+    @Test
+    fun `leftover children after a seq are unrecognized`() {
+        val grammar =
+            Grammar(
+                start = "one",
+                rules = mapOf("one" to SeqRule(listOf(TokenStep("ID", capture = true)))),
+            )
+        val formatter = DefaultFormatterFactory.create(emptyList(), grammar, TokenLexemes(emptyMap()))
+        val node =
+            SyntaxNode(
+                name = "one",
+                children = listOf(leaf("ID", "a", 1), leaf("ID", "b", 2)),
+                location = Location.empty(),
+            )
+
+        assertTrue(formatter.format(program(node)) is Result.Err)
+    }
+
+    @Test
+    fun `unknown seq step is unrecognized`() {
+        val grammar =
+            Grammar(
+                start = "s",
+                rules = mapOf("s" to SeqRule(listOf(FakeStep))),
+            )
+        val formatter = DefaultFormatterFactory.create(emptyList(), grammar, TokenLexemes(emptyMap()))
+        val node = SyntaxNode(name = "s", location = Location.empty())
+
+        assertTrue(formatter.format(program(node)) is Result.Err)
+    }
+
+    @Test
+    fun `missing synthetic lexeme is unrecognized`() {
+        val grammar =
+            Grammar(
+                start = "decl",
+                rules =
+                    mapOf(
+                        "decl" to SeqRule(listOf(TokenStep("LET", capture = false), TokenStep("ID", capture = true))),
+                    ),
+            )
+        val formatter = DefaultFormatterFactory.create(emptyList(), grammar, TokenLexemes(emptyMap()))
+        val decl =
+            SyntaxNode(
+                name = "decl",
+                children = listOf(leaf("ID", "x", 5)),
+                location = Location.empty(),
+            )
+
+        assertTrue(formatter.format(program(decl)) is Result.Err)
+    }
+
+    @Test
+    fun `empty program formats to empty string`() {
+        val grammar =
+            Grammar(
+                start = "s",
+                rules = mapOf("s" to AtomRule("ID")),
+            )
+        val formatter = DefaultFormatterFactory.create(emptyList(), grammar, TokenLexemes(emptyMap()))
+
+        assertEquals("", ok(formatter.format(printscript.syntax.SyntaxProgram.empty())))
+    }
+
+    private object FakeStep : SeqStep
 
     private fun ok(result: Result<String, FormatError>): String {
         assertTrue(result is Result.Ok, "expected Ok but was $result")

@@ -13,5 +13,5 @@ interface StatementExecutor {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
-    ): Result<StatementResult, RuntimeError>
+    ): Result<InterpreterContext, RuntimeError>
 }

@@ -11,6 +11,13 @@ import printscript.cli.command.FormatCommand
 import printscript.cli.command.LintCommand
 import printscript.cli.command.RunCommand
 import printscript.cli.command.TypeCheckCommand
+import printscript.config.PrintScriptConfigs
+import printscript.edition.LanguageCatalog
+import printscript.edition.LanguageKit
+import printscript.io.DefaultSideEffectManager
+import printscript.tck.PrintScriptConfigsLoader
+import printscript.util.Result
+import printscript.util.unwrap
 
 class PrintScriptCli(
     vararg commands: CliktCommand,
@@ -29,23 +36,38 @@ class PrintScriptCli(
     override fun help(context: Context): String = "PrintScript command line interface"
 
     override fun run() {
-        if (version != DEFAULT_VERSION) {
+        if (LanguageCatalog.of(version, DefaultSideEffectManager())
+                is Result.Err
+        ) {
             echo("ERROR", err = true)
             throw ProgramResult(1)
         }
     }
 
     companion object {
-        fun create(): PrintScriptCli {
-            val configs = PrintScriptConfigs.load()
-            return PrintScriptCli(
-                RunCommand(configs.lang, configs.grammar, configs.typeSystem),
-                LintCommand(configs.lang, configs.grammar, configs.linterConfig),
-                CheckCommand(configs.lang, configs.grammar, configs.formatter),
-                FormatCommand(configs.lang, configs.grammar, configs.formatter),
-                TypeCheckCommand(configs.lang, configs.grammar, configs.typeSystem),
-            )
+        fun create(version: String = DEFAULT_VERSION): PrintScriptCli {
+            val configs = PrintScriptConfigsLoader.load("1.0")
+            val sideEffectManager = DefaultSideEffectManager()
+
+            val langKit =
+                LanguageCatalog
+                    .of(version, sideEffectManager)
+                    .unwrap("Failed to load language kit for version $version")
+
+            return create(configs, langKit)
         }
+
+        fun create(
+            configs: PrintScriptConfigs,
+            langKit: LanguageKit,
+        ): PrintScriptCli =
+            PrintScriptCli(
+                RunCommand(configs.lang, configs.grammar, configs.typeSystem, langKit),
+                LintCommand(configs.lang, configs.grammar, configs.linterConfig, langKit),
+                CheckCommand(configs.lang, configs.grammar, configs.formatter, langKit),
+                FormatCommand(configs.lang, configs.grammar, configs.formatter, langKit),
+                TypeCheckCommand(configs.lang, configs.grammar, configs.typeSystem, langKit),
+            )
 
         private const val DEFAULT_VERSION = "1.0"
     }

@@ -1,6 +1,6 @@
 package printscript.error
 
-import printscript.ast.Location
+import printscript.syntax.Location
 
 sealed interface FormatError : Error {
     val message: String

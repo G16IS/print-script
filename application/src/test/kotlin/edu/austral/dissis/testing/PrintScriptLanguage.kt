@@ -6,7 +6,7 @@ import printscript.domain.RegexRule
 import printscript.domain.TokenRule
 
 /**
- * Same rules and `order` as language.config.json. The lexer tries categories
+ * Same rules and `order` as language.config.v1.0.json. The lexer tries categories
  * from first to last, so keywords beat identifiers.
  */
 object PrintScriptLanguage {

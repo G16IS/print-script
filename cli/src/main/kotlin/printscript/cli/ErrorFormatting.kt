@@ -1,13 +1,14 @@
 package printscript.cli
 
-import printscript.ast.Location
 import printscript.error.Error
+import printscript.error.ExecutionFailure
 import printscript.error.FormatError
 import printscript.error.LexerError
 import printscript.error.LintError
 import printscript.error.ParserError
 import printscript.error.RuntimeError
 import printscript.error.TypeError
+import printscript.syntax.Location
 
 internal fun formatLocated(
     message: String,
@@ -22,6 +23,8 @@ internal fun formatError(error: Error): String =
         is ParserError -> formatLocated(error.message, error.location)
         is RuntimeError -> formatRuntimeError(error)
         is TypeError -> formatTypeError(error)
+        is ExecutionFailure.Runtime -> formatRuntimeError(error.error)
+        is ExecutionFailure.Types -> error.errors.joinToString("\n", transform = ::formatError)
     }
 
 internal fun formatTypeError(error: TypeError): String = formatLocated(error.message, error.location)
