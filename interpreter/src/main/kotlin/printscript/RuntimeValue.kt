@@ -14,11 +14,14 @@ data class StringValue(
 
 data object UnitValue : RuntimeValue
 
+data object UninitializedValue : RuntimeValue
+
 fun RuntimeValue.toPrintableString(): String =
     when (this) {
         is StringValue -> value
         is NumberValue -> formatNumber(value)
         UnitValue -> ""
+        UninitializedValue -> ""
     }
 
 private fun formatNumber(value: Double): String =
