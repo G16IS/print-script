@@ -109,6 +109,7 @@ object PsSupport {
     private fun literals(): List<TokenRule> =
         listOf(
             RegexRule(listOf("^\"[^\"]*\""), "STRING_LITERAL", true, "^\"[^\"]*$"),
+            RegexRule(listOf("^'[^']*'"), "STRING_LITERAL", true, "^'[^']*$"),
             // Partial accepts the dot mid-lexeme so decimals like 1.5 tokenize
             // (language.config.v1.0.json's `^[0-9]` splits them; pre-existing lexer gap).
             RegexRule(listOf("^[0-9]+(\\.[0-9]+)?"), "NUMBER_LITERAL", true, "^[0-9]+(\\.[0-9]*)?$"),

@@ -70,6 +70,7 @@ object PrintScriptLanguage {
     ): List<TokenRule> =
         listOf(
             RegexRule(listOf("^\"[^\"]*\""), "STRING_LITERAL", true, stringPartial),
+            RegexRule(listOf("^'[^']*'"), "STRING_LITERAL", true, "^'[^']*$"),
             RegexRule(listOf("^[0-9]+(\\.[0-9]+)?"), "NUMBER_LITERAL", true, numberPartial),
         )
 

@@ -83,6 +83,13 @@
       },
       {
         "type": "regex",
+        "matcher": ["^'[^']*'"],
+        "token": "STRING_LITERAL",
+        "capture": true,
+        "partial": "^'[^']*$"
+      },
+      {
+        "type": "regex",
         "matcher": ["^[0-9]+(\\.[0-9]+)?"],
         "token": "NUMBER_LITERAL",
         "capture": true,
