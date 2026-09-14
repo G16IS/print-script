@@ -48,6 +48,7 @@ object ExecuteCode {
 
         if (!report.isOk) {
             report.errors.forEach { reportError(it, errorHandler) }
+            return
         }
 
         val evaluators = languageKit.evaluators
