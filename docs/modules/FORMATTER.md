@@ -108,6 +108,8 @@ Dos formas. Lectura en `infrastructure`, dominio en `common` (**no** `@Serializa
 
 Resources: `formatter-language.v1.0.json`, `formatter-user-defaults.json`.
 
+**TCK vs CLI.** El path TCK (`PrintScriptConfigsLoader.loadForTck`) trata el JSON de usuario como set completo: defaults vacíos, así que una key ausente queda off (no se rellena con `formatter-user-defaults.json`). El CLI sigue overlayando el YAML de `.printscript/formatter.yml` sobre esos defaults. Los casos nativos del formatter TCK en v1.1 se skipean hasta que exista el lenguaje 1.1.
+
 ---
 
 ## Mapa de archivos
