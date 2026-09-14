@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import printscript.domain.AtomRule
 import printscript.domain.LeftRule
+import printscript.domain.OptionalRule
 import printscript.domain.OrRule
 import printscript.domain.RepeatRule
 import printscript.domain.RuleRefStep
@@ -54,6 +55,13 @@ class JSONGrammarConfigReaderTest {
     }
 
     @Test
+    fun `reads an optional rule`() {
+        val loaded = JSONGrammarConfigReader.read(optionalJson())
+        val opt = loaded.rules.getValue("maybe") as OptionalRule
+        assertEquals("item", opt.item)
+    }
+
+    @Test
     fun `rejects an unknown start rule`() {
         assertThrows<IllegalArgumentException> {
             JSONGrammarConfigReader.read("""{"start":"nope","rules":{"n":{"atom":"X"}}}""")
@@ -98,6 +106,17 @@ class JSONGrammarConfigReaderTest {
           "start": "block",
           "rules": {
             "block": { "repeat": "item" },
+            "item": { "atom": "ID" }
+          }
+        }
+        """.trimIndent()
+
+    private fun optionalJson() =
+        """
+        {
+          "start": "maybe",
+          "rules": {
+            "maybe": { "optional": "item" },
             "item": { "atom": "ID" }
           }
         }
