@@ -9,6 +9,7 @@ import printscript.expression.call.CallEvaluator
 import printscript.expression.literal.IdentifierEvaluator
 import printscript.expression.literal.NumberLiteralEvaluator
 import printscript.expression.literal.StringLiteralEvaluator
+import printscript.statement.AssignmentExecutor
 import printscript.statement.ExpressionStatementExecutor
 import printscript.statement.StatementExecutor
 import printscript.statement.VariableDeclarationExecutor
@@ -29,6 +30,7 @@ object DefaultInterpreterComponents {
     val executors: List<StatementExecutor> =
         listOf(
             VariableDeclarationExecutor,
+            AssignmentExecutor,
             ExpressionStatementExecutor,
         )
 }

@@ -1,6 +1,7 @@
 package printscript.cli
 
 import printscript.error.Error
+import printscript.error.formatError
 import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold

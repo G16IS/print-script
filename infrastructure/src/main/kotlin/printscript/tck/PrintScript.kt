@@ -1,5 +1,7 @@
 package printscript.tck
 
+import java.io.InputStream
+import java.io.Writer
 import printscript.ErrorHandler
 import printscript.InputChannel
 import printscript.PrintChannel
@@ -10,7 +12,11 @@ import printscript.io.DefaultSideEffectManager
 import printscript.io.PrintHandler
 import printscript.io.ReadInputHandler
 import printscript.reader.CodeReader
+import printscript.reader.JSONFormatterRulesConfigReader
+import printscript.reader.JSONLinterConfigReader
 import printscript.usecases.ExecuteCode
+import printscript.usecases.FormatCode
+import printscript.usecases.LintProgram
 import printscript.util.Result
 
 object PrintScript {
@@ -37,6 +43,48 @@ object PrintScript {
             errorHandler,
             languageKitResult.value,
         )
+    }
+
+    fun format(
+        version: String,
+        codeReader: CodeReader,
+        config: InputStream,
+        writer: Writer,
+    ) {
+        val userRules = JSONFormatterRulesConfigReader.read(config)
+        val configs = PrintScriptConfigsLoader.load(version, userRules)
+
+        val languageKitResult =
+            when (val kit = LanguageCatalog.of(version, DefaultSideEffectManager())) {
+                is Result.Err -> return
+                is Result.Ok -> kit
+            }
+
+        FormatCode.formatForTck(
+            configs,
+            codeReader,
+            writer,
+            languageKitResult.value,
+        )
+    }
+
+    fun lint(
+        version: String,
+        codeReader: CodeReader,
+        config: InputStream,
+        errorHandler: ErrorHandler,
+    ) {
+        // El catálogo va antes del loader: para una versión desconocida el loader tira
+        // `Missing resource` y perderíamos el mensaje.
+        val languageKit =
+            when (val kit = LanguageCatalog.of(version, DefaultSideEffectManager())) {
+                is Result.Err -> return errorHandler.handleErrorMessage("version $version not found")
+                is Result.Ok -> kit.value
+            }
+
+        val configs = PrintScriptConfigsLoader.load(version, JSONLinterConfigReader.read(config))
+
+        LintProgram.lintForTck(configs, codeReader, errorHandler, languageKit)
     }
 
     private fun listAllSideEffectHandlers(

@@ -24,7 +24,9 @@ class JSONGrammarConfigReaderTest {
     @Test
     fun `reads or rules`() {
         val statement = grammar.rules.getValue("statement") as OrRule
-        assertEquals(listOf("variable", "expression-stmt"), statement.alternatives)
+        // `assignment` va antes que `expression-stmt`: un `seq` que matchea su primer step y
+        // después falla devuelve `Failed`, que corta el `or`. Ver AGENTS/README del parser.
+        assertEquals(listOf("variable", "assignment", "expression-stmt"), statement.alternatives)
     }
 
     @Test

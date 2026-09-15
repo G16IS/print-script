@@ -5,8 +5,8 @@ import java.nio.file.Path
 import printscript.cli.SourceFileCommand
 import printscript.cli.VersionKit
 import printscript.cli.emit
-import printscript.cli.formatError
 import printscript.cli.presentReport
+import printscript.error.formatError
 import printscript.reader.FileCodeReader
 import printscript.usecases.CheckFormat
 

@@ -56,7 +56,7 @@ class FormatRuleLoaderTest {
         val result = loader.load(language, defaults = defaults)
 
         assertTrue(result is Result.Ok)
-        assertEquals(7, (result as Result.Ok).value.size)
+        assertEquals(8, (result as Result.Ok).value.size)
     }
 
     @Test
@@ -64,7 +64,7 @@ class FormatRuleLoaderTest {
         val result = loader.load(language)
 
         assertTrue(result is Result.Ok)
-        assertEquals(7, (result as Result.Ok).value.size)
+        assertEquals(8, (result as Result.Ok).value.size)
     }
 
     @Test

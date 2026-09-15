@@ -9,7 +9,8 @@ data class TokenSpaceRule(
     private val kinds: Set<PointKind>,
     private val enabled: Boolean,
 ) : FormatRule {
-    override fun applies(point: FormatPoint): Boolean = point.tokenType == tokenType && point.kind in kinds
+    override fun applies(point: FormatPoint): Boolean =
+        (tokenType == ANY_TOKEN || point.tokenType == tokenType) && point.kind in kinds
 
     override fun addChar(
         point: FormatPoint,
@@ -20,4 +21,9 @@ data class TokenSpaceRule(
         } else {
             0
         }
+
+    companion object {
+        /** `"token": "*"` en el config: la rule aplica a cualquier token. */
+        const val ANY_TOKEN = "*"
+    }
 }

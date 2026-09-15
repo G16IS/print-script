@@ -114,10 +114,10 @@ class ExpressionSolverTest {
     }
 
     @Test
-    fun `string and number addition is not defined at runtime`() {
+    fun `string and number addition is defined at runtime`() {
         val expression = binary(stringNode("a"), "+", numberNode("1"))
 
-        assertTrue(err(solver.solve(expression, InterpreterContext())) is InvalidOperands)
+        assertEquals(StringValue("a1"), ok(solver.solve(expression, InterpreterContext())).value)
     }
 
     @Test
