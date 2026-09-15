@@ -178,14 +178,15 @@ class ParserBranchCoverageTest {
                 ),
             )
         val parser = DefaultParser(simpleExprGrammar(), evaluator(simpleExprGrammar()))
-        var program = SyntaxProgram.empty()
+        val builder = SyntaxProgram.builder()
 
-        val first = parser.parseNextStatement(lexer, program)
+        val first = parser.parseNextStatement(lexer)
         assertTrue(first is Result.Ok)
-        program = (first as Result.Ok).value
-        val second = parser.parseNextStatement(lexer, program)
+        builder.add((first as Result.Ok).value)
+        val second = parser.parseNextStatement(lexer)
         assertTrue(second is Result.Ok)
-        assertEquals(2, (second as Result.Ok).value.statements.size)
+        builder.add((second as Result.Ok).value)
+        assertEquals(2, builder.build().statements.size)
     }
 
     private fun simpleExprGrammar() =

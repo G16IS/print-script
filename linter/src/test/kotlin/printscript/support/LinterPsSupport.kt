@@ -39,18 +39,18 @@ object LinterPsSupport {
                 ) as Result.Ok
             ).value
 
-        var program = SyntaxProgram.empty()
+        val builder = SyntaxProgram.builder()
         while (peekNextToken(lexer).type != "EOF") {
             when (
                 val parseResult =
                     parser
-                        .parseNextStatement(lexer, program)
+                        .parseNextStatement(lexer)
             ) {
                 is Result.Err -> throw UnexpectedException(parseResult.error.message)
-                is Result.Ok -> program = parseResult.value
+                is Result.Ok -> builder.add(parseResult.value)
             }
         }
-        return program
+        return builder.build()
     }
 
     private fun peekNextToken(lexer: Lexer): Token {
