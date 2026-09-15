@@ -123,7 +123,7 @@ class TypeCheckerMalformedTest {
     fun `unknown statement kind is reported`() {
         val local =
             config.copy(
-                nodes = config.nodes + ("weird" to NodeConfig(kind = "assignment")),
+                nodes = config.nodes + ("weird" to NodeConfig(kind = "nope")),
             )
         val stmt = SyntaxNode(name = "weird", location = location)
         val report = DefaultTypeCheckerFactory.create(local, DefaultKindHandlerFactory()).check(program(stmt))
@@ -132,7 +132,7 @@ class TypeCheckerMalformedTest {
             report.errors
                 .single()
                 .message
-                .contains("Kind 'assignment' no soportado"),
+                .contains("Kind 'nope' no soportado"),
         )
     }
 

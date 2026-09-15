@@ -3,8 +3,10 @@ package printscript.typechecker
 import printscript.domain.TypeSystemConfig
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
+import printscript.typechecker.handlers.AssignmentHandler
 import printscript.typechecker.handlers.DeclarationHandler
 import printscript.typechecker.handlers.ExpressionStmtHandler
+import printscript.typechecker.handlers.IfHandler
 import printscript.typechecker.handlers.NodeHandler
 import printscript.typechecker.handlers.StatementCheck
 import printscript.util.Report
@@ -72,5 +74,7 @@ class DefaultTypeChecker(
         listOf(
             DeclarationHandler(resolver),
             ExpressionStmtHandler(resolver),
+            IfHandler { stmt, sc -> checkStatement(stmt, sc) },
+            AssignmentHandler(resolver),
         )
 }
