@@ -7,6 +7,7 @@ import printscript.config.PrintScriptConfigs
 import printscript.domain.FormatterRulesConfig
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
+import printscript.domain.LinterConfig
 import printscript.reader.JSONFormatterLanguageConfigReader
 import printscript.reader.JSONFormatterRulesConfigReader
 import printscript.reader.JSONGrammarConfigReader
@@ -36,10 +37,28 @@ object PrintScriptConfigsLoader {
             JSONFormatterRulesConfigReader.read(resource("formatter-user-defaults.json")),
         )
 
+    /**
+     * A diferencia del formatter, [linter] **reemplaza** la config interna en vez de
+     * apoyarse sobre ella: una rule que el caller no manda queda apagada, no toma el
+     * default. Es lo que necesita el caso `valid-no-rules` del TCK, que manda `{}` y no
+     * debe reportar nada.
+     */
+    fun load(
+        version: String,
+        linter: LinterConfig,
+    ): PrintScriptConfigs =
+        loadConfigs(
+            version,
+            FormatterRulesConfig(),
+            JSONFormatterRulesConfigReader.read(resource("formatter-user-defaults.json")),
+            linterOverride = linter,
+        )
+
     private fun loadConfigs(
         version: String,
         user: FormatterRulesConfig,
         defaults: FormatterRulesConfig,
+        linterOverride: LinterConfig? = null,
     ): PrintScriptConfigs {
         val lang =
             JSONLanguageConfigReader.read(resource("language.config.v$version.json"))
@@ -51,7 +70,8 @@ object PrintScriptConfigsLoader {
             JSONTypeSystemConfigReader.read(resource("type-system.config.v$version.json"))
 
         val linterConfig =
-            JSONLinterConfigReader.read(resource("linter.config.v$version.json"))
+            linterOverride
+                ?: JSONLinterConfigReader.read(resource("linter.config.v$version.json"))
 
         return PrintScriptConfigs(
             lang = lang,

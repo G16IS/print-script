@@ -4,11 +4,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import printscript.cli.SourceFileCommand
 import printscript.cli.emit
-import printscript.cli.formatError
 import printscript.cli.presentReport
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.edition.LanguageKit
+import printscript.error.formatError
 import printscript.formatter.Formatter
 import printscript.reader.FileCodeReader
 import printscript.usecases.CheckFormat
