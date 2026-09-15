@@ -14,6 +14,7 @@ import printscript.domain.OptionalRule
 import printscript.domain.OrRule
 import printscript.domain.RepeatRule
 import printscript.domain.SeqRule
+import printscript.domain.TryRule
 
 object GrammarRuleSerializer : KSerializer<GrammarRule> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("GrammarRule")
@@ -41,6 +42,7 @@ object GrammarRuleSerializer : KSerializer<GrammarRule> {
             "atom" in keys -> AtomRuleSerializer
             "repeat" in keys -> RepeatRuleSerializer
             "optional" in keys -> OptionalRuleSerializer
+            "try" in keys -> TryRuleSerializer
             else -> error("Unknown grammar rule keys: $keys")
         }
     }
@@ -56,6 +58,7 @@ object GrammarRuleSerializer : KSerializer<GrammarRule> {
             is AtomRule -> AtomRuleSerializer
             is RepeatRule -> RepeatRuleSerializer
             is OptionalRule -> OptionalRuleSerializer
+            is TryRule -> TryRuleSerializer
             else -> error("Unknown grammar rule: ${rule::class.simpleName}")
         }
 }

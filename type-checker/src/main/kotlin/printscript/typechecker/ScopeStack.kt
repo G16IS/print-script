@@ -16,4 +16,6 @@ data class ScopeStack(
     }
 
     fun lookup(name: String): String? = scopes.asReversed().firstNotNullOfOrNull { it.lookup(name) }
+
+    fun lookupSymbol(name: String): Symbol? = scopes.asReversed().firstNotNullOfOrNull { it.lookupSymbol(name) }
 }

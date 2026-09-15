@@ -24,7 +24,7 @@ class JSONGrammarConfigReaderTest {
     @Test
     fun `reads or rules`() {
         val statement = grammar.rules.getValue("statement") as OrRule
-        assertEquals(listOf("variable", "expression-stmt"), statement.alternatives)
+        assertEquals(listOf("variable", "expression-stmt", "assignment"), statement.alternatives)
     }
 
     @Test

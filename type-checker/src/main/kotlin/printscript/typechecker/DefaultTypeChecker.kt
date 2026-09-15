@@ -3,6 +3,7 @@ package printscript.typechecker
 import printscript.domain.TypeSystemConfig
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
+import printscript.typechecker.handlers.AssignmentHandler
 import printscript.typechecker.handlers.DeclarationHandler
 import printscript.typechecker.handlers.ExpressionStmtHandler
 import printscript.typechecker.handlers.NodeHandler
@@ -72,5 +73,6 @@ class DefaultTypeChecker(
         listOf(
             DeclarationHandler(resolver),
             ExpressionStmtHandler(resolver),
+            AssignmentHandler(resolver),
         )
 }
