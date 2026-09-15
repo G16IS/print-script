@@ -18,7 +18,8 @@ class CallHandler(
         scope: ScopeStack,
         config: TypeSystemConfig,
     ): Result<String, TypeError> {
-        val argNames = config.nodes[node.name]?.args ?: emptyList()
+        val nodeConfig = config.nodes[node.name]
+        val argNames = nodeConfig?.args ?: emptyList()
 
         val args =
             argNames.flatMap { name ->
@@ -31,6 +32,25 @@ class CallHandler(
                 .map { resolver.resolve(it, scope, config) }
                 .firstOrNull { !it.isOk }
 
-        return failed ?: Result.Ok("")
+        return failed ?: Result.Ok(returnType(node, config))
+    }
+
+    /**
+     * Un call no tiene tipo salvo que el config lo declare por callee
+     * (`readInput` / `readEnv`). Sin entrada devuelve `""`, como antes.
+     */
+    private fun returnType(
+        node: SyntaxNode,
+        config: TypeSystemConfig,
+    ): String {
+        val nodeConfig = config.nodes[node.name] ?: return ""
+        val calleeChild = nodeConfig.callee ?: return ""
+        val callee =
+            node
+                .childOrNull(calleeChild)
+                ?.token
+                ?.value
+                ?.orElse(null) ?: return ""
+        return nodeConfig.returnTypes[callee] ?: ""
     }
 }

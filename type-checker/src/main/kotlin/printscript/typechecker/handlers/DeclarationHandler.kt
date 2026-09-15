@@ -4,6 +4,7 @@ import printscript.domain.TypeSystemConfig
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.ScopeStack
+import printscript.typechecker.TypeCompat
 import printscript.typechecker.TypeError
 import printscript.util.fold
 
@@ -39,7 +40,7 @@ class DeclarationHandler(
         parts.expression?.let { expression ->
             resolver.resolve(expression, scope, config).fold(
                 onOk = { resolved ->
-                    if (parts.declared in config.types && parts.declared != resolved) {
+                    if (parts.declared in config.types && !TypeCompat.compatible(parts.declared, resolved)) {
                         errors +=
                             TypeError(
                                 "Se esperaba ${parts.declared} pero se encontró $resolved",
@@ -61,7 +62,7 @@ class DeclarationHandler(
         errors: MutableList<TypeError>,
     ): ScopeStack {
         if (parts.declared !in config.types) return scope
-        val declared = scope.declare(parts.name, parts.declared)
+        val declared = scope.declare(parts.name, parts.declared, parts.mutable)
 
         return if (declared == null) {
             errors += TypeError("La variable '${parts.name}' ya fue declarada", parts.id.location)
@@ -82,7 +83,7 @@ class DeclarationHandler(
         return if (expressionName == null || id == null || typeNode == null) {
             null
         } else {
-            namedParts(id, typeNode, node.findOrNull(expressionName))
+            namedParts(id, typeNode, node.findOrNull(expressionName), nodeConfig.mutable)
         }
     }
 
@@ -90,6 +91,7 @@ class DeclarationHandler(
         id: SyntaxNode,
         typeNode: SyntaxNode,
         expression: SyntaxNode?,
+        mutable: Boolean,
     ): DeclarationParts? {
         val name = id.token?.value?.orElse(null)
         val declared = typeNode.token?.value?.orElse(null)
@@ -97,7 +99,7 @@ class DeclarationHandler(
         return if (name == null || declared == null) {
             null
         } else {
-            DeclarationParts(id, name, typeNode, declared, expression)
+            DeclarationParts(id, name, typeNode, declared, expression, mutable)
         }
     }
 
@@ -107,5 +109,6 @@ class DeclarationHandler(
         val typeNode: SyntaxNode,
         val declared: String,
         val expression: SyntaxNode?,
+        val mutable: Boolean,
     )
 }

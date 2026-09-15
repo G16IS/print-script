@@ -4,6 +4,7 @@ import printscript.domain.TypeSystemConfig
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.ScopeStack
+import printscript.typechecker.TypeCompat
 import printscript.typechecker.TypeError
 import printscript.util.fold
 
@@ -37,7 +38,7 @@ class AssignmentHandler(
             else ->
                 resolver.resolve(expression, scope, config).fold(
                     onOk = { resolved ->
-                        if (symbol.type != resolved) {
+                        if (!TypeCompat.compatible(symbol.type, resolved)) {
                             errors +=
                                 TypeError(
                                     "Se esperaba ${symbol.type} pero se encontró $resolved",

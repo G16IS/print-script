@@ -1,6 +1,7 @@
 package printscript.serializer.config
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -15,6 +16,12 @@ private data class NodeConfigSurrogate(
     val expression: String? = null,
     val callee: String? = null,
     val args: List<String> = emptyList(),
+    val mutable: Boolean = true,
+    val then: String? = null,
+    @SerialName("else")
+    val elseClause: String? = null,
+    val block: String? = null,
+    val returnTypes: Map<String, String> = emptyMap(),
 )
 
 object NodeConfigSerializer : KSerializer<NodeConfig> {
@@ -34,6 +41,11 @@ object NodeConfigSerializer : KSerializer<NodeConfig> {
                 expression = value.expression,
                 callee = value.callee,
                 args = value.args,
+                mutable = value.mutable,
+                then = value.then,
+                elseClause = value.elseClause,
+                block = value.block,
+                returnTypes = value.returnTypes,
             )
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)
     }
@@ -47,6 +59,11 @@ object NodeConfigSerializer : KSerializer<NodeConfig> {
             expression = surrogate.expression,
             callee = surrogate.callee,
             args = surrogate.args,
+            mutable = surrogate.mutable,
+            then = surrogate.then,
+            elseClause = surrogate.elseClause,
+            block = surrogate.block,
+            returnTypes = surrogate.returnTypes,
         )
     }
 }

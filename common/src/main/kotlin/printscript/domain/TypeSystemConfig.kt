@@ -44,4 +44,22 @@ data class NodeConfig(
     val expression: String? = null,
     val callee: String? = null,
     val args: List<String> = emptyList(),
-)
+    /** `false` para declaraciones inmutables (`const`). */
+    val mutable: Boolean = true,
+    /** Nombre del hijo que lleva el bloque principal (rama `then` de un `if`). */
+    val then: String? = null,
+    /** Nombre del hijo que lleva la rama alternativa (`else-clause`). */
+    val elseClause: String? = null,
+    /** Nombre del hijo de un bloque que agrupa sus statements. */
+    val block: String? = null,
+    /**
+     * Tipo de retorno por callee. El valor [ANY_TYPE] marca un retorno
+     * contextual: compatible con cualquier tipo declarado (`readInput` / `readEnv`).
+     */
+    val returnTypes: Map<String, String> = emptyMap(),
+) {
+    companion object {
+        /** Tipo comodín: compatible con cualquier otro. */
+        const val ANY_TYPE = "?"
+    }
+}

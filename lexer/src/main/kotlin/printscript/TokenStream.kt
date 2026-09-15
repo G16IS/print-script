@@ -96,18 +96,26 @@ class TokenStream(
             Result.Err(UnexpectedEnfOfLine(Location(reader.currentPosition(), reader.currentPosition()), text))
         }
 
+    /**
+     * Sólo los matches **completos** son candidatos a emitir.
+     *
+     * Un PARTIAL sirve para seguir consumiendo caracteres, no para ganar el
+     * desempate por prioridad de categoría: con `let n: number`, el lexema `n`
+     * es PARTIAL para el `TYPE` `number` y VALID para `ID`, y `types` gana en
+     * `order`. Si se lo dejara competir, `n` se emitiría como `TYPE`.
+     */
     private fun buildToken(
         text: String,
         matchResults: List<MatchResult>,
         initialPos: CharPosition,
         finalPos: CharPosition,
     ): Result<Token, LexerError> {
-        val rule =
-            ruleDrawResolver.resolve(
-                matchResults
-                    .filter { it.matchType != MatchType.INVALID }
-                    .map { it.tokenRule },
-            )
+        val valid = matchResults.filter { it.matchType == MatchType.VALID }
+        if (valid.isEmpty()) {
+            return Result.Err(UnexpectedToken(Location(initialPos, finalPos)))
+        }
+
+        val rule = ruleDrawResolver.resolve(valid.map { it.tokenRule })
 
         when (rule) {
             is Result.Err -> return rule

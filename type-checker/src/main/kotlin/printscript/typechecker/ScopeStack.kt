@@ -10,8 +10,9 @@ data class ScopeStack(
     fun declare(
         name: String,
         type: String,
+        mutable: Boolean = true,
     ): ScopeStack? {
-        val top = scopes.last().declare(name, type) ?: return null
+        val top = scopes.last().declare(name, type, mutable) ?: return null
         return copy(scopes = scopes.dropLast(1) + top)
     }
 

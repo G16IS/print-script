@@ -74,7 +74,7 @@ class DefaultTypeChecker(
         listOf(
             DeclarationHandler(resolver),
             ExpressionStmtHandler(resolver),
-            IfHandler { stmt, sc -> checkStatement(stmt, sc) },
+            IfHandler(resolver) { stmt, sc -> checkStatement(stmt, sc) },
             AssignmentHandler(resolver),
         )
 }
