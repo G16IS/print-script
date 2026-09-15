@@ -9,9 +9,15 @@
         { "capture": "ID" },
         "COLON",
         { "capture": "TYPE" },
-        "ASSIGN",
-        { "rule": "expression" },
+        { "rule": "initializer" },
         "SEMICOLON"
+      ]
+    },
+    "initializer": { "optional": "var-init" },
+    "var-init": {
+      "seq": [
+        "ASSIGN",
+        { "rule": "expression" }
       ]
     },
 

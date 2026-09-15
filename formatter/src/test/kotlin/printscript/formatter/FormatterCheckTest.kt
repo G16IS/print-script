@@ -8,6 +8,7 @@ import printscript.domain.TokenLexemes
 import printscript.error.UnrecognizedFormatNode
 import printscript.error.WhitespaceMismatch
 import printscript.formatter.support.addition
+import printscript.formatter.support.initializer
 import printscript.formatter.support.leaf
 import printscript.formatter.support.number
 import printscript.formatter.support.program
@@ -161,7 +162,7 @@ class FormatterCheckTest {
                 listOf(
                     leaf("ID", "x", 5),
                     leaf("TYPE", "number", 7),
-                    wrap("expression", wrap("term", number("1", 14))),
+                    initializer(wrap("expression", wrap("term", number("1", 14)))),
                 ),
             location = Location.empty(),
         )
@@ -173,7 +174,7 @@ class FormatterCheckTest {
                 listOf(
                     leaf("ID", "x", 5),
                     leaf("TYPE", "number", 9),
-                    wrap("expression", wrap("term", number("1", 18))),
+                    initializer(wrap("expression", wrap("term", number("1", 18)))),
                 ),
             location = Location.empty(),
         )

@@ -26,6 +26,13 @@ class RuntimeErrorTest {
     }
 
     @Test
+    fun `UninitializedVariable names the identifier`() {
+        val error = UninitializedVariable("x", location)
+        assertEquals("Variable 'x' no inicializada", error.message)
+        assertEquals(location, error.location)
+    }
+
+    @Test
     fun `UnresolvableCall names the callee`() {
         assertEquals("Llamada desconocida 'foo'", UnresolvableCall("foo", location).message)
     }

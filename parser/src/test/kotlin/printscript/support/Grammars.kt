@@ -5,6 +5,7 @@ import printscript.domain.Grammar
 import printscript.domain.GrammarRule
 import printscript.domain.LeftRule
 import printscript.domain.OperatorSpec
+import printscript.domain.OptionalRule
 import printscript.domain.OrRule
 import printscript.domain.RepeatRule
 import printscript.domain.RuleRefStep
@@ -30,6 +31,8 @@ fun capture(type: String) = TokenStep(type, capture = true)
 fun ref(name: String) = RuleRefStep(name)
 
 fun repeat(item: String) = RepeatRule(item)
+
+fun optional(item: String) = OptionalRule(item)
 
 fun left(
     operand: String,

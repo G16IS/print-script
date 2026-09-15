@@ -36,18 +36,20 @@ class DeclarationHandler(
             errors += TypeError("Tipo desconocido '${parts.declared}'", parts.typeNode.location)
         }
 
-        resolver.resolve(parts.expression, scope, config).fold(
-            onOk = { resolved ->
-                if (parts.declared in config.types && parts.declared != resolved) {
-                    errors +=
-                        TypeError(
-                            "Se esperaba ${parts.declared} pero se encontró $resolved",
-                            parts.expression.location,
-                        )
-                }
-            },
-            onErr = { errors += it },
-        )
+        parts.expression?.let { expression ->
+            resolver.resolve(expression, scope, config).fold(
+                onOk = { resolved ->
+                    if (parts.declared in config.types && parts.declared != resolved) {
+                        errors +=
+                            TypeError(
+                                "Se esperaba ${parts.declared} pero se encontró $resolved",
+                                expression.location,
+                            )
+                    }
+                },
+                onErr = { errors += it },
+            )
+        }
 
         return StatementCheck(declare(parts, scope, config, errors), errors)
     }
@@ -73,22 +75,21 @@ class DeclarationHandler(
         node: SyntaxNode,
         config: TypeSystemConfig,
     ): DeclarationParts? {
-        val nodeConfig = config.nodes[node.name] ?: return null
-        val id = nodeConfig.id?.let { node.childOrNull(it) }
-        val typeNode = nodeConfig.declaredType?.let { node.childOrNull(it) }
-        val expression = nodeConfig.expression?.let { node.childOrNull(it) }
-
-        return if (id == null || typeNode == null || expression == null) {
+        val nodeConfig = config.nodes[node.name]
+        val id = nodeConfig?.id?.let { node.childOrNull(it) }
+        val typeNode = nodeConfig?.declaredType?.let { node.childOrNull(it) }
+        val expressionName = nodeConfig?.expression
+        return if (expressionName == null || id == null || typeNode == null) {
             null
         } else {
-            namedParts(id, typeNode, expression)
+            namedParts(id, typeNode, node.findOrNull(expressionName))
         }
     }
 
     private fun namedParts(
         id: SyntaxNode,
         typeNode: SyntaxNode,
-        expression: SyntaxNode,
+        expression: SyntaxNode?,
     ): DeclarationParts? {
         val name = id.token?.value?.orElse(null)
         val declared = typeNode.token?.value?.orElse(null)
@@ -105,6 +106,6 @@ class DeclarationHandler(
         val name: String,
         val typeNode: SyntaxNode,
         val declared: String,
-        val expression: SyntaxNode,
+        val expression: SyntaxNode?,
     )
 }

@@ -17,18 +17,22 @@ class InterpretCodeTest {
             node("variable") {
                 node("ID", "pepe")
                 node("TYPE", "string")
-                node("expression") {
-                    node("term") {
-                        node("string", "\"Hello, World!\"")
+                withInitializer {
+                    node("expression") {
+                        node("term") {
+                            node("string", "\"Hello, World!\"")
+                        }
                     }
                 }
             }
             node("variable") {
                 node("ID", "pepa")
                 node("TYPE", "number")
-                node("expression") {
-                    node("term") {
-                        node("number", "42")
+                withInitializer {
+                    node("expression") {
+                        node("term") {
+                            node("number", "42")
+                        }
                     }
                 }
             }
@@ -45,13 +49,15 @@ class InterpretCodeTest {
             node("variable") {
                 node("ID", "x")
                 node("TYPE", "number")
-                node("expression") {
-                    node("term") { node("number", "1") }
-                    node("OPERATOR", "+")
-                    node("term") {
-                        node("number", "2")
-                        node("OPERATOR", "*")
-                        node("number", "3")
+                withInitializer {
+                    node("expression") {
+                        node("term") { node("number", "1") }
+                        node("OPERATOR", "+")
+                        node("term") {
+                            node("number", "2")
+                            node("OPERATOR", "*")
+                            node("number", "3")
+                        }
                     }
                 }
             }
@@ -67,9 +73,44 @@ class InterpretCodeTest {
             node("variable") {
                 node("ID", "greeting")
                 node("TYPE", "string")
-                node("expression") {
-                    node("term") {
-                        node("string", "\"hola\"")
+                withInitializer {
+                    node("expression") {
+                        node("term") {
+                            node("string", "\"hola\"")
+                        }
+                    }
+                }
+            }
+            printCall("greeting")
+        }
+    }
+
+    @Test
+    fun `declaration without initializer type-checks`() {
+        val report = ParseExample.parse("uninitialized_declaration.ps")
+        assertTrue(report.isOk)
+        assertAst(report.value!!) {
+            node("variable") {
+                node("ID", "x")
+                node("TYPE", "string")
+                node("initializer") {}
+            }
+        }
+    }
+
+    @Test
+    fun `single quoted string literal is kept as a token value`() {
+        val report = ParseExample.parse("single_quoted_string.ps")
+        assertTrue(report.isOk)
+        assertAst(report.value!!) {
+            node("variable") {
+                node("ID", "greeting")
+                node("TYPE", "string")
+                withInitializer {
+                    node("expression") {
+                        node("term") {
+                            node("string", "'hola'")
+                        }
                     }
                 }
             }
@@ -111,6 +152,14 @@ class InterpretCodeTest {
                 it.message.contains("La variable 'x' ya fue declarada")
             },
         )
+    }
+
+    private fun AstBuilder.withInitializer(init: AstBuilder.() -> Unit) {
+        node("initializer") {
+            node("var-init") {
+                init()
+            }
+        }
     }
 
     private fun AstBuilder.printCall(name: String) {

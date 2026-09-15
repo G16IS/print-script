@@ -8,6 +8,7 @@ import printscript.domain.FormatterRulesConfig
 import printscript.domain.TokenLexemes
 import printscript.error.FormatError
 import printscript.formatter.support.addition
+import printscript.formatter.support.initializer
 import printscript.formatter.support.leaf
 import printscript.formatter.support.number
 import printscript.formatter.support.program
@@ -46,6 +47,11 @@ class PrintScriptLayoutTest {
     }
 
     @Test
+    fun `formats a declaration without initializer and no assign token`() {
+        assertEquals("let x : number;\n", ok(formatter.format(program(declaration(withInit = false)))))
+    }
+
+    @Test
     fun `formatted declaration passes check`() {
         val source = ok(formatter.format(program(declaration())))
 
@@ -71,7 +77,7 @@ class PrintScriptLayoutTest {
                     listOf(
                         leaf("ID", "x", 1),
                         leaf("TYPE", "number", 1),
-                        wrap("expression", wrap("term", number("1", 1))),
+                        initializer(wrap("expression", wrap("term", number("1", 1)))),
                     ),
                 location = Location.empty(),
             )
@@ -117,17 +123,19 @@ class PrintScriptLayoutTest {
         assertTrue(formatter.check(program(first, print), source).isOk)
     }
 
-    private fun declaration(): SyntaxNode =
-        SyntaxNode(
+    private fun declaration(withInit: Boolean = true): SyntaxNode {
+        val expression = wrap("expression", wrap("term", number("1", 1)))
+        return SyntaxNode(
             name = "variable",
             children =
                 listOf(
                     leaf("ID", "x", 1),
                     leaf("TYPE", "number", 1),
-                    wrap("expression", wrap("term", number("1", 1))),
+                    if (withInit) initializer(expression) else initializer(),
                 ),
             location = Location.empty(),
         )
+    }
 
     private fun formatterFromLanguage(user: FormatterRulesConfig = FormatterRulesConfig()): Formatter {
         val language = JSONFormatterLanguageConfigReader.read(languageResource())
