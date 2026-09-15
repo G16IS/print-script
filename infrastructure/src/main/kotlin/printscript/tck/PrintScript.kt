@@ -31,8 +31,8 @@ object PrintScript {
         try {
             val configs: PrintScriptConfigs = PrintScriptConfigsLoader.load(version)
 
-        val sideEffectManager =
-            DefaultSideEffectManager(listAllSideEffectHandlersByVersion(version, printChannel, inputChannel))
+            val sideEffectManager =
+                DefaultSideEffectManager(listAllSideEffectHandlersByVersion(version, printChannel, inputChannel))
 
             val languageKitResult =
                 when (val kit = LanguageCatalog.of(version, sideEffectManager)) {
