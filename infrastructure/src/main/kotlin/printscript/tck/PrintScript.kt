@@ -10,6 +10,7 @@ import printscript.config.PrintScriptConfigs
 import printscript.edition.LanguageCatalog
 import printscript.io.DefaultSideEffectManager
 import printscript.io.PrintHandler
+import printscript.io.ReadEnvHandler
 import printscript.io.ReadInputHandler
 import printscript.reader.CodeReader
 import printscript.reader.JSONFormatterRulesConfigReader
@@ -106,10 +107,7 @@ object PrintScript {
             "1.0" -> listAllSideEffectHandlers(printChannel, inputChannel)
             "1.1" ->
                 listAllSideEffectHandlers(printChannel, inputChannel) +
-                    ReadInputHandler(
-                        inputChannel,
-                        printChannel,
-                    )
+                    ReadEnvHandler()
             else -> listOf()
         }
 }
