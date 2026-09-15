@@ -34,7 +34,7 @@ class CallEvaluator(
                 val handler =
                     handlersByCallee[callee]
                         ?: return@flatMap Result.Err(UnresolvableCall(callee, node.location))
-                handler.handle(result, node).map { evalResult ->
+                handler.handle(result, node, sideEffectManager).map { evalResult ->
                     evalResult.sideEffects
                         .drop(result.sideEffects.size)
                         .forEach { sideEffectManager.handle(it) }

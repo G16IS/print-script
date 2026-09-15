@@ -43,14 +43,19 @@ class CallHandler(
         node: SyntaxNode,
         config: TypeSystemConfig,
     ): String {
-        val nodeConfig = config.nodes[node.name] ?: return ""
-        val calleeChild = nodeConfig.callee ?: return ""
+        val nodeConfig = config.nodes[node.name]
         val callee =
-            node
-                .childOrNull(calleeChild)
+            nodeConfig
+                ?.callee
+                ?.let { node.childOrNull(it) }
                 ?.token
                 ?.value
-                ?.orElse(null) ?: return ""
-        return nodeConfig.returnTypes[callee] ?: ""
+                ?.orElse(null)
+        return callee?.let { nodeConfig.returnTypes[it] } ?: NO_TYPE
+    }
+
+    private companion object {
+        /** Un call sin retorno declarado no aporta tipo. */
+        const val NO_TYPE = ""
     }
 }

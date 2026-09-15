@@ -31,8 +31,8 @@ class IfHandler(
         val errors = mutableListOf<TypeError>()
 
         errors += checkCondition(node, nodeConfig, scope, config)
-        errors += checkBranch(node.childOrNull(nodeConfig?.then.orEmpty()), nodeConfig, scope, config)
-        errors += checkBranch(elseBlock(node, nodeConfig), nodeConfig, scope, config)
+        errors += checkBranch(node.childOrNull(nodeConfig?.then.orEmpty()), nodeConfig, scope)
+        errors += checkBranch(elseBlock(node, nodeConfig), nodeConfig, scope)
 
         return StatementCheck(scope, errors)
     }
@@ -80,7 +80,6 @@ class IfHandler(
         block: SyntaxNode?,
         nodeConfig: NodeConfig?,
         parent: ScopeStack,
-        config: TypeSystemConfig,
     ): List<TypeError> {
         if (block == null) return emptyList()
         val statements = block.childOrNull(nodeConfig?.block.orEmpty())?.children ?: emptyList()

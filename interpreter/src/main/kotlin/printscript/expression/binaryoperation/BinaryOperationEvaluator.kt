@@ -1,7 +1,9 @@
 package printscript.expression.binaryoperation
 
+import printscript.BooleanValue
 import printscript.InterpreterContext
 import printscript.NumberValue
+import printscript.RawInputValue
 import printscript.RuntimeValue
 import printscript.StringValue
 import printscript.UninitializedValue
@@ -76,23 +78,32 @@ class BinaryOperationEvaluator(
         if (dividesByZero(operator, right.value)) {
             return Result.Err(DivisionByZero(node.location))
         }
+        val leftValue = asOperand(left.value)
+        val rightValue = asOperand(right.value)
         val computed =
             typeConfiguration
-                .resolveBinaryOperation(operator, left.value::class, right.value::class)
-                ?.apply(left.value, right.value)
+                .resolveBinaryOperation(operator, leftValue::class, rightValue::class)
+                ?.apply(leftValue, rightValue)
         return if (computed != null) {
             Result.Ok(EvalResult.combine(left, right, computed))
         } else {
             Result.Err(
                 InvalidOperands(
                     operator,
-                    displayName(left.value),
-                    displayName(right.value),
+                    displayName(leftValue),
+                    displayName(rightValue),
                     node.location,
                 ),
             )
         }
     }
+
+    /**
+     * Sin un destino declarado, lo leído por `readInput` / `readEnv` vale como
+     * string: la tabla de operaciones no necesita reglas propias para el crudo.
+     */
+    private fun asOperand(value: RuntimeValue): RuntimeValue =
+        if (value is RawInputValue) StringValue(value.raw) else value
 
     private fun dividesByZero(
         operator: String,
@@ -103,6 +114,8 @@ class BinaryOperationEvaluator(
         when (value) {
             is NumberValue -> "number"
             is StringValue -> "string"
+            is BooleanValue -> "boolean"
+            is RawInputValue -> "string"
             is UnitValue -> "unit"
             is UninitializedValue -> "uninitialized"
         }

@@ -39,12 +39,35 @@ data class UninitializedVariable(
         get() = "Variable '$name' no inicializada"
 }
 
+data class InvalidCondition(
+    override val location: Location,
+) : RuntimeError {
+    override val message: String
+        get() = "La condición de un if tiene que ser boolean"
+}
+
 data class UnresolvableCall(
     val callee: String,
     override val location: Location,
 ) : RuntimeError {
     override val message: String
         get() = "Llamada desconocida '$callee'"
+}
+
+data class MissingInput(
+    val prompt: String,
+    override val location: Location,
+) : RuntimeError {
+    override val message: String
+        get() = "No se pudo leer un valor para '$prompt'"
+}
+
+data class MissingEnvVariable(
+    val name: String,
+    override val location: Location,
+) : RuntimeError {
+    override val message: String
+        get() = "La variable de ambiente '$name' no está definida"
 }
 
 data class LanguageVersionNotFound(

@@ -1,6 +1,7 @@
 package printscript.expression.call
 
 import printscript.PrintEffect
+import printscript.SideEffectManager
 import printscript.UnitValue
 import printscript.error.RuntimeError
 import printscript.expression.EvalResult
@@ -14,6 +15,7 @@ object PrintlnHandler : CallHandler {
     override fun handle(
         result: EvalResult,
         node: SyntaxNode,
+        effects: SideEffectManager,
     ): Result<EvalResult, RuntimeError> =
         Result.Ok(
             EvalResult(

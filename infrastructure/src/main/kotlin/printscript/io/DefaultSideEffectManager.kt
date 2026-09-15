@@ -11,6 +11,7 @@ class DefaultSideEffectManager(
         listOf(
             PrintHandler(),
             ReadInputHandler(),
+            ReadEnvHandler(),
         ),
     )
 

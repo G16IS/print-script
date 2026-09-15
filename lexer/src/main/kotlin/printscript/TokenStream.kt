@@ -111,15 +111,15 @@ class TokenStream(
         finalPos: CharPosition,
     ): Result<Token, LexerError> {
         val valid = matchResults.filter { it.matchType == MatchType.VALID }
-        if (valid.isEmpty()) {
-            return Result.Err(UnexpectedToken(Location(initialPos, finalPos)))
-        }
+        val location = Location(initialPos, finalPos)
 
-        val rule = ruleDrawResolver.resolve(valid.map { it.tokenRule })
-
-        when (rule) {
-            is Result.Err -> return rule
-            is Result.Ok -> return TokenFactory.create(rule.value, Location(initialPos, finalPos), text)
+        return when {
+            valid.isEmpty() -> Result.Err(UnexpectedToken(location))
+            else ->
+                when (val rule = ruleDrawResolver.resolve(valid.map { it.tokenRule })) {
+                    is Result.Err -> rule
+                    is Result.Ok -> TokenFactory.create(rule.value, location, text)
+                }
         }
     }
 

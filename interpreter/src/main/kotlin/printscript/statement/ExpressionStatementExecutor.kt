@@ -20,6 +20,7 @@ object ExpressionStatementExecutor : StatementExecutor {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
+        blocks: BlockExecutor,
     ): Result<InterpreterContext, RuntimeError> =
         node.firstChild().flatMap { solver.solve(it, context) }.map { context }
 }

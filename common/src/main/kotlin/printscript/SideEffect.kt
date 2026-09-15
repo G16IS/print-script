@@ -9,3 +9,7 @@ data class PrintEffect(
 data class ReadInputEffect(
     val prompt: String,
 ) : SideEffect
+
+data class ReadEnvEffect(
+    val name: String,
+) : SideEffect
