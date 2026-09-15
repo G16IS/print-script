@@ -35,13 +35,20 @@ class RuleEvaluatorTest {
             capture = true,
             partial = PrintScriptLanguage.STRING_PARTIAL,
         )
+    private val singleString =
+        RegexRule(
+            matcher = listOf("^'[^']*'"),
+            token = "STRING_LITERAL",
+            capture = true,
+            partial = "^'[^']*$",
+        )
 
     private val evaluator =
         RuleEvaluator(
             mapOf(
                 "keywords" to listOf(let),
                 "types" to listOf(type),
-                "literals" to listOf(number, string),
+                "literals" to listOf(number, string, singleString),
                 "identifiers" to listOf(identifier),
             ),
         )
@@ -94,6 +101,8 @@ class RuleEvaluatorTest {
             assertEquals(MatchType.VALID, match("1.5", number))
             assertEquals(MatchType.VALID, match("\"hello\"", string))
             assertEquals(MatchType.VALID, match("\"\"", string))
+            assertEquals(MatchType.VALID, match("'hello'", singleString))
+            assertEquals(MatchType.VALID, match("''", singleString))
         }
 
         @Test
@@ -101,6 +110,7 @@ class RuleEvaluatorTest {
             assertEquals(MatchType.PARTIAL, match("1.", number))
             assertEquals(MatchType.PARTIAL, match("\"hello", string))
             assertEquals(MatchType.PARTIAL, match("\"", string))
+            assertEquals(MatchType.PARTIAL, match("'hello", singleString))
         }
 
         @Test
@@ -123,7 +133,7 @@ class RuleEvaluatorTest {
         @Test
         fun `every rule is evaluated - no short circuit`() {
             val results = evaluator.evaluate("let")
-            assertEquals(5, results.size)
+            assertEquals(6, results.size)
             assertEquals(MatchType.VALID, results.single { it.tokenRule == let }.matchType)
             assertEquals(MatchType.VALID, results.single { it.tokenRule == identifier }.matchType)
             assertEquals(MatchType.INVALID, results.single { it.tokenRule == type }.matchType)

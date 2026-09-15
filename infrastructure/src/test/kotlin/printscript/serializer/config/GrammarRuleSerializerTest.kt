@@ -9,6 +9,7 @@ import printscript.domain.Grammar
 import printscript.domain.GrammarRule
 import printscript.domain.LeftRule
 import printscript.domain.OperatorSpec
+import printscript.domain.OptionalRule
 import printscript.domain.OrRule
 import printscript.domain.RepeatRule
 import printscript.domain.RuleRefStep
@@ -24,18 +25,27 @@ class GrammarRuleSerializerTest {
     }
 
     @Test
+    fun `optional rule round-trips`() {
+        val rule = OptionalRule("item")
+        assertEquals(rule, roundTrip(OptionalRuleSerializer, rule))
+        assertEquals(rule, decode(GrammarRuleSerializer, """{"optional":"item"}"""))
+    }
+
+    @Test
     fun `each grammar rule shape round-trips through GrammarRuleSerializer`() {
         val orRule = OrRule(listOf("a", "b"))
         val atom = AtomRule("ID")
         val seq = SeqRule(listOf(TokenStep("LET", false), RuleRefStep("expression")))
         val left = LeftRule("term", OperatorSpec("OPERATOR", listOf("+", "-")))
         val repeat = RepeatRule("statement")
+        val optional = OptionalRule("statement")
 
         assertEquals(orRule, roundTrip(GrammarRuleSerializer, orRule))
         assertEquals(atom, roundTrip(GrammarRuleSerializer, atom))
         assertEquals(seq, roundTrip(GrammarRuleSerializer, seq))
         assertEquals(left, roundTrip(GrammarRuleSerializer, left))
         assertEquals(repeat, roundTrip(GrammarRuleSerializer, repeat))
+        assertEquals(optional, roundTrip(GrammarRuleSerializer, optional))
     }
 
     @Test

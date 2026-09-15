@@ -10,7 +10,7 @@ Dirigido por datos: el Kotlin es un evaluador de `Grammar`; PrintScript vive en 
 
 ## Cuándo tocarlo
 
-- Combinadores (`or`/`seq`/`left`/`atom`/`repeat`) o uno nuevo
+- Combinadores (`or`/`seq`/`left`/`atom`/`repeat`/`optional`) o uno nuevo
 - Mensajes / política de error (`null` vs `ParseException`)
 - Backtracking del cursor
 - Forma de los nodos (`wrap`, `binary`, qué se captura)
@@ -51,13 +51,14 @@ parser/src/main/kotlin/printscript/
   parse/
     RuleEvaluator.kt        despacha al handler que supports(rule)
     RuleHandler.kt
-    RuleHandlers.kt         defaults(): Atom, Seq, Or, Left, Repeat
+    RuleHandlers.kt         defaults(): Atom, Seq, Or, Left, Repeat, Optional
     ParseContext.kt         grammar + tokens + evaluate/tryEvaluate
     AtomRuleHandler.kt
     SeqRuleHandler.kt
     OrRuleHandler.kt
     LeftRuleHandler.kt
     RepeatRuleHandler.kt
+    OptionalRuleHandler.kt
     step/
       StepEvaluator.kt      TokenStep / RuleRefStep
       StepOutcome.kt        matched + node? + location?
@@ -160,6 +161,16 @@ Location: span de los items, o la location del token actual si la lista está va
 
 `repeat` no está en el `grammar.config.v1.0.json` v1. Tests del parser cubren bloques `{ stmt* }` a mano. Listo para `if`.
 
+### `OptionalRuleHandler`
+
+Siempre envuelve. `tryEvaluate(item)`:
+
+- `Matched` → nodo con nombre de la regla optional y 1 hijo
+- `Missing` → mismo nodo con 0 hijos (no es miss de la optional)
+- `Failed` → se propaga
+
+v1 lo usa: `initializer` = `{ "optional": "var-init" }`.
+
 ---
 
 ## Steps de `seq` (`StepEvaluator`)
@@ -214,7 +225,7 @@ El parser **acepta** `let x: number = "hola";`. Eso es semántica.
 
 Harness en `parser/src/test/kotlin/printscript/support/`:
 
-- `Grammars.kt` — `grammar()`, `atom()`, `seq()`, `expect()`, `capture()`, `ref()`, `left()`, `or()`, `repeat()`
+- `Grammars.kt` — `grammar()`, `atom()`, `seq()`, `expect()`, `capture()`, `ref()`, `left()`, `or()`, `repeat()`, `optional()`
 - `Tokens.kt` — tokens sintéticos 1-based
 - `MockLexer.kt` — `Lexer` de una lista (agrega EOF)
 - `ParseSupport.kt` — `parse(grammar, *tokens)` sobre el start

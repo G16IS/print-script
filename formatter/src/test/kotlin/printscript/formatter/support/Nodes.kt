@@ -35,6 +35,24 @@ fun wrap(
     child: SyntaxNode,
 ): SyntaxNode = SyntaxNode(name = name, children = listOf(child), location = child.location)
 
+fun initializer(expression: SyntaxNode? = null): SyntaxNode {
+    if (expression == null) {
+        return SyntaxNode(name = "initializer", children = emptyList(), location = Location.empty())
+    }
+    return SyntaxNode(
+        name = "initializer",
+        children =
+            listOf(
+                SyntaxNode(
+                    name = "var-init",
+                    children = listOf(expression),
+                    location = expression.location,
+                ),
+            ),
+        location = expression.location,
+    )
+}
+
 fun number(
     value: String,
     startCol: Int,

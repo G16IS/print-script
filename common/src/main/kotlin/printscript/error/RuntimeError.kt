@@ -31,6 +31,14 @@ data class InvalidLiteral(
         get() = "Literal inválido '$literal'"
 }
 
+data class UninitializedVariable(
+    val name: String,
+    override val location: Location,
+) : RuntimeError {
+    override val message: String
+        get() = "Variable '$name' no inicializada"
+}
+
 data class UnresolvableCall(
     val callee: String,
     override val location: Location,

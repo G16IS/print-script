@@ -34,3 +34,9 @@ data class RepeatRule(
 ) : GrammarRule {
     override fun references(): List<String> = listOf(item)
 }
+
+data class OptionalRule(
+    val item: String,
+) : GrammarRule {
+    override fun references(): List<String> = listOf(item)
+}

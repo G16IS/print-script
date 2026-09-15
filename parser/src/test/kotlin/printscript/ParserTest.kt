@@ -61,7 +61,42 @@ class ParserTest {
         assertEquals("variable", stmt.name)
         assertEquals("x", stmt.child("ID").value())
         assertEquals("number", stmt.child("TYPE").value())
-        assertEquals("5", numberValue(stmt.child("expression")))
+        assertEquals("5", numberValue(stmt.find("expression")))
+    }
+
+    @Test
+    fun `parses variable declaration without initializer`() {
+        val stmt =
+            parseOne(
+                Tokens.let(),
+                Tokens.id("x"),
+                Tokens.colon(),
+                Tokens.type("string"),
+                Tokens.semicolon(),
+            )
+        assertEquals("variable", stmt.name)
+        assertEquals("x", stmt.child("ID").value())
+        assertEquals("string", stmt.child("TYPE").value())
+        val initializer = stmt.child("initializer")
+        assertEquals(0, initializer.children.size)
+    }
+
+    @Test
+    fun `parses variable declaration with initializer nested under optional`() {
+        val stmt =
+            parseOne(
+                Tokens.let(),
+                Tokens.id("x"),
+                Tokens.colon(),
+                Tokens.type("number"),
+                Tokens.assign(),
+                Tokens.number("5"),
+                Tokens.semicolon(),
+            )
+        val initializer = stmt.child("initializer")
+        assertEquals(1, initializer.children.size)
+        assertEquals("var-init", initializer.children.single().name)
+        assertEquals("5", numberValue(stmt.find("expression")))
     }
 
     @Test
@@ -78,7 +113,7 @@ class ParserTest {
                 Tokens.number("2"),
                 Tokens.semicolon(),
             )
-        val expr = stmt.child("expression")
+        val expr = stmt.find("expression")
         assertEquals("+", expr.op())
         assertEquals("1", numberValue(expr.lhs()))
         assertEquals("2", numberValue(expr.rhs()))
@@ -151,7 +186,7 @@ class ParserTest {
                 Tokens.semicolon(),
             )
         assertEquals("number", stmt.child("TYPE").value())
-        assertEquals("string", stmt.child("expression").find("string").name)
+        assertEquals("string", stmt.find("expression").find("string").name)
     }
 
     @Test

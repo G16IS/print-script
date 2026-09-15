@@ -4,6 +4,7 @@ import printscript.InterpreterContext
 import printscript.NumberValue
 import printscript.RuntimeValue
 import printscript.StringValue
+import printscript.UninitializedValue
 import printscript.UnitValue
 import printscript.error.DivisionByZero
 import printscript.error.InvalidOperands
@@ -103,6 +104,7 @@ class BinaryOperationEvaluator(
             is NumberValue -> "number"
             is StringValue -> "string"
             is UnitValue -> "unit"
+            is UninitializedValue -> "uninitialized"
         }
 
     private data class BinaryParts(

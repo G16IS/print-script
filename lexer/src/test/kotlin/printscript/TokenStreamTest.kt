@@ -108,11 +108,10 @@ class TokenStreamTest {
             assertTrue(exception is Result.Err && exception.error is UnexpectedToken)
         }
 
-        // TODO refactor v1 so that this behaviour doesn't exist
         @Test
-        fun `single quote is not a string delimiter`() {
-            val error = lex("'hi'")
-            assertTrue(error is Result.Err && error.error is UnexpectedToken)
+        fun `unterminated single quoted string`() {
+            val error = lex("'hello")
+            assertTrue(error is Result.Err && error.error is UnexpectedEnfOfLine)
         }
 
         @Test

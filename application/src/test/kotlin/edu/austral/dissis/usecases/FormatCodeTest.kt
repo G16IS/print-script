@@ -58,4 +58,12 @@ class FormatCodeTest {
         assertTrue(thrown.message!!.startsWith("TCK format failed:"))
         assertEquals("", writer.toString())
     }
+
+    @Test
+    fun `formats an uninitialized declaration without assign`() {
+        val formatted = FormatExample.format("unformatted_uninitialized.ps")
+
+        assertTrue(formatted is Result.Ok)
+        assertEquals("let x : string;\n", (formatted as Result.Ok).value)
+    }
 }

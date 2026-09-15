@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonObject
 import printscript.domain.AtomRule
 import printscript.domain.GrammarRule
 import printscript.domain.LeftRule
+import printscript.domain.OptionalRule
 import printscript.domain.OrRule
 import printscript.domain.RepeatRule
 import printscript.domain.SeqRule
@@ -39,6 +40,7 @@ object GrammarRuleSerializer : KSerializer<GrammarRule> {
             "left" in keys -> LeftRuleSerializer
             "atom" in keys -> AtomRuleSerializer
             "repeat" in keys -> RepeatRuleSerializer
+            "optional" in keys -> OptionalRuleSerializer
             else -> error("Unknown grammar rule keys: $keys")
         }
     }
@@ -53,6 +55,7 @@ object GrammarRuleSerializer : KSerializer<GrammarRule> {
             is LeftRule -> LeftRuleSerializer
             is AtomRule -> AtomRuleSerializer
             is RepeatRule -> RepeatRuleSerializer
+            is OptionalRule -> OptionalRuleSerializer
             else -> error("Unknown grammar rule: ${rule::class.simpleName}")
         }
 }

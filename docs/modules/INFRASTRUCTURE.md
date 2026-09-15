@@ -113,6 +113,7 @@ Módulo polimórfico de `GrammarRule` (por si se serializa por tipo), pero el de
 | `left` | `LeftRuleSerializer` | `LeftRule` |
 | `atom` | `AtomRuleSerializer` | `AtomRule` |
 | `repeat` | `RepeatRuleSerializer` | `RepeatRule` |
+| `optional` | `OptionalRuleSerializer` | `OptionalRule` |
 | otra | error `Unknown grammar rule keys` | |
 
 Una sola clave de tipo por objeto. No mezclar `{ "or": …, "seq": … }`.
@@ -169,11 +170,11 @@ Tokens: `LET`, `CALL` (`println`, capture), `TYPE` (`string`/`number`, capture),
 
 `COMMA` está; la gramática no lo usa.
 
-Partial de string en este JSON: `"^\"[^\"]*$"` (permite tokenizar `"hola"`). Números siguen con `^[0-9]` (el `1.5` se parte).
+Dos regex de `STRING_LITERAL`: `"..."` (`partial` `"^\"[^\"]*$"`) y `'...'` (`partial` `"^'[^']*$"`). Números siguen con `^[0-9]` (el `1.5` se parte).
 
 ### `grammar.config.v1.0.json`
 
-`start: statement`. Producciones: `statement`, `variable`, `expression-stmt`, `expression`, `term`, `factor`, `number`, `string`, `identifier`, `call`, `group`. Sin `repeat`. `call` tiene un solo argumento.
+`start: statement`. Producciones: `statement`, `variable`, `initializer` (`optional` de `var-init`), `var-init`, `expression-stmt`, `expression`, `term`, `factor`, `number`, `string`, `identifier`, `call`, `group`. `repeat` no se usa. `call` tiene un solo argumento.
 
 ### `type-system.config.v1.0.json`
 
@@ -192,7 +193,7 @@ JSON, docs y tests coinciden: **primero gana**. Keywords antes que identifiers p
 `JSONGrammarConfigReaderTest`:
 
 - Lee el resource real: `start`, `or`, `seq` (capturas + rule refs), `left`+valores, `atom`
-- JSON chico con `repeat`
+- JSON chico con `repeat` / `optional`
 - Rechaza start desconocido, ref colgante, shape desconocido
 
 `JSONTypeSystemConfigReaderTest`: resource canónico, `commutative: false`, rechaza tipos inexistentes.

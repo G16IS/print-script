@@ -71,7 +71,7 @@ El hueco entre dos tokens es `AFTER` del anterior **más** `BEFORE` del actual (
 
 El core es **inmutable**: `WalkState` es un `data class` (`output`, `errors`, `last`, `indentLevel`). `emit` / `FormatRuleLoader.instantiate` son `fold` + `copy`.
 
-Puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens): `GrammarWalker` la reinyecta leyendo `SeqRule` + `TokenLexemes` (lexemas exactos de un solo matcher). Los hijos del nodo se consumen **en orden** (capturas y rule-refs); los sintéticos no avanzan el cursor. Dos rule-refs con el mismo nombre (then/else) no se pisan. Nodos que no son `SeqRule` (`Or`, `Left`, `Atom`, `Repeat`) caen al walk genérico de hijos. `check` respeta `failFast=false` también en errores estructurales del seq (`UnrecognizedFormatNode`).
+Puntuación que el parser no deja en el árbol (`let`, `:`, `=`, `;`, parens): `GrammarWalker` la reinyecta leyendo `SeqRule` + `TokenLexemes` (lexemas exactos de un solo matcher). Los hijos del nodo se consumen **en orden** (capturas y rule-refs); los sintéticos no avanzan el cursor. Dos rule-refs con el mismo nombre (then/else) no se pisan. `OptionalRule`: 0 hijos no emite nada; 1 hijo se camina; más es `UnrecognizedFormatNode`. Así `let x: string;` no inventa `=`. Nodos que no son `SeqRule` ni `OptionalRule` (`Or`, `Left`, `Atom`, `Repeat`) caen al walk genérico de hijos. `check` respeta `failFast=false` también en errores estructurales del seq (`UnrecognizedFormatNode`).
 
 ### Rules
 
