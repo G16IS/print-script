@@ -14,7 +14,7 @@ class TypeCheckCommand : SourceFileCommand("typecheck", "Type-check a PrintScrip
         emit(
             presentReport(
                 {
-                    TypecheckCode.typecheck(
+                    TypecheckCode.check(
                         kit.configs.lang,
                         kit.configs.grammar,
                         kit.configs.typeSystem,
