@@ -93,6 +93,6 @@ object PrintScript {
     ): List<SideEffectHandler> =
         listOf(
             PrintHandler(printChannel),
-            ReadInputHandler(inputChannel),
+            ReadInputHandler(inputChannel, printChannel),
         )
 }
