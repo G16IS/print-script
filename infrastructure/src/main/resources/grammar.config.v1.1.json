@@ -6,9 +6,11 @@
                 "if",
                 "constant",
                 "variable",
+                "assignment",
                 "expression-stmt"
             ]
         },
+        "assignment": { "try": "assignment-body" },
         "variable": {
             "seq": [
                 "LET",
@@ -22,6 +24,14 @@
                 {
                     "rule": "initializer"
                 },
+                "SEMICOLON"
+            ]
+        },
+        "assignment-body": {
+            "seq": [
+                { "capture": "ID" },
+                "ASSIGN",
+                { "rule": "expression" },
                 "SEMICOLON"
             ]
         },

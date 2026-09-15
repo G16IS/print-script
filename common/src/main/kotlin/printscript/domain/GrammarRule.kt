@@ -40,3 +40,9 @@ data class OptionalRule(
 ) : GrammarRule {
     override fun references(): List<String> = listOf(item)
 }
+
+data class TryRule(
+    val item: String,
+) : GrammarRule {
+    override fun references(): List<String> = listOf(item)
+}

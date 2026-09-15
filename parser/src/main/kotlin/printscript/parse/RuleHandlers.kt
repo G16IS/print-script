@@ -9,5 +9,6 @@ object RuleHandlers {
             LeftRuleHandler(),
             RepeatRuleHandler(),
             OptionalRuleHandler(),
+            TryRuleHandler(),
         )
 }
