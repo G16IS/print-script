@@ -96,6 +96,23 @@ class TypeCheckerTest {
     }
 
     @Test
+    fun `declaration without initializer still declares the annotated type`() {
+        val program = program(variable("x", "string", expression = null))
+        val report = checker.check(program)
+        assertTrue(report.isOk)
+    }
+
+    @Test
+    fun `later statement can reference a variable declared without initializer`() {
+        val program =
+            program(
+                variable("x", "number", expression = null),
+                exprStmt(idExpr("x")),
+            )
+        assertTrue(checker.check(program).isOk)
+    }
+
+    @Test
     fun `expression statement validates the expression`() {
         val program = program(exprStmt(wrap("expression", call(numberExpr("1")))))
 
@@ -209,12 +226,12 @@ class TypeCheckerTest {
     private fun variable(
         name: String,
         type: String,
-        expression: SyntaxNode,
+        expression: SyntaxNode?,
     ): SyntaxNode =
         SyntaxNode(
             name = "variable",
             children =
-                listOf(
+                listOfNotNull(
                     leaf("ID", "ID", name),
                     leaf("TYPE", "TYPE", type),
                     expression,

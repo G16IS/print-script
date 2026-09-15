@@ -99,7 +99,7 @@ Spec de ese JSON: [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md). El 
 
 - Las claves son `SyntaxNode.name` (reglas del parser).
 - `kind` elige el handler.
-- Los demás campos dicen **qué hijos** extraer (`child(name)`): `id`, `declaredType`, `expression`, `callee`, `args`.
+- Los demás campos dicen **qué hijos** extraer: `id` y `declaredType` son hijos directos (`child`); `expression` se busca en el subárbol (`find`). Si no hay `expression`, la declaración sin `=` es válida y igual registra el tipo.
 - El código **no** hardcodea `"variable"` ni `"expression"`. Un statement nuevo = grammar + entrada en `nodes`. Solo un *kind* nuevo requiere Kotlin.
 
 ---
@@ -116,7 +116,7 @@ Spec de ese JSON: [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md). El 
 
 `DefaultExpressionTypeResolver` y `DefaultTypeChecker` despachan por `handlers[nodeConfig.kind]`. Kind desconocido → error con location.
 
-Orden en declaraciones: **primero** se resuelve el initializer (scope actual), **después** se registra el id. `let x: number = x;` falla.
+Orden en declaraciones: **primero** se resuelve el initializer si existe (scope actual), **después** se registra el id. `let x: number = x;` falla. `let x: number;` declara sin resolver expresión.
 
 El único acumulador mutable es la lista local de errores en `check`.
 
@@ -125,7 +125,7 @@ El único acumulador mutable es la lista local de errores en `check`.
 ## Qué hace
 
 - Tipo declarado existe en `config.types`
-- Tipo del initializer compatible con la anotación
+- Tipo del initializer compatible con la anotación (si hay initializer)
 - Redeclaración en el mismo scope
 - Identificador no declarado
 - Operandos según la tabla de `operations` (`+` number+number, string+string, string+number)

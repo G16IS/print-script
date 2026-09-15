@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import printscript.domain.AtomRule
 import printscript.domain.LeftRule
+import printscript.domain.OptionalRule
 import printscript.domain.OrRule
 import printscript.domain.RepeatRule
 import printscript.domain.RuleRefStep
@@ -30,6 +31,8 @@ class JSONGrammarConfigReaderTest {
     fun `reads seq steps including captures and rule refs`() {
         val variable = grammar.rules.getValue("variable") as SeqRule
         assertEquals(expectedVariableSteps(), variable.steps)
+        val initializer = grammar.rules.getValue("initializer") as OptionalRule
+        assertEquals("var-init", initializer.item)
     }
 
     @Test
@@ -51,6 +54,13 @@ class JSONGrammarConfigReaderTest {
         val loaded = JSONGrammarConfigReader.read(repeatJson())
         val block = loaded.rules.getValue("block") as RepeatRule
         assertEquals("item", block.item)
+    }
+
+    @Test
+    fun `reads an optional rule`() {
+        val loaded = JSONGrammarConfigReader.read(optionalJson())
+        val opt = loaded.rules.getValue("maybe") as OptionalRule
+        assertEquals("item", opt.item)
     }
 
     @Test
@@ -82,8 +92,7 @@ class JSONGrammarConfigReaderTest {
             TokenStep("ID", true),
             TokenStep("COLON", false),
             TokenStep("TYPE", true),
-            TokenStep("ASSIGN", false),
-            RuleRefStep("expression"),
+            RuleRefStep("initializer"),
             TokenStep("SEMICOLON", false),
         )
 
@@ -98,6 +107,17 @@ class JSONGrammarConfigReaderTest {
           "start": "block",
           "rules": {
             "block": { "repeat": "item" },
+            "item": { "atom": "ID" }
+          }
+        }
+        """.trimIndent()
+
+    private fun optionalJson() =
+        """
+        {
+          "start": "maybe",
+          "rules": {
+            "maybe": { "optional": "item" },
             "item": { "atom": "ID" }
           }
         }

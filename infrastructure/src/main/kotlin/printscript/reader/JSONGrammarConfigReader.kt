@@ -10,12 +10,14 @@ import printscript.domain.AtomRule
 import printscript.domain.Grammar
 import printscript.domain.GrammarRule
 import printscript.domain.LeftRule
+import printscript.domain.OptionalRule
 import printscript.domain.OrRule
 import printscript.domain.RepeatRule
 import printscript.domain.SeqRule
 import printscript.serializer.config.AtomRuleSerializer
 import printscript.serializer.config.GrammarSerializer
 import printscript.serializer.config.LeftRuleSerializer
+import printscript.serializer.config.OptionalRuleSerializer
 import printscript.serializer.config.OrRuleSerializer
 import printscript.serializer.config.RepeatRuleSerializer
 import printscript.serializer.config.SeqRuleSerializer
@@ -38,6 +40,7 @@ object JSONGrammarConfigReader : GrammarConfigReader {
                 subclass(SeqRule::class, SeqRuleSerializer)
                 subclass(LeftRule::class, LeftRuleSerializer)
                 subclass(RepeatRule::class, RepeatRuleSerializer)
+                subclass(OptionalRule::class, OptionalRuleSerializer)
             }
         }
 

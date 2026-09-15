@@ -22,12 +22,17 @@ object StringLiteralEvaluator : ExpressionEvaluator {
         solver: ExpressionSolver,
     ): Result<EvalResult, RuntimeError> =
         node.tokenValue().flatMap { raw ->
-            if (raw.length >= 2 && raw.startsWith(QUOTE) && raw.endsWith(QUOTE)) {
-                Result.Ok(EvalResult.pure(StringValue(raw.removeSurrounding(QUOTE))))
-            } else {
+            val quote = matchingQuote(raw)
+            if (quote == null) {
                 Result.Err(InvalidLiteral(raw, node.location))
+            } else {
+                Result.Ok(EvalResult.pure(StringValue(raw.substring(1, raw.lastIndex))))
             }
         }
 
-    private const val QUOTE = "\""
+    private fun matchingQuote(raw: String): Char? {
+        val quote = raw.firstOrNull() ?: return null
+        val quoted = raw.length >= 2 && raw.last() == quote
+        return if (quoted && (quote == '"' || quote == '\'')) quote else null
+    }
 }

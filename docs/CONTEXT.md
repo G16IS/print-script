@@ -67,11 +67,12 @@ println(1 + 2 * 3);
 
 Soportado hoy:
 
-- Declaración: `let <id>: <string|number> = <expr>;`
+- Declaración: `let <id>: <string|number> (= <expr>)?;` — el `=` es un `OptionalRule` (`initializer` / `var-init`)
 - Statement de expresión: `<expr>;` (incluye `println(<expr>);`)
-- Expresiones: literales number/string, identificadores, `+ - * /`, agrupación `( )`
+- Expresiones: literales number/string (`"..."` o `'...'`), identificadores, `+ - * /`, agrupación `( )`
 - Precedencia: `* /` sobre `+ -`; asociatividad izquierda
 - `+` de strings es concatenación **a nivel semántico** (el parser no distingue)
+- `let x: T;` type-checkea y declara `x`. Leerla en runtime es `UninitializedVariable` (no hay defaults)
 
 No está en la gramática v1 (pero el parser ya sabe evaluar `repeat`, pensado para bloques/`if`):
 
@@ -257,7 +258,7 @@ Dispatch por `node.name` (el nombre de regla de `grammar.config.v1.0.json`). `De
 
 `println` es una **expresión** (`factor → call`), no un statement. Los efectos viajan en `EvalResult(value, sideEffects)` y se combinan de hijos a padres. `PrintlnHandler` emite `PrintEffect`.
 
-Valores: `NumberValue(Double)`, `StringValue` (sin comillas), `UnitValue` (resultado de un call). Números enteros se imprimen sin `.0` (`toPrintableString()`).
+Valores: `NumberValue(Double)`, `StringValue` (sin comillas), `UnitValue` (resultado de un call), `UninitializedValue` (`let` sin `=`). Números enteros se imprimen sin `.0` (`toPrintableString()`). Leer una no inicializada es `UninitializedVariable`.
 
 Contexto: `InterpreterContext` inmutable copy-on-write, con `parent` y `childScope()`. `declareVariable` sombrea en el scope actual; `assignVariable` reconstruye la cadena dueña. V1 no tiene asignaciones sueltas ni bloques, así que `assignVariable` / `childScope` están listos y sin usar en el walk de statements.
 
@@ -283,7 +284,7 @@ Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 
 - `JSONLanguageConfigReader` / `JSONGrammarConfigReader` / `JSONTypeSystemConfigReader` / `JSONFormatterLanguageConfigReader` / `JSONFormatterRulesConfigReader` / `YAMLFormatterRulesConfigReader` / `JSONLinterConfigReader` implementan los ports de `common`
 - Serializers **surrogate** en `serializer/config`: el dominio no lleva `@Serializable`. `LanguageConfigSerializer` + `TokenRuleSerializer` (discrimina `type: exact|regex`)
-- Discriminación de `GrammarRule` por **clave JSON** (`or`, `seq`, `left`, `atom`, `repeat`), no por campo `type`
+- Discriminación de `GrammarRule` por **clave JSON** (`or`, `seq`, `left`, `atom`, `repeat`, `optional`), no por campo `type`
 - Resources: `language.config.v1.0.json` / `v1.1.json` (hoy iguales), igual para grammar, type-system, formatter-language, linter; `formatter-user-defaults.json` sin versión
 
 Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
@@ -337,7 +338,7 @@ Los strings de token del lexer **tienen que coincidir** con los de la gramática
 | `TYPE` | `string`, `number` | sí |
 | `ID` | identificadores | sí |
 | `NUMBER_LITERAL` | `42`, `1.5` | sí |
-| `STRING_LITERAL` | `"hola"` (con comillas) | sí |
+| `STRING_LITERAL` | `"hola"` o `'hola'` (con comillas) | sí |
 | `OPERATOR` | `+ - * /` | sí (el símbolo) |
 | `COLON` `ASSIGN` `SEMICOLON` `LEFT_PAREN` `RIGHT_PAREN` `COMMA` | puntuación | no |
 | `EOF` | fin de archivo (lo emite el lexer, no una regla) | no |
@@ -395,7 +396,7 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 | Lexer/parser tiran excepciones | lexer, parser | El CLI las atrapa y imprime `ERROR`; el resto del pipeline usa `Result`/`Report` |
 | `string + number` diverge | type-system JSON vs `DefaultTypeConfiguration` | El type-checker acepta `"a" + 1`; el interpreter responde `InvalidOperands` |
 | Tabla de ops del interpreter hardcodeada | `interpreter/.../DefaultTypeConfiguration.kt` | No comparte `type-system.config.v1.0.json` con el type-checker |
-| `partial` de números en el JSON | `language.config.v1.0.json` (`^[0-9]`) | `1.5` no tokeniza con el resource; strings sí (`partial` `^"[^"]*$`) |
+| `partial` de números en el JSON | `language.config.v1.0.json` (`^[0-9]`) | `1.5` no tokeniza con el resource; strings `"..."` y `'...'` sí |
 | Dos `TypeError` | `common/.../error/TypeError.kt` vs `type-checker/.../TypeError.kt` | El pipeline de application usa el data class del módulo; el sealed de common lo usa el interpreter (variantes compartidas) |
 | `TokenType` enum | `common/.../TokenType.kt` | No lo usa nadie |
 | `TokenRegistry` | `lexer/.../TokenRegistry.kt` | No lo usa el `TokenStream` |
@@ -418,7 +419,7 @@ Versión de lenguaje / kits: `LanguageCatalog` en `:application` — detalle en 
 ### Nueva producción de gramática
 
 1. Editar `grammar.config.v1.0.json`.
-2. Si alcanza con `or`/`seq`/`left`/`atom`/`repeat`, no hay código Kotlin nuevo.
+2. Si alcanza con `or`/`seq`/`left`/`atom`/`repeat`/`optional`, no hay código Kotlin nuevo.
 3. Tests: `parser` (handlers + `ParserTest`) y un `.ps` en application si es de integración.
 4. Ver [GRAMMAR_CONFIG.md](configs/GRAMMAR_CONFIG.md).
 

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.domain.AtomRule
 import printscript.domain.Grammar
+import printscript.domain.OptionalRule
 import printscript.domain.RuleRefStep
 import printscript.domain.SeqRule
 import printscript.domain.SeqStep
@@ -133,6 +134,43 @@ class GrammarWalkerTest {
             )
 
         assertTrue(formatter.format(program(decl)) is Result.Err)
+    }
+
+    @Test
+    fun `absent optional emits nothing`() {
+        val grammar =
+            Grammar(
+                start = "maybe",
+                rules =
+                    mapOf(
+                        "maybe" to OptionalRule("item"),
+                        "item" to AtomRule("ID"),
+                    ),
+            )
+        val formatter = DefaultFormatterFactory.create(emptyList(), grammar, TokenLexemes(emptyMap()))
+        val node = SyntaxNode(name = "maybe", children = emptyList(), location = Location.empty())
+        assertEquals("", ok(formatter.format(program(node))))
+    }
+
+    @Test
+    fun `present optional emits the inner child`() {
+        val grammar =
+            Grammar(
+                start = "maybe",
+                rules =
+                    mapOf(
+                        "maybe" to OptionalRule("item"),
+                        "item" to AtomRule("ID"),
+                    ),
+            )
+        val formatter = DefaultFormatterFactory.create(emptyList(), grammar, TokenLexemes(emptyMap()))
+        val node =
+            SyntaxNode(
+                name = "maybe",
+                children = listOf(leaf("ID", "x", 1)),
+                location = Location.empty(),
+            )
+        assertEquals("x", ok(formatter.format(program(node))))
     }
 
     @Test

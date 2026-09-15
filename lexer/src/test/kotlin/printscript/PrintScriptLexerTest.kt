@@ -141,6 +141,17 @@ class PrintScriptLexerTest {
                 tok("ID", "world"),
                 tok("EOF"),
             )
+
+        @Test
+        fun `single quoted hello keeps the quotes`() =
+            assertLex("'hello'", tok("STRING_LITERAL", "'hello'"), tok("EOF"))
+
+        @Test
+        fun `empty single quoted string keeps the quotes`() = assertLex("''", tok("STRING_LITERAL", "''"), tok("EOF"))
+
+        @Test
+        fun `double quotes are allowed inside single quotes`() =
+            assertLex("'say \"hi\"'", tok("STRING_LITERAL", "'say \"hi\"'"), tok("EOF"))
     }
 
     @Nested

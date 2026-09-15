@@ -3,6 +3,7 @@ package printscript.tck
 import java.io.ByteArrayInputStream
 import java.io.StringWriter
 import java.nio.charset.StandardCharsets
+import java.util.Optional
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.Test
 import printscript.domain.FormatterRulesConfig
 import printscript.edition.LanguageCatalog
 import printscript.io.DefaultSideEffectManager
+import printscript.reader.CharPosition
+import printscript.reader.CodeReader
 import printscript.usecases.FormatCode
 import printscript.util.Result
 
@@ -224,4 +227,35 @@ class PrintScriptFormatTckTest {
           ]
         }
         """.trimIndent()
+
+    /** In-memory [CodeReader]; positions match [FileCodeReader] (1-based). */
+    private class StringCodeReader(
+        source: String,
+    ) : CodeReader {
+        private val realReader = source.reader().buffered()
+        private var currentPosition = CharPosition(1, 1)
+        private var lookahead = realReader.read()
+
+        override fun read(): Optional<Char> {
+            if (lookahead == -1) return Optional.empty()
+
+            val char = lookahead.toChar()
+            currentPosition =
+                if (char == '\n') {
+                    CharPosition(currentPosition.line + 1, 1)
+                } else {
+                    CharPosition(currentPosition.line, currentPosition.col + 1)
+                }
+
+            lookahead = realReader.read()
+            return Optional.of(char)
+        }
+
+        override fun peek(): Optional<Char> {
+            if (lookahead == -1) return Optional.empty()
+            return Optional.of(lookahead.toChar())
+        }
+
+        override fun currentPosition(): CharPosition = currentPosition
+    }
 }

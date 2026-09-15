@@ -1,8 +1,10 @@
 package printscript.expression.literal
 
 import printscript.InterpreterContext
+import printscript.UninitializedValue
 import printscript.error.RuntimeError
 import printscript.error.UndeclaredIdentifier
+import printscript.error.UninitializedVariable
 import printscript.expression.EvalResult
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.ExpressionSolver
@@ -21,9 +23,10 @@ object IdentifierEvaluator : ExpressionEvaluator {
         solver: ExpressionSolver,
     ): Result<EvalResult, RuntimeError> =
         node.tokenValue().flatMap { name ->
-            val value =
-                context.getVariable(name)
-                    ?: return@flatMap Result.Err(UndeclaredIdentifier(name, node.location))
-            Result.Ok(EvalResult.pure(value))
+            when (val value = context.getVariable(name)) {
+                null -> Result.Err(UndeclaredIdentifier(name, node.location))
+                UninitializedValue -> Result.Err(UninitializedVariable(name, node.location))
+                else -> Result.Ok(EvalResult.pure(value))
+            }
         }
 }

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.error.DivisionByZero
 import printscript.error.UndeclaredIdentifier
+import printscript.error.UninitializedVariable
 import printscript.support.PsSupport
 import printscript.support.createInterpreter
 import printscript.support.interpretEffects
@@ -70,6 +71,33 @@ class InterpreterIntegrationTest {
 
         assertTrue(result is Result.Err)
         assertTrue((result as Result.Err).error is UndeclaredIdentifier)
+    }
+
+    @Test
+    fun `single quoted strings print without quotes`() {
+        val program = PsSupport.parse("println('hola');")
+        assertEquals(listOf(PrintEffect("hola")), interpretEffects("1.0", program))
+    }
+
+    @Test
+    fun `reading an uninitialized variable fails`() {
+        val program =
+            PsSupport.parse(
+                """
+                let x: string;
+                println(x);
+                """.trimIndent(),
+            )
+        val result = createInterpreter("1.0").interpret(InterpreterContext(), program)
+        assertTrue(result is Result.Err)
+        assertTrue((result as Result.Err).error is UninitializedVariable)
+    }
+
+    @Test
+    fun `uninitialized declaration by itself succeeds`() {
+        val program = PsSupport.parse("let x: number;")
+        val result = createInterpreter("1.0").interpret(InterpreterContext(), program)
+        assertTrue(result is Result.Ok)
     }
 
     @Test

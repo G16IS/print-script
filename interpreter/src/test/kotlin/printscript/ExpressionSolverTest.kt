@@ -68,6 +68,12 @@ class ExpressionSolverTest {
     }
 
     @Test
+    fun `single quoted string literal strips surrounding quotes`() {
+        val node = leaf("string", "STRING_LITERAL", "'hola'")
+        assertEquals(StringValue("hola"), ok(solver.solve(node, InterpreterContext())).value)
+    }
+
+    @Test
     fun `identifier resolves to declared value`() {
         val context = InterpreterContext().declareVariable("pepe", StringValue("hola"))
 

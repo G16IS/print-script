@@ -47,7 +47,7 @@ interpreter/src/main/kotlin/printscript/
   DefaultInterpreter.kt           Interpreter + BlockExecutor: dispatch por node.name
   DefaultInterpreterFactory.kt    arma solver + executors
   InterpreterContext.kt           entorno inmutable copy-on-write
-  RuntimeValue.kt                 NumberValue | StringValue | UnitValue
+  RuntimeValue.kt                 NumberValue | StringValue | UnitValue | UninitializedValue
   ResultExt.kt                    zip interno (lookups puros, no solve)
   node/
     NodeAccess.kt                 tokenValue / childAt / firstChild / namedChild
@@ -56,7 +56,7 @@ interpreter/src/main/kotlin/printscript/
     BlockExecutor.kt              fun interface del fold de statements
     StatementExecutor.kt          nodeNames + execute(node, context, solver)
     StatementResult.kt            sideEffects + newContext
-    VariableDeclarationExecutor.kt   let x: T = expr;  (object)
+    VariableDeclarationExecutor.kt   let x: T (= expr)?; UninitializedValue si no hay expr  (object)
     ExpressionStatementExecutor.kt   <expr>;           (object)
   expression/
     ExpressionEvaluator.kt        nodeNames + evaluate(..., solver)
@@ -66,8 +66,8 @@ interpreter/src/main/kotlin/printscript/
     GroupEvaluator.kt             passthrough de ( expr )  (object)
     literal/
       NumberLiteralEvaluator.kt      toDouble finito o InvalidLiteral (object)
-      StringLiteralEvaluator.kt      exige comillas (object)
-      IdentifierEvaluator.kt         lookup o UndeclaredIdentifier (object)
+      StringLiteralEvaluator.kt      strip `"` o `'`; si no, InvalidLiteral (object)
+      IdentifierEvaluator.kt         lookup; UninitializedValue → UninitializedVariable (object)
     binaryoperation/
       BinaryOperationRule.kt      apply nullable
       TypeConfiguration.kt        interface
