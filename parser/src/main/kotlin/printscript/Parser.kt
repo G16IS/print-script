@@ -1,16 +1,13 @@
 package printscript
 
 import printscript.error.ParserError
-import printscript.syntax.SyntaxProgram
+import printscript.syntax.SyntaxNode
 import printscript.util.Result
 
 /**
- * Transforms a token stream into a [SyntaxProgram] one statement at a time.
+ * Transforms a token stream into [SyntaxNode]s one statement at a time.
  * Syntactic analysis only — no semantic validation.
  */
 interface Parser {
-    fun parseNextStatement(
-        tokenStream: Lexer,
-        program: SyntaxProgram,
-    ): Result<SyntaxProgram, ParserError>
+    fun parseNextStatement(tokenStream: Lexer): Result<SyntaxNode, ParserError>
 }

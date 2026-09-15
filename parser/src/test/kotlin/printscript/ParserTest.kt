@@ -167,9 +167,10 @@ class ParserTest {
                 Tokens.rparen(),
                 Tokens.semicolon(),
             )
-        var program = SyntaxProgram.empty()
-        program = parseOk(parser.parseNextStatement(lexer, program))
-        program = parseOk(parser.parseNextStatement(lexer, program))
+        val builder = SyntaxProgram.builder()
+        builder.add(parseOk(parser.parseNextStatement(lexer)))
+        builder.add(parseOk(parser.parseNextStatement(lexer)))
+        val program = builder.build()
         assertEquals(listOf("variable", "expression-stmt"), program.statements.map { it.name })
     }
 
@@ -323,18 +324,14 @@ class ParserTest {
         assertEquals("3", numberValue(expr.rhs()))
     }
 
-    private fun parseOne(vararg tokens: Token): SyntaxNode =
-        parseOk(parser.parseNextStatement(mockLexer(*tokens), SyntaxProgram.empty()))
-            .statements
-            .single()
+    private fun parseOne(vararg tokens: Token): SyntaxNode = parseOk(parser.parseNextStatement(mockLexer(*tokens)))
 
-    private fun parseNext(lexer: MockLexer): Result<SyntaxProgram, ParserError> =
-        parser.parseNextStatement(lexer, SyntaxProgram.empty())
+    private fun parseNext(lexer: MockLexer): Result<SyntaxNode, ParserError> = parser.parseNextStatement(lexer)
 
-    private fun parseOk(result: Result<SyntaxProgram, ParserError>): SyntaxProgram =
+    private fun parseOk(result: Result<SyntaxNode, ParserError>): SyntaxNode =
         when (result) {
             is Result.Ok -> result.value
-            is Result.Err -> error("Expected a parsed program, got: ${result.error.message}")
+            is Result.Err -> error("Expected a parsed node, got: ${result.error.message}")
         }
 
     private fun mockLexer(vararg tokens: Token) = MockLexer(tokens.toList())
