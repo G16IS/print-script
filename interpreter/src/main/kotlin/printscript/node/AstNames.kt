@@ -4,6 +4,7 @@ package printscript.node
 internal object AstNames {
     const val ID = "ID"
     const val VARIABLE = "variable"
+    const val ASSIGNMENT = "assignment"
     const val EXPRESSION_STMT = "expression-stmt"
     const val EXPRESSION = "expression"
     const val TERM = "term"

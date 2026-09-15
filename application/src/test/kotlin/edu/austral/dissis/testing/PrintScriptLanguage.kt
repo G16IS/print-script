@@ -49,7 +49,7 @@ object PrintScriptLanguage {
         listOf(
             RegexRule(listOf("^\"[^\"]*\""), "STRING_LITERAL", true, "^\"[^\"]*\$"),
             RegexRule(listOf("^'[^']*'"), "STRING_LITERAL", true, "^'[^']*$"),
-            RegexRule(listOf("^[0-9]+(\\.[0-9]+)?"), "NUMBER_LITERAL", true, "^[0-9]"),
+            RegexRule(listOf("^[0-9]+(\\.[0-9]+)?"), "NUMBER_LITERAL", true, "^[0-9]+(\\.[0-9]*)?\$"),
         )
 
     private fun identifiers(): List<TokenRule> =

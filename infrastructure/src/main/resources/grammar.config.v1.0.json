@@ -4,8 +4,8 @@
         "statement": {
             "or": [
                 "variable",
-                "expression-stmt",
-                "assignment"
+                "assignment",
+                "expression-stmt"
             ]
         },
         "assignment": {

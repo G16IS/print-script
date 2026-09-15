@@ -203,6 +203,35 @@ class ParserTest {
     }
 
     @Test
+    fun `parses a standalone assignment`() {
+        val stmt =
+            parseOne(
+                Tokens.id("x"),
+                Tokens.assign(),
+                Tokens.number("5"),
+                Tokens.semicolon(),
+            )
+        assertEquals("assignment", stmt.name)
+        assertEquals("x", stmt.child("ID").value())
+        assertEquals("5", numberValue(stmt.find("expression")))
+    }
+
+    @Test
+    fun `an expression statement starting with an identifier is not an assignment`() {
+        // `assignment` va antes que `expression-stmt` en el `or`, así que esto ejercita el
+        // backtracking del `try`: matchea ID, falla en ASSIGN, rebobina y cae a expression-stmt.
+        val stmt =
+            parseOne(
+                Tokens.id("x"),
+                Tokens.op("+"),
+                Tokens.number("1"),
+                Tokens.semicolon(),
+            )
+        assertEquals("expression-stmt", stmt.name)
+        assertEquals("+", stmt.child("expression").op())
+    }
+
+    @Test
     fun `rejects missing colon in declaration`() {
         val result =
             parseNext(

@@ -46,6 +46,11 @@
       "declaredType": "TYPE",
       "expression": "expression"
     },
+    "assignment": {
+      "kind": "assignment",
+      "id": "ID",
+      "expression": "expression"
+    },
     "expression-stmt": {
       "kind": "expression",
       "expression": "expression"

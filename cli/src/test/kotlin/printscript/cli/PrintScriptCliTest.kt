@@ -39,6 +39,43 @@ class PrintScriptCliTest {
     }
 
     @Test
+    fun `run assigns to a declared variable and prints a decimal`() {
+        // Caso `print-statement/1.0/arithmetic-operations-decimal` del TCK: cubre la asignación
+        // standalone y el literal decimal, que antes rompían el parser y el lexer respectivamente.
+        val file =
+            sourceFile(
+                """
+                let pi: number;
+                pi = 3.14;
+                println(pi / 2);
+                """.trimIndent(),
+            )
+
+        val captured = ByteArrayOutputStream()
+        val previous = System.out
+        System.setOut(PrintStream(captured))
+        val result =
+            try {
+                cli("run", file)
+            } finally {
+                System.setOut(previous)
+            }
+
+        assertEquals(0, result.statusCode)
+        assertEquals("1.57\n", captured.toString())
+    }
+
+    @Test
+    fun `typecheck rejects assigning to an undeclared variable`() {
+        val file = sourceFile("x = 5;")
+
+        val result = cli("typecheck", file)
+
+        assertEquals(1, result.statusCode)
+        assertTrue(result.stderr.contains("Variable 'x' no declarada"))
+    }
+
+    @Test
     fun `typecheck reports a type error`() {
         val file =
             sourceFile(
