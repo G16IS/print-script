@@ -32,20 +32,21 @@ class PrintScriptConfigsLoaderTest {
     }
 
     @Test
-    fun `loadForTck with only assign disabled does not keep assign spaces from user-defaults`() {
+    fun `a partial user config wins over user-defaults rule by rule`() {
         val user =
             FormatterRulesConfig(
                 listOf(FormatRuleSpec(type = "space-around-assign", enabled = false)),
             )
-        val configs = PrintScriptConfigsLoader.loadForTck("1.0", user)
+        val configs = PrintScriptConfigsLoader.load("1.0", user)
         val formatted = format(configs, "let x:number=1;")
 
         assertTrue(formatted.contains("number=1"))
         assertFalse(formatted.contains("number = 1"))
+        assertTrue(formatted.contains("x : number"), "las rules no mandadas siguen tomando el default interno")
     }
 
     @Test
-    fun `PrintScript format uses loadForTck so complete user rules control spacing`() {
+    fun `PrintScript format lets a complete user config control spacing`() {
         val config =
             """
             {

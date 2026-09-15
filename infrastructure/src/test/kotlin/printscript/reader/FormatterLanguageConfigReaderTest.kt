@@ -17,6 +17,7 @@ class FormatterLanguageConfigReaderTest {
         assertEquals(listOf("OPERATOR", "SEMICOLON", "LET"), config.rules.map { it.token })
         assertEquals(
             listOf(
+                "single-space-separation",
                 "space-before-colon",
                 "space-after-colon",
                 "space-around-assign",
@@ -24,6 +25,9 @@ class FormatterLanguageConfigReaderTest {
             ),
             config.userBindings.map { it.userType },
         )
+        val separation = config.userBindings.single { it.userType == "single-space-separation" }
+        assertEquals("*", separation.token)
+        assertEquals(false, separation.defaultEnabled)
         val println = config.userBindings.single { it.userType == "newlines-before-println" }
         assertEquals("CALL", println.token)
         assertEquals("println", println.value)
@@ -31,7 +35,7 @@ class FormatterLanguageConfigReaderTest {
         assertEquals(UserRuleBinding.PARAM_COUNT, println.param)
         assertEquals(1, println.defaultCount)
         assertNull(println.defaultEnabled)
-        assertEquals(true, config.userBindings.first().defaultEnabled)
+        assertEquals(true, config.userBindings.single { it.userType == "space-before-colon" }.defaultEnabled)
     }
 
     private fun languageResource() =

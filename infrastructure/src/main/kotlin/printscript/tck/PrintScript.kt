@@ -50,7 +50,7 @@ object PrintScript {
         writer: Writer,
     ) {
         val userRules = JSONFormatterRulesConfigReader.read(config)
-        val configs = PrintScriptConfigsLoader.loadForTck(version, userRules)
+        val configs = PrintScriptConfigsLoader.load(version, userRules)
 
         val languageKitResult =
             when (val kit = LanguageCatalog.of(version, DefaultSideEffectManager())) {

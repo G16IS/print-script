@@ -1,5 +1,6 @@
 {
   "rules": [
+    { "type": "single-space-separation", "enabled": false },
     { "type": "space-before-colon", "enabled": true },
     { "type": "space-after-colon", "enabled": true },
     { "type": "space-around-assign", "enabled": true },

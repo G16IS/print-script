@@ -107,6 +107,83 @@ class PrintScriptFormatTckTest {
     }
 
     @Test
+    fun `single-space-separation puts exactly one space between every pair of tokens`() {
+        val config =
+            """
+            {
+              "rules": [
+                { "type": "single-space-separation", "enabled": true },
+                { "type": "space-before-colon", "enabled": false },
+                { "type": "space-after-colon", "enabled": false },
+                { "type": "space-around-assign", "enabled": false },
+                { "type": "newlines-before-println", "count": 0 }
+              ]
+            }
+            """.trimIndent()
+        val writer = StringWriter()
+
+        PrintScript.format(
+            "1.0",
+            StringCodeReader("let something:      string=\"a really cool thing\";\nprintln(something);"),
+            ByteArrayInputStream(config.toByteArray(StandardCharsets.UTF_8)),
+            writer,
+        )
+
+        // golden de printscript-tck/formatter/1.0/enforce-single-space-separation
+        assertEquals(
+            "let something : string = \"a really cool thing\" ;\nprintln ( something ) ;\n",
+            writer.toString(),
+        )
+    }
+
+    @Test
+    fun `single-space-separation stays off unless the config turns it on`() {
+        val writer = StringWriter()
+
+        PrintScript.format(
+            "1.0",
+            StringCodeReader("let something:      string=\"a really cool thing\";\nprintln(something);"),
+            ByteArrayInputStream(rulesJson().toByteArray(StandardCharsets.UTF_8)),
+            writer,
+        )
+
+        assertEquals("let something:string=\"a really cool thing\";\nprintln(something);\n", writer.toString())
+    }
+
+    @Test
+    fun `non configurable rules hold whatever the TCK config says`() {
+        val messy = "let    x   :    string    =    \"a\"      +    \"b\"   ;\nprintln   (   x   )   ;"
+        val writer = StringWriter()
+
+        PrintScript.format(
+            "1.0",
+            StringCodeReader(messy),
+            ByteArrayInputStream(
+                rulesJson(newlinesBeforePrintln = 0).toByteArray(StandardCharsets.UTF_8),
+            ),
+            writer,
+        )
+
+        // un espacio como máximo entre tokens, espacio alrededor del operador,
+        // salto de línea después del `;` — ninguna de las tres se configura.
+        assertEquals("let x:string=\"a\" + \"b\";\nprintln(x);\n", writer.toString())
+    }
+
+    @Test
+    fun `an empty TCK config falls back to the internal defaults`() {
+        val writer = StringWriter()
+
+        PrintScript.format(
+            "1.0",
+            StringCodeReader("let x:number=1;"),
+            ByteArrayInputStream("{}".toByteArray(StandardCharsets.UTF_8)),
+            writer,
+        )
+
+        assertEquals("let x : number = 1;\n", writer.toString())
+    }
+
+    @Test
     fun `CLI load with empty user still has colon spaces from defaults`() {
         val configs = PrintScriptConfigsLoader.load("1.0", FormatterRulesConfig())
         val kit =

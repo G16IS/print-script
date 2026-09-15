@@ -22,6 +22,10 @@ object PrintScriptConfigsLoader {
 
     fun load(version: String): PrintScriptConfigs = load(version, userRules())
 
+    /**
+     * `formatter-user-defaults.json` queda siempre debajo de [user]: una rule que el
+     * caller no manda toma el default interno, no queda sin definir.
+     */
     fun load(
         version: String,
         user: FormatterRulesConfig,
@@ -31,11 +35,6 @@ object PrintScriptConfigsLoader {
             user,
             JSONFormatterRulesConfigReader.read(resource("formatter-user-defaults.json")),
         )
-
-    fun loadForTck(
-        version: String,
-        user: FormatterRulesConfig,
-    ): PrintScriptConfigs = loadConfigs(version, user, FormatterRulesConfig())
 
     private fun loadConfigs(
         version: String,
