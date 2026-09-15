@@ -1,5 +1,6 @@
 package printscript.expression.binaryoperation
 
+import kotlin.math.roundToInt
 import kotlin.reflect.KClass
 import printscript.NumberValue
 import printscript.RuntimeValue
@@ -23,7 +24,29 @@ object DefaultTypeConfiguration : TypeConfiguration {
             add(numeric("/") { a, b -> a / b })
             add(
                 BinaryOperationRule("+", StringValue::class, StringValue::class, StringValue::class) { l, r ->
-                    if (l is StringValue && r is StringValue) StringValue(l.value + r.value) else null
+                    if (l is StringValue && r is StringValue) {
+                        StringValue(l.value + r.value)
+                    } else {
+                        null
+                    }
+                },
+            )
+            add(
+                BinaryOperationRule("+", StringValue::class, NumberValue::class, StringValue::class) { l, r ->
+                    if (l is StringValue && r is NumberValue) {
+                        StringValue(l.value + r.value.roundToInt().toString())
+                    } else {
+                        null
+                    }
+                },
+            )
+            add(
+                BinaryOperationRule("+", NumberValue::class, StringValue::class, StringValue::class) { l, r ->
+                    if (l is NumberValue && r is StringValue) {
+                        StringValue(l.value.roundToInt().toString() + r.value)
+                    } else {
+                        null
+                    }
                 },
             )
         }
