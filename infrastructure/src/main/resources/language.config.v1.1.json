@@ -1,201 +1,79 @@
 {
-    "order": [
-        "keywords",
-        "types",
-        "operators",
-        "literals",
-        "identifiers"
+  "order": ["keywords", "types", "operators", "literals", "identifiers"],
+  "config": {
+    "keywords": [
+      { "type": "exact", "matcher": ["let"], "token": "LET", "capture": false },
+      { "type": "exact", "matcher": ["const"], "token": "CONST", "capture": false },
+      { "type": "exact", "matcher": ["if"], "token": "IF", "capture": false },
+      { "type": "exact", "matcher": ["else"], "token": "ELSE", "capture": false },
+      {
+        "type": "exact",
+        "matcher": ["println", "readInput", "readEnv"],
+        "token": "CALL",
+        "capture": true
+      }
     ],
-    "config": {
-        "keywords": [
-            {
-                "type": "exact",
-                "matcher": [
-                    "let"
-                ],
-                "token": "LET",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "println",
-                    "readInput",
-                    "readEnv"
-                ],
-                "token": "CALL",
-                "capture": true
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "let"
-                ],
-                "token": "LET",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "const"
-                ],
-                "token": "CONST",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "if"
-                ],
-                "token": "IF",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "else"
-                ],
-                "token": "ELSE",
-                "capture": false
-            }
-        ],
-        "types": [
-            {
-                "type": "exact",
-                "matcher": [
-                    "string",
-                    "number",
-                    "boolean"
-                ],
-                "token": "TYPE",
-                "capture": true
-            }
-        ],
-        "operators": [
-            {
-                "type": "exact",
-                "matcher": [
-                    ":"
-                ],
-                "token": "COLON",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "="
-                ],
-                "token": "ASSIGN",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    ";"
-                ],
-                "token": "SEMICOLON",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "("
-                ],
-                "token": "LEFT_PAREN",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    ")"
-                ],
-                "token": "RIGHT_PAREN",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    ","
-                ],
-                "token": "COMMA",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "+",
-                    "-",
-                    "*",
-                    "/"
-                ],
-                "token": "OPERATOR",
-                "capture": true
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "{"
-                ],
-                "token": "LEFT_BRACE",
-                "capture": false
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "}"
-                ],
-                "token": "RIGHT_BRACE",
-                "capture": false
-            }
-        ],
-        "literals": [
-            {
-                "type": "regex",
-                "matcher": [
-                    "^\"[^\"]*\""
-                ],
-                "token": "STRING_LITERAL",
-                "capture": true,
-                "partial": "^\"[^\"]*$"
-            },
-            {
-                "type": "regex",
-                "matcher": [
-                    "^'[^']*'"
-                ],
-                "token": "STRING_LITERAL",
-                "capture": true,
-                "partial": "^'[^']*$"
-            },
-            {
-                "type": "regex",
-                "matcher": [
-                    "^[0-9]+(\\.[0-9]+)?"
-                ],
-                "token": "NUMBER_LITERAL",
-                "capture": true,
-                "partial": "^[0-9]"
-            },
-            {
-                "type": "exact",
-                "matcher": [
-                    "true",
-                    "false"
-                ],
-                "token": "BOOLEAN_LITERAL",
-                "capture": true
-            }
-        ],
-        "identifiers": [
-            {
-                "type": "regex",
-                "matcher": [
-                    "^[a-zA-Z_][a-zA-Z0-9_]*"
-                ],
-                "token": "ID",
-                "capture": true,
-                "partial": "^[a-zA-Z_]"
-            }
-        ]
-    }
+    "types": [
+      {
+        "type": "exact",
+        "matcher": ["string", "number", "boolean"],
+        "token": "TYPE",
+        "capture": true
+      }
+    ],
+    "operators": [
+      { "type": "exact", "matcher": [":"], "token": "COLON", "capture": false },
+      { "type": "exact", "matcher": ["="], "token": "ASSIGN", "capture": false },
+      { "type": "exact", "matcher": [";"], "token": "SEMICOLON", "capture": false },
+      { "type": "exact", "matcher": ["("], "token": "LEFT_PAREN", "capture": false },
+      { "type": "exact", "matcher": [")"], "token": "RIGHT_PAREN", "capture": false },
+      { "type": "exact", "matcher": ["{"], "token": "LEFT_BRACE", "capture": false },
+      { "type": "exact", "matcher": ["}"], "token": "RIGHT_BRACE", "capture": false },
+      { "type": "exact", "matcher": [","], "token": "COMMA", "capture": false },
+      {
+        "type": "exact",
+        "matcher": ["+", "-", "*", "/"],
+        "token": "OPERATOR",
+        "capture": true
+      }
+    ],
+    "literals": [
+      {
+        "type": "regex",
+        "matcher": ["^\"[^\"]*\""],
+        "token": "STRING_LITERAL",
+        "capture": true,
+        "partial": "^\"[^\"]*$"
+      },
+      {
+        "type": "regex",
+        "matcher": ["^'[^']*'"],
+        "token": "STRING_LITERAL",
+        "capture": true,
+        "partial": "^'[^']*$"
+      },
+      {
+        "type": "regex",
+        "matcher": ["^[0-9]+(\\.[0-9]+)?"],
+        "token": "NUMBER_LITERAL",
+        "capture": true,
+        "partial": "^[0-9]+(\\.[0-9]*)?$"
+      },
+      {
+        "type": "exact",
+        "matcher": ["true", "false"],
+        "token": "BOOLEAN_LITERAL",
+        "capture": true
+      }
+    ],
+    "identifiers": [
+      {
+        "type": "regex",
+        "matcher": ["^[a-zA-Z_][a-zA-Z0-9_]*"],
+        "token": "ID",
+        "capture": true,
+        "partial": "^[a-zA-Z_]"
+      }
+    ]
+  }
 }
