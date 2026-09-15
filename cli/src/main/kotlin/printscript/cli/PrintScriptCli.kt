@@ -4,7 +4,6 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.subcommands
-import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import printscript.cli.command.CheckCommand
 import printscript.cli.command.FormatCommand
@@ -17,58 +16,54 @@ import printscript.edition.LanguageKit
 import printscript.io.DefaultSideEffectManager
 import printscript.tck.PrintScriptConfigsLoader
 import printscript.util.Result
-import printscript.util.unwrap
 
-class PrintScriptCli(
-    vararg commands: CliktCommand,
-) : CliktCommand(name = "printscript") {
+class PrintScriptCli : CliktCommand(name = "printscript") {
     private val version by option(
         "--version",
         help = "PrintScript language version",
-    ).default(DEFAULT_VERSION)
-
-    init {
-        subcommands(*commands)
-    }
+    )
 
     override val printHelpOnEmptyArgs: Boolean = true
 
     override fun help(context: Context): String = "PrintScript command line interface"
 
     override fun run() {
-        if (LanguageCatalog.of(version, DefaultSideEffectManager())
-                is Result.Err
-        ) {
-            echo("ERROR", err = true)
-            throw ProgramResult(1)
-        }
+        val ver =
+            version ?: run {
+                echo("ERROR", err = true)
+                throw ProgramResult(1)
+            }
+
+        val kit =
+            loadKit(ver) ?: run {
+                echo("ERROR", err = true)
+                throw ProgramResult(1)
+            }
+
+        currentContext.findOrSetObject { kit }
     }
 
     companion object {
-        fun create(version: String = DEFAULT_VERSION): PrintScriptCli {
-            val configs = PrintScriptConfigsLoader.load("1.0")
-            val sideEffectManager = DefaultSideEffectManager()
-
-            val langKit =
-                LanguageCatalog
-                    .of(version, sideEffectManager)
-                    .unwrap("Failed to load language kit for version $version")
-
-            return create(configs, langKit)
-        }
-
-        fun create(
-            configs: PrintScriptConfigs,
-            langKit: LanguageKit,
-        ): PrintScriptCli =
-            PrintScriptCli(
-                RunCommand(configs.lang, configs.grammar, configs.typeSystem, langKit),
-                LintCommand(configs.lang, configs.grammar, configs.linterConfig, langKit),
-                CheckCommand(configs.lang, configs.grammar, configs.formatter, langKit),
-                FormatCommand(configs.lang, configs.grammar, configs.formatter, langKit),
-                TypeCheckCommand(configs.lang, configs.grammar, configs.typeSystem, langKit),
+        fun create(): PrintScriptCli =
+            PrintScriptCli().subcommands(
+                RunCommand(),
+                LintCommand(),
+                CheckCommand(),
+                FormatCommand(),
+                TypeCheckCommand(),
             )
 
-        private const val DEFAULT_VERSION = "1.0"
+        private fun loadKit(version: String): VersionKit? {
+            val sideEffectManager = DefaultSideEffectManager()
+            val langKit = LanguageCatalog.of(version, sideEffectManager)
+            if (langKit is Result.Err) return null
+            val configs = PrintScriptConfigsLoader.load(version)
+            return VersionKit(configs, (langKit as Result.Ok).value)
+        }
     }
 }
+
+data class VersionKit(
+    val configs: PrintScriptConfigs,
+    val langKit: LanguageKit,
+)

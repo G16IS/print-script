@@ -89,4 +89,4 @@ Desde la raíz del repo:
 
 ## Tests
 
-`PrintScriptCliTest` arma un `.ps` temporal y corre `PrintScriptCli.create()` con Clikt `test(*args)`: cubre `run` / `typecheck` / `format` / `check`, parse inválido → `ERROR`, `--version 2.0` → `ERROR`, y help si no hay subcomando.
+`PrintScriptCliv1Test` arma un `.ps` temporal y corre `PrintScriptCli.create()` con Clikt `test(*args)`: cubre `run` / `typecheck` / `format` / `check`, parse inválido → `ERROR`, `--version 2.0` → `ERROR`, y help si no hay subcomando.
