@@ -29,7 +29,8 @@ object PrintScript {
     ) {
         val configs: PrintScriptConfigs = PrintScriptConfigsLoader.load(version)
 
-        val sideEffectManager = DefaultSideEffectManager(listAllSideEffectHandlers(printChannel, inputChannel))
+        val sideEffectManager =
+            DefaultSideEffectManager(listAllSideEffectHandlersByVersion(version, printChannel, inputChannel))
 
         val languageKitResult =
             when (val kit = LanguageCatalog.of(version, sideEffectManager)) {
@@ -95,4 +96,20 @@ object PrintScript {
             PrintHandler(printChannel),
             ReadInputHandler(inputChannel, printChannel),
         )
+
+    private fun listAllSideEffectHandlersByVersion(
+        version: String,
+        printChannel: PrintChannel,
+        inputChannel: InputChannel,
+    ): List<SideEffectHandler> =
+        when (version) {
+            "1.0" -> listAllSideEffectHandlers(printChannel, inputChannel)
+            "1.1" ->
+                listAllSideEffectHandlers(printChannel, inputChannel) +
+                    ReadInputHandler(
+                        inputChannel,
+                        printChannel,
+                    )
+            else -> listOf()
+        }
 }
