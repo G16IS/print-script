@@ -1,62 +1,166 @@
 {
-  "start": "statement",
-  "rules": {
-    "statement": { "or": ["variable", "expression-stmt"] },
-
-    "variable": {
-      "seq": [
-        "LET",
-        { "capture": "ID" },
-        "COLON",
-        { "capture": "TYPE" },
-        { "rule": "initializer" },
-        "SEMICOLON"
-      ]
-    },
-    "initializer": { "optional": "var-init" },
-    "var-init": {
-      "seq": [
-        "ASSIGN",
-        { "rule": "expression" }
-      ]
-    },
-
-    "expression-stmt": {
-      "seq": [
-        { "rule": "expression" },
-        "SEMICOLON"
-      ]
-    },
-
-    "expression": {
-      "left": "term",
-      "op": { "token": "OPERATOR", "values": ["+", "-"] }
-    },
-    "term": {
-      "left": "factor",
-      "op": { "token": "OPERATOR", "values": ["*", "/"] }
-    },
-
-    "factor": { "or": ["number", "string", "identifier", "call", "group"] },
-
-    "number": { "atom": "NUMBER_LITERAL" },
-    "string": { "atom": "STRING_LITERAL" },
-    "identifier": { "atom": "ID" },
-
-    "call": {
-      "seq": [
-        { "capture": "CALL" },
-        "LEFT_PAREN",
-        { "rule": "expression" },
-        "RIGHT_PAREN"
-      ]
-    },
-    "group": {
-      "seq": [
-        "LEFT_PAREN",
-        { "rule": "expression" },
-        "RIGHT_PAREN"
-      ]
+    "start": "statement",
+    "rules": {
+        "statement": {
+            "or": [
+                "if",
+                "constant",
+                "variable",
+                "expression-stmt"
+            ]
+        },
+        "variable": {
+            "seq": [
+                "LET",
+                {
+                    "capture": "ID"
+                },
+                "COLON",
+                {
+                    "capture": "TYPE"
+                },
+                {
+                    "rule": "initializer"
+                },
+                "SEMICOLON"
+            ]
+        },
+        "constant": {
+            "seq": [
+                "CONST",
+                {
+                    "capture": "ID"
+                },
+                "COLON",
+                {
+                    "capture": "TYPE"
+                },
+                {
+                    "rule": "var-init"
+                },
+                "SEMICOLON"
+            ]
+        },
+        "initializer": {
+            "optional": "var-init"
+        },
+        "var-init": {
+            "seq": [
+                "ASSIGN",
+                {
+                    "rule": "expression"
+                }
+            ]
+        },
+        "if": {
+            "seq": [
+                "IF",
+                "LEFT_PAREN",
+                {
+                    "rule": "expression"
+                },
+                "RIGHT_PAREN",
+                {
+                    "rule": "block"
+                },
+                {
+                    "rule": "else-clause"
+                }
+            ]
+        },
+        "else-clause": {
+            "optional": "else-block"
+        },
+        "else-block": {
+            "seq": [
+                "ELSE",
+                {
+                    "rule": "block"
+                }
+            ]
+        },
+        "block": {
+            "seq": [
+                "LEFT_BRACE",
+                {
+                    "rule": "statements"
+                },
+                "RIGHT_BRACE"
+            ]
+        },
+        "statements": {
+            "repeat": "statement"
+        },
+        "expression-stmt": {
+            "seq": [
+                {
+                    "rule": "expression"
+                },
+                "SEMICOLON"
+            ]
+        },
+        "expression": {
+            "left": "term",
+            "op": {
+                "token": "OPERATOR",
+                "values": [
+                    "+",
+                    "-"
+                ]
+            }
+        },
+        "term": {
+            "left": "factor",
+            "op": {
+                "token": "OPERATOR",
+                "values": [
+                    "*",
+                    "/"
+                ]
+            }
+        },
+        "factor": {
+            "or": [
+                "number",
+                "string",
+                "boolean",
+                "identifier",
+                "call",
+                "group"
+            ]
+        },
+        "number": {
+            "atom": "NUMBER_LITERAL"
+        },
+        "string": {
+            "atom": "STRING_LITERAL"
+        },
+        "boolean": {
+            "atom": "BOOLEAN_LITERAL"
+        },
+        "identifier": {
+            "atom": "ID"
+        },
+        "call": {
+            "seq": [
+                {
+                    "capture": "CALL"
+                },
+                "LEFT_PAREN",
+                {
+                    "rule": "expression"
+                },
+                "RIGHT_PAREN"
+            ]
+        },
+        "group": {
+            "seq": [
+                "LEFT_PAREN",
+                {
+                    "rule": "expression"
+                },
+                "RIGHT_PAREN"
+            ]
+        }
     }
-  }
 }
