@@ -1,10 +1,10 @@
 package printscript.expression.binaryoperation
 
-import kotlin.math.roundToInt
 import kotlin.reflect.KClass
 import printscript.NumberValue
 import printscript.RuntimeValue
 import printscript.StringValue
+import printscript.toPrintableString
 
 object DefaultTypeConfiguration : TypeConfiguration {
     private val rules: Map<Triple<String, KClass<out RuntimeValue>, KClass<out RuntimeValue>>, BinaryOperationRule> =
@@ -34,7 +34,7 @@ object DefaultTypeConfiguration : TypeConfiguration {
             add(
                 BinaryOperationRule("+", StringValue::class, NumberValue::class, StringValue::class) { l, r ->
                     if (l is StringValue && r is NumberValue) {
-                        StringValue(l.value + r.value.roundToInt().toString())
+                        StringValue(l.value + NumberValue(r.value).toPrintableString())
                     } else {
                         null
                     }
@@ -43,7 +43,7 @@ object DefaultTypeConfiguration : TypeConfiguration {
             add(
                 BinaryOperationRule("+", NumberValue::class, StringValue::class, StringValue::class) { l, r ->
                     if (l is NumberValue && r is StringValue) {
-                        StringValue(l.value.roundToInt().toString() + r.value)
+                        StringValue(NumberValue(l.value).toPrintableString() + r.value)
                     } else {
                         null
                     }

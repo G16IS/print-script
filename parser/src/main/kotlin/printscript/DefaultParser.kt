@@ -5,7 +5,7 @@ import printscript.error.ParseErrors
 import printscript.error.ParserError
 import printscript.parse.ParseResult
 import printscript.parse.RuleEvaluator
-import printscript.syntax.SyntaxProgram
+import printscript.syntax.SyntaxNode
 import printscript.token.LexerTokenSource
 import printscript.token.TokenSource
 import printscript.util.Result
@@ -17,13 +17,10 @@ class DefaultParser(
     private var boundLexer: Lexer? = null
     private var source: TokenSource? = null
 
-    override fun parseNextStatement(
-        tokenStream: Lexer,
-        program: SyntaxProgram,
-    ): Result<SyntaxProgram, ParserError> {
+    override fun parseNextStatement(tokenStream: Lexer): Result<SyntaxNode, ParserError> {
         val tokens = bind(tokenStream)
         return when (val result = evaluator.evaluate(grammar.start, tokens)) {
-            is ParseResult.Matched -> Result.Ok(program.withStatement(result.node))
+            is ParseResult.Matched -> Result.Ok(result.node)
             ParseResult.Missing -> Result.Err(ParseErrors.unexpectedStart(tokens.peek()))
             is ParseResult.Failed -> Result.Err(result.error)
         }

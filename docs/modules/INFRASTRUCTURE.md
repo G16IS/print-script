@@ -202,7 +202,7 @@ JSON, docs y tests coinciden: **primero gana**. Keywords antes que identifiers p
 
 `FormatterRulesConfigReaderTest`: YAML de usuario (`enabled` / `count`) + resource `formatter-user-defaults.json`. JSON y YAML de usuario comparten `FormatterRulesConfigSerializer`.
 
-`JSONLanguageConfigReaderTest` lee el resource real (`order`, LET, STRING_LITERAL). El pipeline del CLI (`run` / `typecheck` / `format` / `check` + parse inválido → `ERROR`) vive en `PrintScriptCliTest` (`:cli`). No hay test de `FileCodeReader`.
+`JSONLanguageConfigReaderTest` lee el resource real (`order`, LET, STRING_LITERAL). El pipeline del CLI (`run` / `typecheck` / `format` / `check` + parse inválido → `ERROR`) vive en `PrintScriptCliv1Test` (`:cli`). No hay test de `FileCodeReader`.
 
 Serializers (`printscript.serializer.config`):
 

@@ -1,6 +1,7 @@
 package printscript.statement
 
 import printscript.InterpreterContext
+import printscript.ValueCoercion
 import printscript.error.RuntimeError
 import printscript.expression.ExpressionSolver
 import printscript.node.AstNames
@@ -13,8 +14,9 @@ import printscript.util.flatMap
 /**
  * `<id> = <expr>;`
  *
- * Reassigns an already declared variable. Mutability and type compatibility are the
- * type-checker's job: the interpreter trusts a validated program.
+ * Mutability and type compatibility are the type-checker's job: the interpreter
+ * trusts a validated program. Lo único que resuelve acá es a qué tipo convertir
+ * un `readInput` / `readEnv`, que sale del tipo con el que se declaró la variable.
  */
 object AssignmentExecutor : StatementExecutor {
     override val nodeNames = setOf(AstNames.ASSIGNMENT)
@@ -23,11 +25,14 @@ object AssignmentExecutor : StatementExecutor {
         node: SyntaxNode,
         context: InterpreterContext,
         solver: ExpressionSolver,
+        blocks: BlockExecutor,
     ): Result<InterpreterContext, RuntimeError> =
         node.namedChild(AstNames.ID).flatMap { it.tokenValue() }.flatMap { name ->
             node.namedChild(AstNames.EXPRESSION).flatMap { expression ->
                 solver.solve(expression, context).flatMap { solved ->
-                    context.assignVariable(name, solved.value, node.location)
+                    ValueCoercion
+                        .toDeclared(solved.value, context.typeOf(name), expression.location)
+                        .flatMap { value -> context.assignVariable(name, value, node.location) }
                 }
             }
         }

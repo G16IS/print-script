@@ -29,6 +29,11 @@ object LanguageCatalog {
         v10(sideEffectManager).copy(
             version = LanguageVersion(1, 1),
             resourceSuffix = "1.1",
+            evaluators =
+                DefaultInterpreterComponents.evaluatorsV11(
+                    sideEffectManager = sideEffectManager,
+                ),
+            executors = DefaultInterpreterComponents.executorsV11,
         )
 
     fun of(

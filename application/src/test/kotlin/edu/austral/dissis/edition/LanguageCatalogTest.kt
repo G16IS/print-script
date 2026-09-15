@@ -69,13 +69,22 @@ class LanguageCatalogTest {
     }
 
     @Test
-    fun `of 1 dot 1 is a copy of v10 with version 1 dot 1`() {
+    fun `of 1 dot 1 extends v10 with the 1 dot 1 runtime`() {
         val kit = (LanguageCatalog.of("1.1", sideEffects) as Result.Ok).value
         assertEquals(LanguageVersion(1, 1), kit.version)
         assertEquals("1.1", kit.resourceSuffix)
         assertEquals(v10.parserHandlers.size, kit.parserHandlers.size)
-        assertEquals(v10.evaluators.size, kit.evaluators.size)
-        assertEquals(v10.executors.size, kit.executors.size)
+        // 1.1 agrega literales boolean, y los executors de `const` e `if`.
+        assertEquals(v10.evaluators.size + 1, kit.evaluators.size)
+        assertEquals(v10.executors.size + 2, kit.executors.size)
+    }
+
+    @Test
+    fun `v10 does not know the 1 dot 1 statements`() {
+        val kit = (LanguageCatalog.of("1.0", sideEffects) as Result.Ok).value
+        val executorNames = kit.executors.flatMap { it.nodeNames }
+        assertTrue("if" !in executorNames)
+        assertTrue("constant" !in executorNames)
     }
 
     @Test

@@ -52,6 +52,7 @@ class DefaultInterpreter(
                 statement,
                 context,
                 expressionSolver,
+                this,
             )
 
         return when (executeResult) {

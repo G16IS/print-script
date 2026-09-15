@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import printscript.domain.ExactRule
 import printscript.domain.LanguageConfig
-import printscript.error.MultipleRulesWithSamePriority
 import printscript.error.UnexpectedEnfOfLine
 import printscript.error.UnexpectedToken
 import printscript.support.MockReader
@@ -186,8 +185,10 @@ class TokenStreamTest {
                 PrintScriptLanguage.config(
                     stringPartial = PrintScriptLanguage.PRODUCTION_STRING_PARTIAL,
                 )
+            // El partial angosto corta en la comilla de apertura: lo consumido
+            // no matchea entero ninguna regla, así que no hay token que emitir.
             val exception = lex("\"hello\"", config)
-            assertTrue { exception is Result.Err && exception.error is UnexpectedEnfOfLine }
+            assertTrue(exception is Result.Err && exception.error is UnexpectedToken)
         }
 
         @Test
@@ -202,7 +203,7 @@ class TokenStreamTest {
         }
 
         @Test
-        fun `prefix operators in the same category collide when emitting the shorter one`() {
+        fun `the shorter prefix operator wins when the longer one cannot complete`() {
             val assign = ExactRule(listOf("="), "ASSIGN", false)
             val equals = ExactRule(listOf("=="), "EQUALS", false)
             val config =
@@ -210,8 +211,8 @@ class TokenStreamTest {
                     order = listOf("operators"),
                     config = mapOf("operators" to listOf(assign, equals)),
                 )
-            val error = lex("=x", config)
-            assertTrue(error is Result.Err && error.error is MultipleRulesWithSamePriority)
+            // `=` matchea ASSIGN entero y `==` sólo parcialmente: gana ASSIGN.
+            assertLex("=", config, tok("ASSIGN"), tok("EOF"))
             assertLex("==", config, tok("EQUALS"), tok("EOF"))
         }
     }

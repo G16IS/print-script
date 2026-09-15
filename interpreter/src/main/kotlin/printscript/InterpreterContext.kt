@@ -13,6 +13,7 @@ import printscript.util.map
 class InterpreterContext private constructor(
     private val parent: InterpreterContext?,
     private val variables: Map<String, RuntimeValue>,
+    private val declaredTypes: Map<String, String> = emptyMap(),
 ) {
     constructor() : this(null, emptyMap())
 
@@ -20,10 +21,22 @@ class InterpreterContext private constructor(
 
     fun getVariable(name: String): RuntimeValue? = variables[name] ?: parent?.getVariable(name)
 
+    /**
+     * Tipo con el que se declaró la variable, si se conoce. Es lo que decide a
+     * qué convertir un `readInput` / `readEnv` asignado a ella.
+     */
+    fun typeOf(name: String): String? = declaredTypes[name] ?: parent?.typeOf(name)
+
     fun declareVariable(
         name: String,
         value: RuntimeValue,
-    ): InterpreterContext = InterpreterContext(parent, variables + (name to value))
+        declaredType: String? = null,
+    ): InterpreterContext =
+        InterpreterContext(
+            parent,
+            variables + (name to value),
+            if (declaredType == null) declaredTypes else declaredTypes + (name to declaredType),
+        )
 
     fun assignVariable(
         name: String,
@@ -32,10 +45,10 @@ class InterpreterContext private constructor(
     ): Result<InterpreterContext, RuntimeError> =
         when {
             variables.containsKey(name) ->
-                Result.Ok(InterpreterContext(parent, variables + (name to value)))
+                Result.Ok(InterpreterContext(parent, variables + (name to value), declaredTypes))
             parent != null ->
                 parent.assignVariable(name, value, location).map { rebuiltParent ->
-                    InterpreterContext(rebuiltParent, variables)
+                    InterpreterContext(rebuiltParent, variables, declaredTypes)
                 }
             else -> Result.Err(UndeclaredIdentifier(name, location))
         }

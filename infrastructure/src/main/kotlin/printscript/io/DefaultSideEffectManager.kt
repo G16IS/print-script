@@ -3,6 +3,8 @@ package printscript.io
 import printscript.SideEffect
 import printscript.SideEffectHandler
 import printscript.SideEffectManager
+import printscript.io.channel.ConsoleInputChannel
+import printscript.io.channel.ConsolePrintChannel
 
 class DefaultSideEffectManager(
     val handlers: List<SideEffectHandler>,
@@ -10,7 +12,8 @@ class DefaultSideEffectManager(
     constructor() : this(
         listOf(
             PrintHandler(),
-            ReadInputHandler(),
+            ReadInputHandler(ConsoleInputChannel(), ConsolePrintChannel()),
+            ReadEnvHandler(),
         ),
     )
 

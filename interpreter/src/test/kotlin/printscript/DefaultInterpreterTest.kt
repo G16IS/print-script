@@ -10,6 +10,7 @@ import printscript.error.UnresolvableExpression
 import printscript.expression.DefaultExpressionSolver
 import printscript.expression.ExpressionSolver
 import printscript.node.AstNames
+import printscript.statement.BlockExecutor
 import printscript.statement.ExpressionStatementExecutor
 import printscript.statement.StatementExecutor
 import printscript.statement.VariableDeclarationExecutor
@@ -162,6 +163,7 @@ class DefaultInterpreterTest {
             node: SyntaxNode,
             context: InterpreterContext,
             solver: ExpressionSolver,
+            blocks: BlockExecutor,
         ): Result<InterpreterContext, RuntimeError> = Result.Err(UnrecognizedNode(node.name, node.location))
     }
 }

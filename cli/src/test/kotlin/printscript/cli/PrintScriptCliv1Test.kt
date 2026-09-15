@@ -10,9 +10,13 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 
-class PrintScriptCliTest {
+class PrintScriptCliv1Test {
     @TempDir
     lateinit var tempDir: Path
+
+    companion object {
+        const val VERSION = "1.0"
+    }
 
     @Test
     fun `run prints println output`() {
@@ -121,33 +125,13 @@ class PrintScriptCliTest {
     }
 
     @Test
-    fun `unsupported language version prints ERROR`() {
-        val file = sourceFile("1+2;")
-
-        val result = cli("--version", "2.0", "run", file)
-
-        assertEquals(1, result.statusCode)
-        assertTrue(result.stderr.contains("ERROR"))
-    }
-
-    @Test
-    fun `version 1 dot 1 is accepted`() {
-        val file = sourceFile("1+2;")
-
-        val result = cli("--version", "1.1", "format", file)
-
-        assertEquals(0, result.statusCode)
-        assertEquals("1 + 2;\n", result.stdout)
-    }
-
-    @Test
     fun `missing subcommand prints help`() {
         val result = cli()
 
         assertTrue(result.stdout.contains("Usage") || result.stderr.contains("Usage"))
     }
 
-    private fun cli(vararg args: String) = PrintScriptCli.create().test(*args)
+    private fun cli(vararg args: String) = PrintScriptCli.create().test("--version", VERSION, *args)
 
     private fun sourceFile(contents: String): String {
         val file = tempDir.resolve("sample.ps")

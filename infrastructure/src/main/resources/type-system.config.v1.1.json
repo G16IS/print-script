@@ -1,69 +1,59 @@
 {
-  "types": ["number", "string"],
-
+  "types": ["number", "string", "boolean"],
   "literals": {
     "NUMBER_LITERAL": "number",
-    "STRING_LITERAL": "string"
+    "STRING_LITERAL": "string",
+    "BOOLEAN_LITERAL": "boolean"
   },
-
   "operations": [
-    {
-      "op": "+",
-      "operands": ["number", "number"],
-      "result": "number"
-    },
-    {
-      "op": "+",
-      "operands": ["string", "string"],
-      "result": "string"
-    },
-    {
-      "op": "+",
-      "operands": ["string", "number"],
-      "result": "string"
-    },
-    {
-      "op": "-",
-      "operands": ["number", "number"],
-      "result": "number"
-    },
-    {
-      "op": "*",
-      "operands": ["number", "number"],
-      "result": "number"
-    },
-    {
-      "op": "/",
-      "operands": ["number", "number"],
-      "result": "number"
-    }
+    { "op": "+", "operands": ["number", "number"], "result": "number" },
+    { "op": "+", "operands": ["string", "string"], "result": "string" },
+    { "op": "+", "operands": ["string", "number"], "result": "string" },
+    { "op": "-", "operands": ["number", "number"], "result": "number" },
+    { "op": "*", "operands": ["number", "number"], "result": "number" },
+    { "op": "/", "operands": ["number", "number"], "result": "number" }
   ],
-
   "nodes": {
     "variable": {
       "kind": "declaration",
       "id": "ID",
       "declaredType": "TYPE",
+      "expression": "expression",
+      "mutable": true
+    },
+    "constant": {
+      "kind": "declaration",
+      "id": "ID",
+      "declaredType": "TYPE",
+      "expression": "expression",
+      "mutable": false
+    },
+    "assignment": {
+      "kind": "assignment",
+      "id": "ID",
       "expression": "expression"
     },
-    "expression-stmt": {
-      "kind": "expression",
-      "expression": "expression"
+    "if": {
+      "kind": "if",
+      "expression": "expression",
+      "then": "block",
+      "else": "else-clause",
+      "block": "statements"
     },
+    "expression-stmt": { "kind": "expression", "expression": "expression" },
     "expression": { "kind": "binary-or-primary" },
     "term": { "kind": "binary-or-primary" },
     "factor": { "kind": "primary" },
     "call": {
       "kind": "call",
       "callee": "CALL",
-      "args": ["expression"]
+      "args": ["expression"],
+      "returnTypes": { "readInput": "?", "readEnv": "?" }
     },
-    "group": {
-      "kind": "group",
-      "expression": "expression"
-    },
+    "group": { "kind": "group", "expression": "expression" },
     "number": { "kind": "literal" },
     "string": { "kind": "literal" },
+    "boolean": { "kind": "literal" },
     "identifier": { "kind": "identifier" }
   }
 }

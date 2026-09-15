@@ -1,11 +1,15 @@
 package printscript
 
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import printscript.error.UnexpectedToken
 import printscript.support.PrintScriptLanguage
 import printscript.support.assertLex
 import printscript.support.assertTypes
+import printscript.support.lex
 import printscript.support.tok
+import printscript.util.Result
 
 /**
  * Tokenization of PrintScript v1 with the **test** [PrintScriptLanguage.ORDER]
@@ -109,13 +113,12 @@ class PrintScriptLexerTest {
             )
 
         @Test
-        fun `a trailing dot before another token is emitted as the number lexeme`() =
-            assertLex(
-                "1.;",
-                tok("NUMBER_LITERAL", "1."),
-                tok("SEMICOLON"),
-                tok("EOF"),
-            )
+        fun `a trailing dot is not a valid number literal`() {
+            // `1.` sólo matchea el `partial` de NUMBER_LITERAL, nunca el matcher
+            // completo: un match parcial no alcanza para emitir un token.
+            val result = lex("1.;")
+            assertTrue(result is Result.Err && result.error is UnexpectedToken)
+        }
     }
 
     @Nested

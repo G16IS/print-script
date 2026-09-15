@@ -22,7 +22,7 @@ internal object ParseProgram {
         val lexer = DefaultLexerFactory.create(reader, langConfig)
         val parser = DefaultParserFactory.create(grammar, kit.parserHandlers)
 
-        var program = SyntaxProgram.empty()
+        val builder = SyntaxProgram.builder()
         var error: Error? = null
 
         while (error == null) {
@@ -31,15 +31,15 @@ internal object ParseProgram {
                 is Result.Ok -> {
                     if (peeked.value.type == END_TOKEN) break
 
-                    when (val parsed = parser.parseNextStatement(lexer, program)) {
+                    when (val parsed = parser.parseNextStatement(lexer)) {
                         is Result.Err -> error = parsed.error
-                        is Result.Ok -> program = parsed.value
+                        is Result.Ok -> builder.add(parsed.value)
                     }
                 }
             }
         }
 
-        error ?: return Result.Ok(program)
+        error ?: return Result.Ok(builder.build())
         return Result.Err(error)
     }
 }
