@@ -11,7 +11,9 @@ import printscript.domain.TypeSystemConfig
 import printscript.edition.LanguageKit
 import printscript.error.Error
 import printscript.error.TypeErrorWithMessage
+import printscript.reader.CharPosition
 import printscript.reader.CodeReader
+import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.DefaultTypeCheckerFactory
 import printscript.typechecker.ScopeStack
@@ -26,28 +28,39 @@ object ExecuteCode {
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
         kit: LanguageKit,
-    ): Report<Unit, Error> {
-        val typeChecker = DefaultTypeCheckerFactory.create(typeSystem, kit.kindHandlerFactory)
-        val interpreter = DefaultInterpreterFactory.create(kit.evaluators, kit.executors)
+    ): Report<Unit, Error> =
+        try {
+            val typeChecker = DefaultTypeCheckerFactory.create(typeSystem, kit.kindHandlerFactory)
+            val interpreter = DefaultInterpreterFactory.create(kit.evaluators, kit.executors)
 
-        var scope = ScopeStack()
-        var context = InterpreterContext()
-        var errorReport: Report<Unit, Error>? = null
+            var scope = ScopeStack()
+            var context = InterpreterContext()
+            var errorReport: Report<Unit, Error>? = null
 
-        for (parsed in ParseProgram.parseStatements(langConfig, grammar, reader, kit)) {
-            val failure =
-                executeStatement(parsed, typeChecker, interpreter, scope, context) { newScope, newContext ->
-                    scope = newScope
-                    context = newContext
+            for (parsed in ParseProgram.parseStatements(langConfig, grammar, reader, kit)) {
+                val failure =
+                    executeStatement(parsed, typeChecker, interpreter, scope, context) { newScope, newContext ->
+                        scope = newScope
+                        context = newContext
+                    }
+                if (failure != null) {
+                    errorReport = failure
+                    break
                 }
-            if (failure != null) {
-                errorReport = failure
-                break
             }
-        }
 
-        return errorReport ?: Report(value = Unit)
-    }
+            errorReport ?: Report(value = Unit)
+        } catch (_: OutOfMemoryError) {
+            Report(
+                errors =
+                    listOf(
+                        TypeErrorWithMessage(
+                            "Java heap space",
+                            Location(CharPosition(0, 0), CharPosition(0, 0)),
+                        ),
+                    ),
+            )
+        }
 
     fun executeForTck(
         configs: PrintScriptConfigs,
@@ -55,9 +68,13 @@ object ExecuteCode {
         errorHandler: ErrorHandler,
         languageKit: LanguageKit,
     ) {
-        val report = execute(configs.lang, configs.grammar, configs.typeSystem, codeReader, languageKit)
-        if (!report.isOk) {
-            report.errors.forEach { reportError(it, errorHandler) }
+        try {
+            val report = execute(configs.lang, configs.grammar, configs.typeSystem, codeReader, languageKit)
+            if (!report.isOk) {
+                report.errors.forEach { reportError(it, errorHandler) }
+            }
+        } catch (_: OutOfMemoryError) {
+            errorHandler.handleErrorMessage("4")
         }
     }
 
