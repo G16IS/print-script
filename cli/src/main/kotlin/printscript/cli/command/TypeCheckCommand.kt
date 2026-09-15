@@ -2,12 +2,12 @@ package printscript.cli.command
 
 import printscript.cli.SourceFileCommand
 import printscript.cli.emit
-import printscript.cli.formatError
 import printscript.cli.presentReport
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.edition.LanguageKit
+import printscript.error.formatError
 import printscript.reader.FileCodeReader
 import printscript.usecases.TypecheckCode
 
