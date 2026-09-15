@@ -54,13 +54,27 @@ internal object ParseProgram {
         reader: CodeReader,
         kit: LanguageKit,
     ): Result<SyntaxProgram, Error> {
+        val lexer = DefaultLexerFactory.create(reader, langConfig)
+        val parser = DefaultParserFactory.create(grammar, kit.parserHandlers)
+
         val builder = SyntaxProgram.builder()
-        for (statementResult in parseStatements(langConfig, grammar, reader, kit)) {
-            when (statementResult) {
-                is Result.Err -> return Result.Err(statementResult.error)
-                is Result.Ok -> builder.add(statementResult.value)
+        var error: Error? = null
+
+        while (error == null) {
+            when (val peeked = lexer.peek(null)) {
+                is Result.Err -> error = peeked.error
+                is Result.Ok -> {
+                    if (peeked.value.type == END_TOKEN) break
+
+                    when (val parsed = parser.parseNextStatement(lexer)) {
+                        is Result.Err -> error = parsed.error
+                        is Result.Ok -> builder.add(parsed.value)
+                    }
+                }
             }
         }
-        return Result.Ok(builder.build())
+
+        error ?: return Result.Ok(builder.build())
+        return Result.Err(error)
     }
 }

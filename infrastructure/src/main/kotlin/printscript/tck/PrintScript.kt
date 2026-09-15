@@ -10,6 +10,7 @@ import printscript.config.PrintScriptConfigs
 import printscript.edition.LanguageCatalog
 import printscript.io.DefaultSideEffectManager
 import printscript.io.PrintHandler
+import printscript.io.ReadEnvHandler
 import printscript.io.ReadInputHandler
 import printscript.reader.CodeReader
 import printscript.reader.JSONFormatterRulesConfigReader
@@ -30,7 +31,8 @@ object PrintScript {
         try {
             val configs: PrintScriptConfigs = PrintScriptConfigsLoader.load(version)
 
-            val sideEffectManager = DefaultSideEffectManager(listAllSideEffectHandlers(printChannel, inputChannel))
+        val sideEffectManager =
+            DefaultSideEffectManager(listAllSideEffectHandlersByVersion(version, printChannel, inputChannel))
 
             val languageKitResult =
                 when (val kit = LanguageCatalog.of(version, sideEffectManager)) {
@@ -103,4 +105,17 @@ object PrintScript {
             PrintHandler(printChannel),
             ReadInputHandler(inputChannel, printChannel),
         )
+
+    private fun listAllSideEffectHandlersByVersion(
+        version: String,
+        printChannel: PrintChannel,
+        inputChannel: InputChannel,
+    ): List<SideEffectHandler> =
+        when (version) {
+            "1.0" -> listAllSideEffectHandlers(printChannel, inputChannel)
+            "1.1" ->
+                listAllSideEffectHandlers(printChannel, inputChannel) +
+                    ReadEnvHandler()
+            else -> listOf()
+        }
 }
