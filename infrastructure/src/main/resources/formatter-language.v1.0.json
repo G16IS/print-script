@@ -6,6 +6,13 @@
   ],
   "userBindings": [
     {
+      "userType": "single-space-separation",
+      "type": "space-around",
+      "token": "*",
+      "param": "enabled",
+      "default": false
+    },
+    {
       "userType": "space-before-colon",
       "type": "space-before",
       "token": "COLON",

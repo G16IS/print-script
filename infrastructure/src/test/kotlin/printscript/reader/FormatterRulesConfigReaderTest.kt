@@ -46,6 +46,7 @@ class FormatterRulesConfigReaderTest {
 
         assertEquals(
             listOf(
+                FormatRuleSpec(type = "single-space-separation", enabled = false),
                 FormatRuleSpec(type = "space-before-colon", enabled = true),
                 FormatRuleSpec(type = "space-after-colon", enabled = true),
                 FormatRuleSpec(type = "space-around-assign", enabled = true),

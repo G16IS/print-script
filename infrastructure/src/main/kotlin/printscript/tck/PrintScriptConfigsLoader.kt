@@ -20,7 +20,27 @@ import printscript.util.fold
 object PrintScriptConfigsLoader {
     private const val USER_YAML_PATH = ".printscript/formatter.yml"
 
-    fun load(version: String): PrintScriptConfigs {
+    fun load(version: String): PrintScriptConfigs = load(version, userRules())
+
+    /**
+     * `formatter-user-defaults.json` queda siempre debajo de [user]: una rule que el
+     * caller no manda toma el default interno, no queda sin definir.
+     */
+    fun load(
+        version: String,
+        user: FormatterRulesConfig,
+    ): PrintScriptConfigs =
+        loadConfigs(
+            version,
+            user,
+            JSONFormatterRulesConfigReader.read(resource("formatter-user-defaults.json")),
+        )
+
+    private fun loadConfigs(
+        version: String,
+        user: FormatterRulesConfig,
+        defaults: FormatterRulesConfig,
+    ): PrintScriptConfigs {
         val lang =
             JSONLanguageConfigReader.read(resource("language.config.v$version.json"))
 
@@ -38,7 +58,7 @@ object PrintScriptConfigsLoader {
             grammar = grammar,
             typeSystem = typeSystem,
             linterConfig = linterConfig,
-            formatter = loadFormatter(lang, grammar, version),
+            formatter = loadFormatter(lang, grammar, version, user, defaults),
         )
     }
 
@@ -46,13 +66,15 @@ object PrintScriptConfigsLoader {
         lang: LanguageConfig,
         grammar: Grammar,
         version: String,
+        user: FormatterRulesConfig,
+        defaults: FormatterRulesConfig,
     ) = LoadFormatter
         .load(
             grammar,
             lang,
             JSONFormatterLanguageConfigReader.read(resource("formatter-language.v$version.json")),
-            userRules(),
-            JSONFormatterRulesConfigReader.read(resource("formatter-user-defaults.json")),
+            user,
+            defaults,
         ).fold(
             onOk = { it },
             onErr = { error("Could not load formatter: ${it.message}") },

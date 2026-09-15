@@ -61,6 +61,8 @@ infrastructure/src/main/
 
 Specs: [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](../configs/GRAMMAR_CONFIG.md), [TYPE_SYSTEM_CONFIG.md](../configs/TYPE_SYSTEM_CONFIG.md), [FORMATTER_CONFIG.md](../configs/FORMATTER_CONFIG.md).
 
+**TCK.** `printscript.tck.PrintScriptConfigsLoader.loadForTck` carga language/grammar/formatter sin `formatter-user-defaults.json`: el adapter manda un set completo de user rules y las keys faltantes quedan off. El CLI (`load`) sigue mergeando YAML de usuario sobre esos defaults. Los dirs nativos del formatter TCK en v1.1 se skipean hasta que exista el lenguaje.
+
 ---
 
 ## Config del lexer — `JSONLanguageConfigReader`

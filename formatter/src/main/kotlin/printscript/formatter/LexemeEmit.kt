@@ -81,17 +81,20 @@ private fun expectedGap(
     lexeme: String,
     parentName: String?,
 ): Gap {
+    // El primer token del programa no separa de nada: nunca lleva whitespace delante.
+    if (previous == null) {
+        return Gap.EMPTY
+    }
+
     val afterPrevious =
-        previous?.let { emitted ->
-            registry.whitespaceFor(
-                FormatPoint(
-                    kind = PointKind.AFTER_TOKEN,
-                    tokenType = emitted.tokenType,
-                    tokenValue = emitted.tokenValue,
-                    parentNodeName = emitted.parentNodeName,
-                ),
-            )
-        } ?: Gap.EMPTY
+        registry.whitespaceFor(
+            FormatPoint(
+                kind = PointKind.AFTER_TOKEN,
+                tokenType = previous.tokenType,
+                tokenValue = previous.tokenValue,
+                parentNodeName = previous.parentNodeName,
+            ),
+        )
 
     val beforeCurrent =
         registry.whitespaceFor(
@@ -100,7 +103,7 @@ private fun expectedGap(
                 tokenType = tokenType,
                 tokenValue = lexeme,
                 parentNodeName = parentName,
-                previousTokenType = previous?.tokenType,
+                previousTokenType = previous.tokenType,
             ),
         )
 
