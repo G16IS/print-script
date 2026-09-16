@@ -46,7 +46,7 @@ class DefaultTypeChecker(
         return Result.Ok(program)
     }
 
-    private fun checkStatement(
+    override fun checkStatement(
         statement: SyntaxNode,
         scope: ScopeStack,
     ): StatementCheck {

@@ -28,23 +28,27 @@ object PrintScript {
         errorHandler: ErrorHandler,
         inputChannel: InputChannel,
     ) {
-        val configs: PrintScriptConfigs = PrintScriptConfigsLoader.load(version)
+        try {
+            val configs: PrintScriptConfigs = PrintScriptConfigsLoader.load(version)
 
-        val sideEffectManager =
-            DefaultSideEffectManager(listAllSideEffectHandlersByVersion(version, printChannel, inputChannel))
+            val sideEffectManager =
+                DefaultSideEffectManager(listAllSideEffectHandlersByVersion(version, printChannel, inputChannel))
 
-        val languageKitResult =
-            when (val kit = LanguageCatalog.of(version, sideEffectManager)) {
-                is Result.Err -> return errorHandler.handleErrorMessage("version $version not found")
-                is Result.Ok -> kit
-            }
+            val languageKitResult =
+                when (val kit = LanguageCatalog.of(version, sideEffectManager)) {
+                    is Result.Err -> return errorHandler.handleErrorMessage("version $version not found")
+                    is Result.Ok -> kit
+                }
 
-        ExecuteCode.executeForTck(
-            configs,
-            codeReader,
-            errorHandler,
-            languageKitResult.value,
-        )
+            ExecuteCode.executeForTck(
+                configs,
+                codeReader,
+                errorHandler,
+                languageKitResult.value,
+            )
+        } catch (e: OutOfMemoryError) {
+            errorHandler.handleErrorMessage(e.message ?: "Out of memory")
+        }
     }
 
     fun format(
@@ -76,17 +80,21 @@ object PrintScript {
         config: InputStream,
         errorHandler: ErrorHandler,
     ) {
-        // El catálogo va antes del loader: para una versión desconocida el loader tira
-        // `Missing resource` y perderíamos el mensaje.
-        val languageKit =
-            when (val kit = LanguageCatalog.of(version, DefaultSideEffectManager())) {
-                is Result.Err -> return errorHandler.handleErrorMessage("version $version not found")
-                is Result.Ok -> kit.value
-            }
+        try {
+            // El catálogo va antes del loader: para una versión desconocida el loader tira
+            // `Missing resource` y perderíamos el mensaje.
+            val languageKit =
+                when (val kit = LanguageCatalog.of(version, DefaultSideEffectManager())) {
+                    is Result.Err -> return errorHandler.handleErrorMessage("version $version not found")
+                    is Result.Ok -> kit.value
+                }
 
-        val configs = PrintScriptConfigsLoader.load(version, JSONLinterConfigReader.read(config))
+            val configs = PrintScriptConfigsLoader.load(version, JSONLinterConfigReader.read(config))
 
-        LintProgram.lintForTck(configs, codeReader, errorHandler, languageKit)
+            LintProgram.lintForTck(configs, codeReader, errorHandler, languageKit)
+        } catch (e: OutOfMemoryError) {
+            errorHandler.handleErrorMessage(e.message ?: "Out of memory")
+        }
     }
 
     private fun listAllSideEffectHandlers(
