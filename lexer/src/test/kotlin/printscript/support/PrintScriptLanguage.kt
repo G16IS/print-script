@@ -23,6 +23,18 @@ object PrintScriptLanguage {
     const val PRODUCTION_NUMBER_PARTIAL = "^[0-9]"
     const val PRODUCTION_STRING_PARTIAL = "^\""
 
+    fun rules(
+        numberPartial: String = NUMBER_PARTIAL,
+        stringPartial: String = STRING_PARTIAL,
+    ): Map<String, List<TokenRule>> =
+        mapOf(
+            "keywords" to keywords(),
+            "types" to types(),
+            "operators" to operators(),
+            "literals" to literals(numberPartial, stringPartial),
+            "identifiers" to identifiers(),
+        )
+
     fun config(
         order: List<String> = ORDER,
         numberPartial: String = NUMBER_PARTIAL,
@@ -30,14 +42,7 @@ object PrintScriptLanguage {
     ): LanguageConfig =
         LanguageConfig(
             order = order,
-            config =
-                mapOf(
-                    "keywords" to keywords(),
-                    "types" to types(),
-                    "operators" to operators(),
-                    "literals" to literals(numberPartial, stringPartial),
-                    "identifiers" to identifiers(),
-                ),
+            rulesByCategory = rules(numberPartial, stringPartial),
         )
 
     fun reversedOrder(): LanguageConfig = config(order = ORDER.reversed())

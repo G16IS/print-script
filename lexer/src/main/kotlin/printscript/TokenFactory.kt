@@ -5,6 +5,7 @@ import printscript.domain.Token
 import printscript.domain.TokenRule
 import printscript.syntax.Location
 import printscript.util.Result
+import printscript.util.ok
 
 object TokenFactory {
     fun create(
@@ -12,7 +13,7 @@ object TokenFactory {
         location: Location,
         value: String,
     ): Result.Ok<Token> =
-        Result.Ok(
+        ok(
             Token(
                 type = rule.token,
                 value = if (rule.capture) Optional.of(value) else Optional.empty(),

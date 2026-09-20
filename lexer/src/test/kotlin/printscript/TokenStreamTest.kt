@@ -54,15 +54,15 @@ class TokenStreamTest {
         @Test
         fun `peek null does not consume`() {
             val stream = lexer("let x")
-            assertEquals("LET", castTokenResult(stream.peek(null)).type)
-            assertEquals("LET", castTokenResult(stream.peek(null)).type)
+            assertEquals("LET", castTokenResult(stream.peek()).type)
+            assertEquals("LET", castTokenResult(stream.peek()).type)
             assertEquals("LET", castTokenResult(stream.nextToken()).type)
         }
 
         @Test
         fun `peek zero is the same as peek null`() {
             val stream = lexer("let")
-            assertEquals(stream.peek(null), stream.peek(0))
+            assertEquals(stream.peek(), stream.peek(0))
         }
 
         @Test
@@ -79,22 +79,21 @@ class TokenStreamTest {
         @Test
         fun `peek then next then peek resume in order`() {
             val stream = lexer("1 + 2")
-            assertEquals("NUMBER_LITERAL", castTokenResult(stream.peek(null)).type)
+            assertEquals("NUMBER_LITERAL", castTokenResult(stream.peek()).type)
             assertEquals("1", castTokenResult(stream.nextToken()).value.get())
-            assertEquals("OPERATOR", castTokenResult(stream.peek(null)).type)
+            assertEquals("OPERATOR", castTokenResult(stream.peek()).type)
             assertEquals("+", castTokenResult(stream.nextToken()).value.get())
-            assertEquals("NUMBER_LITERAL", castTokenResult(stream.peek(null)).type)
+            assertEquals("NUMBER_LITERAL", castTokenResult(stream.peek()).type)
         }
 
         @Test
         fun `peek on empty source is EOF`() {
-            assertEquals("EOF", castTokenResult(lexer("").peek(null)).type)
+            assertEquals("EOF", castTokenResult(lexer("").peek()).type)
         }
 
         @Test
         fun `peek surfaces an unexpected token`() {
-            val result = lexer("@").peek(null)
-
+            val result = lexer("@").peek()
             assertTrue(result is Result.Err && result.error is UnexpectedToken)
         }
     }
@@ -197,7 +196,7 @@ class TokenStreamTest {
             val config =
                 LanguageConfig(
                     order = listOf("keywords"),
-                    config = mapOf("keywords" to listOf(ifRule)),
+                    rulesByCategory = mapOf("keywords" to listOf(ifRule)),
                 )
             assertTypes("if", config, "IF", "EOF")
         }
@@ -209,7 +208,7 @@ class TokenStreamTest {
             val config =
                 LanguageConfig(
                     order = listOf("operators"),
-                    config = mapOf("operators" to listOf(assign, equals)),
+                    rulesByCategory = mapOf("operators" to listOf(assign, equals)),
                 )
             // `=` matchea ASSIGN entero y `==` sólo parcialmente: gana ASSIGN.
             assertLex("=", config, tok("ASSIGN"), tok("EOF"))
@@ -223,6 +222,17 @@ class TokenStreamTest {
         fun `DefaultLexerFactory builds a stream that tokenizes PrintScript`() {
             val stream =
                 DefaultLexerFactory.create(
+                    MockReader("let"),
+                    PrintScriptLanguage.config(),
+                )
+            assertEquals("LET", castTokenResult(stream.nextToken()).type)
+            assertEquals("EOF", castTokenResult(stream.nextToken()).type)
+        }
+
+        @Test
+        fun `Lexer companion create builds a stream that tokenizes PrintScript`() {
+            val stream =
+                Lexer.create(
                     MockReader("let"),
                     PrintScriptLanguage.config(),
                 )

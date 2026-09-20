@@ -2,8 +2,10 @@ package printscript.support
 
 import java.util.Optional
 import printscript.Lexer
+import printscript.domain.LanguageConfig
 import printscript.domain.Token
 import printscript.error.LexerError
+import printscript.reader.CodeReader
 import printscript.syntax.Location
 import printscript.util.Result
 
@@ -12,6 +14,10 @@ class MockLexer(
 ) : Lexer {
     private val tokens: List<Token> = ensureEof(tokens)
     private var index: Int = 0
+
+    override fun create(codeReader: CodeReader, langConfig: LanguageConfig): Lexer {
+        TODO("Not yet implemented")
+    }
 
     override fun nextToken(): Result<Token, LexerError> {
         val token = tokens[index]

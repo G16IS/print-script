@@ -12,89 +12,105 @@ import printscript.reader.CharPosition
 import printscript.reader.CodeReader
 import printscript.syntax.Location
 import printscript.util.Result
+import printscript.util.err
+import printscript.util.flatMap
+import printscript.util.fold
+import printscript.util.ok
 
 class TokenStream(
     private val reader: CodeReader,
-    val ruleEvaluator: RuleEvaluator,
-    val ruleDrawResolver: RuleDrawResolver,
+    private val ruleEvaluator: RuleEvaluator,
+    private val ruleDrawResolver: RuleDrawResolver,
 ) : Lexer {
     private val buffer = ArrayDeque<Token>()
 
-    override fun nextToken(): Result<Token, LexerError> {
-        val token = buffer.removeFirstOrNull() ?: return readNextToken()
-
-        return Result.Ok(token)
+    companion object {
+        const val END_TOKEN = "EOF"
     }
 
-    override fun peek(offset: Int?): Result<Token, LexerError> {
-        val realOffset: Int = offset ?: 0
+    fun getTerminalToken(position: CharPosition) =
+        Token(
+            END_TOKEN,
+            Optional.empty(),
+            Location(position, position),
+        )
 
-        while (buffer.size <= realOffset) {
-            val nextToken: Result<Token, LexerError> = readNextToken()
+    override fun nextToken(): Result<Token, LexerError> {
+        val token =
+            buffer.removeFirstOrNull()
+                ?: return readNextToken()
 
-            when (nextToken) {
-                is Result.Ok -> buffer.addLast(nextToken.value)
-                is Result.Err -> return nextToken
-            }
+        return ok(token)
+    }
+
+    override fun peek(offset: Int): Result<Token, LexerError> {
+        while (buffer.size <= offset) {
+            readNextToken()
+                .fold(
+                    onOk = { buffer.addLast(it) },
+                    onErr = { return err(it) },
+                )
         }
-        return Result.Ok(buffer[realOffset])
+
+        return ok(buffer[offset])
     }
 
     private fun readNextToken(): Result<Token, LexerError> {
         val first = skipWhitespace()
+        val initialPos = reader.currentPosition()
+
         if (first.isEmpty) {
-            val pos = reader.currentPosition()
-            return Result.Ok(Token("EOF", Optional.empty(), Location(pos, pos)))
-            // TODO-future: cambiar por TerminalToken
+            return ok(getTerminalToken(initialPos))
         }
 
-        return scanToken(first.get().toString(), reader.currentPosition())
+        val firstMatchResults = ruleEvaluator.evaluate(first.get())
+
+        if (areAllMatchResultsInvalid(firstMatchResults)) {
+            return err(UnexpectedToken(Location.point(initialPos)))
+        }
+
+        return consumeToken(first.get(), firstMatchResults, initialPos)
     }
 
-    private fun scanToken(
-        initialText: String,
+    /**
+     * Mientras siga matcheando alguna regla ("maximal munch").
+     * Corta cuando se acaba el input ([resolveEndOfInput]) o el próximo
+     * carácter invalida todos los matches ([buildToken]).
+     */
+    private tailrec fun consumeToken(
+        text: String,
+        lastMatchResults: List<MatchResult>,
         initialPos: CharPosition,
     ): Result<Token, LexerError> {
-        var text = initialText
-        var lastMatchResults = ruleEvaluator.evaluate(text)
+        val nextChar = reader.peek()
+        val matchResults = nextChar.map { ruleEvaluator.evaluate(text + it) }
 
-        if (areAllMatchResultsInvalid(lastMatchResults)) {
-            return Result.Err(UnexpectedToken(Location(initialPos, initialPos)))
+        return when {
+            nextChar.isEmpty -> resolveEndOfInput(text, lastMatchResults, initialPos)
+
+            areAllMatchResultsInvalid(matchResults.get()) ->
+                buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
+
+            else -> {
+                reader.read()
+                consumeToken(text + nextChar.get(), matchResults.get(), initialPos)
+            }
         }
-
-        var result: Result<Token, LexerError>? = null
-        while (result == null) {
-            val nextChar = reader.peek()
-
-            result =
-                if (nextChar.isEmpty) {
-                    resolveEndOfInput(text, lastMatchResults, initialPos)
-                } else {
-                    val matchResults = ruleEvaluator.evaluate(text + nextChar.get())
-                    if (areAllMatchResultsInvalid(matchResults)) {
-                        buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
-                    } else {
-                        reader.read()
-                        text += nextChar.get()
-                        lastMatchResults = matchResults
-                        null
-                    }
-                }
-        }
-
-        return result
     }
 
     private fun resolveEndOfInput(
         text: String,
         lastMatchResults: List<MatchResult>,
         initialPos: CharPosition,
-    ): Result<Token, LexerError> =
-        if (lastMatchResults.any { it.matchType == MatchType.VALID }) {
-            buildToken(text, lastMatchResults, initialPos, reader.currentPosition())
-        } else {
-            Result.Err(UnexpectedEnfOfLine(Location(reader.currentPosition(), reader.currentPosition()), text))
+    ): Result<Token, LexerError> {
+        val currentPosition = reader.currentPosition()
+
+        if (!isSomeMatchResultValid(lastMatchResults)) {
+            return err(UnexpectedEnfOfLine(Location.point(currentPosition), text))
         }
+
+        return buildToken(text, lastMatchResults, initialPos, currentPosition)
+    }
 
     /**
      * Sólo los matches **completos** son candidatos a emitir.
@@ -110,30 +126,43 @@ class TokenStream(
         initialPos: CharPosition,
         finalPos: CharPosition,
     ): Result<Token, LexerError> {
-        val valid = matchResults.filter { it.matchType == MatchType.VALID }
         val location = Location(initialPos, finalPos)
 
-        return when {
-            valid.isEmpty() -> Result.Err(UnexpectedToken(location))
-            else ->
-                when (val rule = ruleDrawResolver.resolve(valid.map { it.tokenRule })) {
-                    is Result.Err -> rule
-                    is Result.Ok -> TokenFactory.create(rule.value, location, text)
-                }
+        val valid = getValidMatchResults(matchResults)
+        if (valid.isEmpty()) {
+            return err(UnexpectedToken(location))
         }
+
+        return ruleDrawResolver
+            .resolve(valid.map { it.tokenRule })
+            .flatMap { rule -> TokenFactory.create(rule, location, text) }
     }
 
-    private fun areAllMatchResultsInvalid(matchResults: List<MatchResult>): Boolean =
-        matchResults.none { it.matchType == MatchType.VALID || it.matchType == MatchType.PARTIAL }
-
-    private fun skipWhitespace(): Optional<Char> {
+    private fun skipWhitespace(): Optional<String> {
         var current = reader.read()
+
         while (current.isPresent) {
             if (!current.get().isWhitespace()) {
-                return current
+                return Optional.of(current.get().toString())
             }
+
             current = reader.read()
         }
+
         return Optional.empty()
     }
+
+    // == Helpers ==
+
+    private fun getValidMatchResults(matchResults: List<MatchResult>) =
+        matchResults
+            .filter { it.matchType == MatchType.VALID }
+
+    private fun isSomeMatchResultValid(matchResults: List<MatchResult>): Boolean =
+        matchResults
+            .any { it.matchType == MatchType.VALID }
+
+    private fun areAllMatchResultsInvalid(matchResults: List<MatchResult>): Boolean =
+        matchResults
+            .none { it.matchType == MatchType.VALID || it.matchType == MatchType.PARTIAL }
 }

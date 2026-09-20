@@ -4,11 +4,17 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import printscript.domain.ExactRule
+import printscript.domain.LanguageConfig
 import printscript.domain.RegexRule
 import printscript.domain.TokenRule
+import printscript.evaluator.ExactEvaluator
+import printscript.evaluator.MatchResult
 import printscript.evaluator.MatchType
+import printscript.evaluator.RegexEvaluator
 import printscript.evaluator.RuleEvaluator
+import printscript.support.MockMatchingRuleEvaluator
 import printscript.support.PrintScriptLanguage
 
 class RuleEvaluatorTest {
@@ -43,15 +49,21 @@ class RuleEvaluatorTest {
             partial = "^'[^']*$",
         )
 
-    private val evaluator =
-        RuleEvaluator(
-            mapOf(
-                "keywords" to listOf(let),
-                "types" to listOf(type),
-                "literals" to listOf(number, string, singleString),
-                "identifiers" to listOf(identifier),
-            ),
+    private val evaluators = listOf(ExactEvaluator(), RegexEvaluator())
+
+    private val config =
+        LanguageConfig(
+            order = listOf("keywords", "types", "literals", "identifiers"),
+            rulesByCategory =
+                mapOf(
+                    "keywords" to listOf(let),
+                    "types" to listOf(type),
+                    "literals" to listOf(number, string, singleString),
+                    "identifiers" to listOf(identifier),
+                ),
         )
+
+    private val evaluator = RuleEvaluator(config, evaluators)
 
     private fun match(
         text: String,
@@ -169,7 +181,12 @@ class RuleEvaluatorTest {
                     capture = true,
                     partial = PrintScriptLanguage.PRODUCTION_NUMBER_PARTIAL,
                 )
-            val production = RuleEvaluator(mapOf("literals" to listOf(rule)))
+            val langConfig =
+                LanguageConfig(
+                    order = listOf("literals"),
+                    rulesByCategory = mapOf("literals" to listOf(rule)),
+                )
+            val production = RuleEvaluator(langConfig, evaluators)
             assertEquals(MatchType.VALID, production.evaluate("1").single().matchType)
             assertEquals(MatchType.INVALID, production.evaluate("1.").single().matchType)
             assertEquals(MatchType.VALID, production.evaluate("1.5").single().matchType)
@@ -184,7 +201,12 @@ class RuleEvaluatorTest {
                     capture = true,
                     partial = PrintScriptLanguage.PRODUCTION_STRING_PARTIAL,
                 )
-            val production = RuleEvaluator(mapOf("literals" to listOf(rule)))
+            val langConfig =
+                LanguageConfig(
+                    order = listOf("literals"),
+                    rulesByCategory = mapOf("literals" to listOf(rule)),
+                )
+            val production = RuleEvaluator(langConfig, evaluators)
             assertEquals(MatchType.PARTIAL, production.evaluate("\"").single().matchType)
             assertEquals(MatchType.INVALID, production.evaluate("\"h").single().matchType)
             assertEquals(MatchType.VALID, production.evaluate("\"hello\"").single().matchType)
@@ -203,10 +225,75 @@ class RuleEvaluatorTest {
     inner class PrintScriptConfig {
         @Test
         fun `the shared language config evaluates the same way`() {
-            val fromLanguage = RuleEvaluator(PrintScriptLanguage.config().config)
+            val fromLanguage = RuleEvaluator(PrintScriptLanguage.config(), evaluators)
             val results = fromLanguage.evaluate("println")
             assertTrue(results.any { it.tokenRule.token == "CALL" && it.matchType == MatchType.VALID })
             assertTrue(results.any { it.tokenRule.token == "ID" && it.matchType == MatchType.VALID })
+        }
+    }
+
+    @Nested
+    inner class MockEvaluatorDelegation {
+        @Test
+        fun `delegates to matching evaluator`() {
+            val mockEvaluator =
+                MockMatchingRuleEvaluator(
+                    canApply = { it == let },
+                    onEvaluate = { text, rule, cat ->
+                        MatchResult(rule, MatchType.VALID, cat)
+                    },
+                )
+            val singleRuleConfig =
+                LanguageConfig(
+                    order = listOf("keywords"),
+                    rulesByCategory = mapOf("keywords" to listOf(let)),
+                )
+            val customEvaluator = RuleEvaluator(singleRuleConfig, listOf(mockEvaluator))
+            val result = customEvaluator.evaluate("let")
+
+            assertEquals(1, result.size)
+            assertEquals(let, result.single().tokenRule)
+            assertEquals(MatchType.VALID, result.single().matchType)
+            assertEquals("keywords", result.single().category)
+        }
+
+        @Test
+        fun `throws IllegalArgumentException when no evaluator applies`() {
+            val singleRuleConfig =
+                LanguageConfig(
+                    order = listOf("keywords"),
+                    rulesByCategory = mapOf("keywords" to listOf(let)),
+                )
+            val emptyEvaluator = RuleEvaluator(singleRuleConfig, emptyList())
+
+            assertThrows<IllegalArgumentException> {
+                emptyEvaluator.evaluate("let")
+            }
+        }
+    }
+
+    @Nested
+    inner class EvaluatorAbstractions {
+        @Test
+        fun `ExactEvaluator only applies to ExactRule`() {
+            val exactEvaluator = ExactEvaluator()
+            assertTrue(exactEvaluator.applies(let))
+            org.junit.jupiter.api.Assertions
+                .assertFalse(exactEvaluator.applies(identifier))
+        }
+
+        @Test
+        fun `RegexEvaluator only applies to RegexRule`() {
+            val regexEvaluator = RegexEvaluator()
+            assertTrue(regexEvaluator.applies(identifier))
+            org.junit.jupiter.api.Assertions
+                .assertFalse(regexEvaluator.applies(let))
+        }
+
+        @Test
+        fun `MatchingRuleEvaluator companion builds expected error message`() {
+            val msg = printscript.evaluator.MatchingRuleEvaluator.errorMessage("ExactRule", identifier)
+            assertEquals("\"expected: ExactRule\", got \"RegexRule\"", msg)
         }
     }
 }

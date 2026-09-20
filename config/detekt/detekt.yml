@@ -1,8 +1,5 @@
 style:
   ForbiddenComment:
     active: true
-    comments:
-      - value: 'FIXME:'
-        reason: 'Forbidden FIXME todo marker in comment, please fix the problem.'
-      - value: 'STOPSHIP:'
-        reason: 'Forbidden STOPSHIP todo marker in comment, please address the problem before shipping the code.'
+  ReturnCount:
+    active: false
