@@ -12,6 +12,9 @@ class LexerTokenSource(
     private val buffer = mutableListOf<Token>()
     private var index = 0
 
+    internal val retainedCount: Int
+        get() = buffer.size
+
     override fun peek(): Token = peek(0)
 
     override fun peek(offset: Int): Token {
@@ -31,6 +34,17 @@ class LexerTokenSource(
 
     override fun restore(mark: Int) {
         index = mark
+    }
+
+    override fun releaseConsumed() {
+        if (index <= 0) return
+        if (index >= buffer.size) {
+            buffer.clear()
+            index = 0
+            return
+        }
+        buffer.subList(0, index).clear()
+        index = 0
     }
 
     private fun fillTo(target: Int) {

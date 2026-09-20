@@ -46,8 +46,8 @@ parser/src/main/kotlin/printscript/
   DefaultParser.kt
   DefaultParserFactory.kt
   token/
-    TokenSource.kt          peek / advance / checkpoint / restore
-    LexerTokenSource.kt     buffer sobre Lexer; EOF = type == "EOF"
+    TokenSource.kt          peek / advance / checkpoint / restore / releaseConsumed
+    LexerTokenSource.kt     buffer sobre Lexer; compacta al terminar el statement; EOF = type == "EOF"
   parse/
     RuleEvaluator.kt        despacha al handler que supports(rule)
     RuleHandler.kt
@@ -84,10 +84,13 @@ interface TokenSource {
     fun isAtEnd(): Boolean          // peek().type == "EOF"
     fun checkpoint(): Int
     fun restore(mark: Int)
+    fun releaseConsumed()           // default no-op
 }
 ```
 
 `LexerTokenSource` acumula tokens en una lista y mueve `index`. `restore` no relee el lexer: solo retrocede el índice. Imprescindible para `or` y para el primer step de `seq`.
+
+Al terminar `parseNextStatement` (ok o error) llama `releaseConsumed()`: tira los tokens ya avanzados y deja el lookahead en el frente. El backtracking **dentro** del statement sigue usando índices absolutos; compactar **después** de `evaluate` no los invalida. Sin esto el buffer crece con el archivo y el TCK de 32k `println` no entra en 15m.
 
 `advance()` sobre EOF **no** incrementa (se queda en EOF).
 

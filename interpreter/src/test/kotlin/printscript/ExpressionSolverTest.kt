@@ -11,6 +11,7 @@ import printscript.error.UnrecognizedNode
 import printscript.error.UnresolvableCall
 import printscript.error.UnresolvableExpression
 import printscript.expression.DefaultExpressionSolver
+import printscript.support.RecordingSideEffectManager
 import printscript.support.TEST_LOCATION
 import printscript.support.binary
 import printscript.support.call
@@ -25,7 +26,8 @@ import printscript.support.stringNode
 import printscript.syntax.SyntaxNode
 
 class ExpressionSolverTest {
-    private val solver = DefaultExpressionSolver(defaultEvaluators())
+    private val effects = RecordingSideEffectManager()
+    private val solver = DefaultExpressionSolver(defaultEvaluators(effects))
 
     @Test
     fun `number literal evaluates to NumberValue`() {
@@ -151,23 +153,23 @@ class ExpressionSolverTest {
         val result = ok(solver.solve(call(numberNode("42")), InterpreterContext()))
 
         assertEquals(UnitValue, result.value)
-        assertEquals(listOf(PrintEffect("42")), result.sideEffects)
+        assertEquals(listOf(PrintEffect("42")), effects.effects)
     }
 
     @Test
     fun `println prints strings without quotes`() {
-        val result = ok(solver.solve(call(stringNode("hola")), InterpreterContext()))
+        ok(solver.solve(call(stringNode("hola")), InterpreterContext()))
 
-        assertEquals(listOf(PrintEffect("hola")), result.sideEffects)
+        assertEquals(listOf(PrintEffect("hola")), effects.effects)
     }
 
     @Test
     fun `nested calls accumulate effects in evaluation order`() {
         val nested = call(call(numberNode("1")))
 
-        val result = ok(solver.solve(nested, InterpreterContext()))
+        ok(solver.solve(nested, InterpreterContext()))
 
-        assertEquals(listOf(PrintEffect("1"), PrintEffect("")), result.sideEffects)
+        assertEquals(listOf(PrintEffect("1"), PrintEffect("")), effects.effects)
     }
 
     @Test

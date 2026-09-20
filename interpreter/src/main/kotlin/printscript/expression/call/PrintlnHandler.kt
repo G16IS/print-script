@@ -16,11 +16,8 @@ object PrintlnHandler : CallHandler {
         result: EvalResult,
         node: SyntaxNode,
         effects: SideEffectManager,
-    ): Result<EvalResult, RuntimeError> =
-        Result.Ok(
-            EvalResult(
-                value = UnitValue,
-                sideEffects = result.sideEffects + PrintEffect(result.value.toPrintableString()),
-            ),
-        )
+    ): Result<EvalResult, RuntimeError> {
+        effects.handle(PrintEffect(result.value.toPrintableString()))
+        return Result.Ok(EvalResult.pure(UnitValue))
+    }
 }

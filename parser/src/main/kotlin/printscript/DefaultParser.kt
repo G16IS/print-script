@@ -17,12 +17,18 @@ class DefaultParser(
     private var boundLexer: Lexer? = null
     private var source: TokenSource? = null
 
+    internal fun retainedTokenCount(): Int = (source as? LexerTokenSource)?.retainedCount ?: 0
+
     override fun parseNextStatement(tokenStream: Lexer): Result<SyntaxNode, ParserError> {
         val tokens = bind(tokenStream)
-        return when (val result = evaluator.evaluate(grammar.start, tokens)) {
-            is ParseResult.Matched -> Result.Ok(result.node)
-            ParseResult.Missing -> Result.Err(ParseErrors.unexpectedStart(tokens.peek()))
-            is ParseResult.Failed -> Result.Err(result.error)
+        return try {
+            when (val result = evaluator.evaluate(grammar.start, tokens)) {
+                is ParseResult.Matched -> Result.Ok(result.node)
+                ParseResult.Missing -> Result.Err(ParseErrors.unexpectedStart(tokens.peek()))
+                is ParseResult.Failed -> Result.Err(result.error)
+            }
+        } finally {
+            tokens.releaseConsumed()
         }
     }
 

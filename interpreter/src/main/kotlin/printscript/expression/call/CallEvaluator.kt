@@ -13,7 +13,6 @@ import printscript.node.tokenValue
 import printscript.syntax.SyntaxNode
 import printscript.util.Result
 import printscript.util.flatMap
-import printscript.util.map
 import printscript.zip
 
 class CallEvaluator(
@@ -34,12 +33,7 @@ class CallEvaluator(
                 val handler =
                     handlersByCallee[callee]
                         ?: return@flatMap Result.Err(UnresolvableCall(callee, node.location))
-                handler.handle(result, node, sideEffectManager).map { evalResult ->
-                    evalResult.sideEffects
-                        .drop(result.sideEffects.size)
-                        .forEach { sideEffectManager.handle(it) }
-                    evalResult
-                }
+                handler.handle(result, node, sideEffectManager)
             }
         }
 

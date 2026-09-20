@@ -11,7 +11,7 @@ import printscript.util.flatMap
 import printscript.util.map
 
 /**
- * `<expr>;` — the value is discarded; effects (e.g. from `println`) are kept.
+ * `<expr>;` — the value is discarded; `println` already fired through the manager.
  */
 object ExpressionStatementExecutor : StatementExecutor {
     override val nodeNames = setOf(AstNames.EXPRESSION_STMT)
