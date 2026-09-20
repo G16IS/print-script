@@ -19,8 +19,8 @@ class MockLexer(
         return Result.Ok(token)
     }
 
-    override fun peek(offset: Int?): Result<Token, LexerError> {
-        val i = index + (offset ?: 0)
+    override fun peek(offset: Int): Result<Token, LexerError> {
+        val i = index + offset
         return Result.Ok(tokens[i.coerceIn(0, tokens.lastIndex)])
     }
 

@@ -26,7 +26,7 @@ common/src/main/kotlin/printscript/
     Token.kt              Token(type: String, value: Optional<String>, location)
     TokenType.kt          enum leftover — no usar
     TokenRule.kt          ExactRule / RegexRule
-    LanguageConfig.kt     order + config (categorías → reglas)
+    LanguageConfig.kt     order + rulesByCategory (privados; rulesInOrder())
     Grammar.kt            start + rules, valida referencias
     GrammarRule.kt        Or / Atom / Seq / Left / Repeat
     SeqStep.kt            TokenStep / RuleRefStep
@@ -99,13 +99,15 @@ El lexer decide `VALID` / `PARTIAL` / `INVALID` con estas reglas. `common` no ev
 ### `LanguageConfig`
 
 ```kotlin
-data class LanguageConfig(
-    val order: List<String>,                       // categorías, primero = más prioritaria
-    val config: Map<String, List<TokenRule>>       // nombre de categoría → reglas
+class LanguageConfig(
+    private val order: List<String>,                          // categorías, primero = más prioritaria
+    private val rulesByCategory: Map<String, List<TokenRule>>, // nombre de categoría → reglas
 )
 ```
 
-`order` significa “primero gana”. `RuleDrawResolver` (lexer) usa `order.indexOf(category)` y se queda con el **mínimo**. Ver [LEXER.md](LEXER.md).
+El JSON sigue usando la clave `"config"` (serializer en infrastructure). En Kotlin se construye con `rulesByCategory` y se recorre con `rulesInOrder()` / `categoryOf` / `findPriority`.
+
+`order` significa “primero gana”. `RuleDrawResolver` (lexer) usa `findPriority` (índice en `order`) y se queda con el **mínimo**. Ver [LEXER.md](LEXER.md).
 
 ### `FormatterRulesConfig`
 

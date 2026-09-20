@@ -19,18 +19,17 @@ Convierte un stream de caracteres (`CodeReader`) en un stream de `Token` según 
 
 ```kotlin
 interface Lexer {
-    fun nextToken(): Token
-    fun peek(offset: Int?): Token    // offset null = 0; no consume
-}
-
-object DefaultLexerFactory {
-    fun create(codeReader: CodeReader, langConfig: LanguageConfig): Lexer
+    companion object {
+        fun create(codeReader: CodeReader, langConfig: LanguageConfig): Lexer
+    }
+    fun nextToken(): Result<Token, LexerError>
+    fun peek(offset: Int = 0): Result<Token, LexerError>    // no consume
 }
 ```
 
-Siempre crear el lexer por la factory. La impl es `TokenStream`.
+Siempre crear el lexer por `Lexer.create`. La impl es `TokenStream`; `DefaultLexerFactory` es `internal`.
 
-`application` usa `lexer.peek(null).type != "EOF"` para saber si queda statement.
+`ParseProgram` usa `lexer.peek()` (`Result`) y corta si `type == "EOF"` (`TokenStream.END_TOKEN`).
 
 ---
 
@@ -38,14 +37,16 @@ Siempre crear el lexer por la factory. La impl es `TokenStream`.
 
 ```
 lexer/src/main/kotlin/printscript/
-  Lexer.kt                  interface
-  DefaultLexerFactory.kt    TokenStream(reader, RuleEvaluator, RuleDrawResolver)
+  Lexer.kt                  interface + companion create
+  DefaultLexerFactory.kt    internal; TokenStream(reader, RuleEvaluator, RuleDrawResolver)
   TokenStream.kt            loop de lectura + buffer de peek
-  RuleDrawResolver.kt       desempate por categoría
+  RuleDrawResolver.kt       desempate por categoría → Result
   TokenFactory.kt           Token a partir de TokenRule + texto + location
-  TokenRegistry.kt          leftover, no lo usa TokenStream
   evaluator/
-    RuleEvaluator.kt        ExactRule / RegexRule → MatchType
+    RuleEvaluator.kt        despacha a MatchingRuleEvaluator por regla
+    MatchingRuleEvaluator.kt
+    ExactEvaluator.kt
+    RegexEvaluator.kt
     MatchResult.kt
     MatchType.kt            VALID | PARTIAL | INVALID
 ```
@@ -57,12 +58,12 @@ lexer/src/main/kotlin/printscript/
 1. `skipWhitespace()` — `read()` hasta un no-whitespace o EOF.
 2. Si EOF: emitir `Token("EOF", empty, Location(pos, pos))`.
 3. El primer carácter no-ws ya está consumido. `text` empieza ahí.
-4. Evaluar **todas** las reglas contra `text`. Si todas son `INVALID` → `Error("Unexpected token at line …")`.
+4. Evaluar **todas** las reglas contra `text`. Si todas son `INVALID` → `Result.Err(UnexpectedToken)`.
 5. Loop: `peek` del siguiente carácter.
-   - Si no hay más: si hay algún `VALID`, emitir; si no, `IllegalStateException` (caso típico: string sin cerrar).
+   - Si no hay más: si hay algún `VALID`, emitir; si no, `Result.Err(UnexpectedEnfOfLine)` (caso típico: string sin cerrar).
    - Evaluar `text + nextChar`. Si **todo** `INVALID` o no-parcial: **no** consumir ese carácter; emitir token con el `text` anterior.
    - Si algo sigue `VALID` o `PARTIAL`: `read()`, agrandar `text`, repetir.
-6. Emitir: filtrar matches no-`INVALID`, resolver empate, `TokenFactory.create`.
+6. Emitir: filtrar solo matches `VALID` (un `PARTIAL` no gana el desempate), resolver empate, `TokenFactory.create`.
 
 El lexer es **greedy en caracteres** (maximal munch) y **no** greedy entre reglas de la misma categoría: si dos reglas de la categoría ganadora matchean, `RuleDrawResolver` tira.
 
@@ -98,7 +99,7 @@ Se recompila el `Regex` en cada evaluación. No hay cache.
 
 ## Prioridad (`RuleDrawResolver`)
 
-Cuando el munch termina, pueden quedar varias reglas `VALID` o `PARTIAL` (ej. `let` es keyword **e** identificador). Se prueba categoría por categoría, **primera en `order` gana**.
+Cuando el munch termina, solo compiten las reglas `VALID` (ej. `let` es keyword **e** identificador). Un `PARTIAL` sirve para seguir leyendo, no para ganar: con `let n: number`, `n` es `PARTIAL` de `TYPE` (`number`) y `VALID` de `ID`; si el parcial compitiera, `types` (antes en `order`) emitiría `TYPE`. Se prueba categoría por categoría, **primera en `order` gana**.
 
 ```
 findHighestPriorityCategory = minBy { order.indexOf(category) }  // ausente → Int.MAX_VALUE
@@ -106,8 +107,9 @@ findHighestPriorityCategory = minBy { order.indexOf(category) }  // ausente → 
 
 - Índice **más bajo** gana → la categoría **primera** en `order` gana.
 - Categoría ausente de `order`: prioridad más baja (no le gana a ninguna listada).
-- Si la categoría ganadora tiene **más de una** regla matching → `IllegalArgumentException`.
-- Si la regla no está en `config` → `IllegalStateException`.
+- Si la categoría ganadora tiene **más de una** regla matching → `Result.Err(MultipleRulesWithSamePriority)`.
+- Si la regla no está en `config` → `Result.Err(RuleNotFound)`.
+- Si no hay reglas matching → `Result.Err(NoRulesProvided)`.
 
 Coincide con `language.config.v1.0.json`:
 
@@ -150,20 +152,17 @@ No compares locations de tests de lexer con las de `FileCodeReader`.
 
 ## Errores
 
-| Situación | Qué tira |
+`nextToken` / `peek` devuelven `Result<Token, LexerError>`. No lanzan en el camino de tokenización.
+
+| Situación | Qué devuelve |
 |---|---|
-| Primer carácter no matchea nada | `IllegalArgumentException("Unexpected token at line …")` |
-| EOF a mitad de un parcial (ej. `"hola`) | `IllegalStateException("Unexpected end of file…")` |
-| Empate en la misma categoría | `IllegalArgumentException` desde el resolver |
-| `peek`/`next` después de EOF | vuelve a emitir EOF (no avanza más allá: cada `readNextToken` al final del archivo produce otro EOF si se llama de nuevo; el parser se detiene al ver `EOF`) |
+| Primer carácter no matchea nada | `Result.Err(UnexpectedToken)` |
+| EOF a mitad de un parcial (ej. `"hola`) | `Result.Err(UnexpectedEnfOfLine)` |
+| Empate en la misma categoría | `Result.Err(MultipleRulesWithSamePriority)` |
+| Regla matching ausente del config | `Result.Err(RuleNotFound)` |
+| `peek`/`next` después de EOF | `Result.Ok` con otro EOF (el parser se detiene al ver `EOF`) |
 
-No hay tipo `LexException`. Si unificás errores, este módulo es el más informal.
-
----
-
-## Leftover
-
-`TokenRegistry`: mapa `String → (Location) → Token`. No está en el camino de `TokenStream`. No lo extiendas; el camino vivo es `TokenFactory` + `TokenRule.token`.
+`RuleEvaluator` sí puede tirar `IllegalArgumentException` si ninguna estrategia (exact/regex) aplica a una regla.
 
 ---
 
@@ -175,7 +174,7 @@ JUnit 5. Harness en `lexer/src/test/kotlin/printscript/support/`:
 - `lexer` / `lex` / `assertLex` / `assertTypes` / `tok` — agregar un caso es una línea: `assertLex("letter", tok("ID", "letter"), tok("EOF"))`.
 - `MockReader` — `CodeReader` in-memory. Locations línea 0.
 
-Los tests **no** cargan `language.config.v1.0.json`. Van por `DefaultLexerFactory`.
+Los tests **no** cargan `language.config.v1.0.json`. Van por `DefaultLexerFactory` (visible en el mismo módulo) / `Lexer.create`.
 
 | Clase | Qué cubre |
 |---|---|

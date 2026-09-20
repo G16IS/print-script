@@ -29,14 +29,10 @@ object JSONLanguageConfigReader : LanguageConfigReader {
      * Validaciones de consistencia post-deserialización.
      */
     private fun validate(config: LanguageConfig) {
-        require(config.order.isNotEmpty()) { "order no puede estar vacío" }
+        val categories = config.rulesInOrder()
+        require(categories.isNotEmpty()) { "order no puede estar vacío" }
 
-        val missing = config.order.filter { it !in config.config }
-        require(missing.isEmpty()) {
-            "Categorías en order no definidas en config: $missing"
-        }
-
-        config.config.forEach { (category, rules) ->
+        categories.forEach { (category, rules) ->
             require(rules.isNotEmpty()) { "Categoría '$category' no tiene reglas" }
 
             rules.forEachIndexed { index, rule ->

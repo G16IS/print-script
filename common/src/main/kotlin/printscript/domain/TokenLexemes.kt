@@ -15,7 +15,7 @@ data class TokenLexemes(
     companion object {
         fun from(config: LanguageConfig): TokenLexemes {
             val lexemes = mutableMapOf<String, String>()
-            for (rules in config.config.values) {
+            for ((_, rules) in config.rulesInOrder()) {
                 for (rule in rules) {
                     if (rule is ExactRule && rule.matcher.size == 1) {
                         lexemes[rule.token] = rule.matcher.single()

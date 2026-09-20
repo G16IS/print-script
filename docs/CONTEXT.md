@@ -116,17 +116,26 @@ Armado típico (lo que hace `interpretCode` **hoy**):
 
 ```kotlin
 val codeReader = FileCodeReader(path)
-val lexer = DefaultLexerFactory.create(codeReader, langConfig)
-val parser = DefaultParserFactory.create(grammar)
+val lexer = Lexer.create(codeReader, langConfig)
+val parser = DefaultParserFactory.create(grammar, handlers)
 
-var program = SyntaxProgram.empty()
-while (lexer.peek(null).type != "EOF") {
-    program = parser.parseNextStatement(lexer, program)
+val builder = SyntaxProgram.builder()
+while (true) {
+    when (val peeked = lexer.peek()) {
+        is Result.Err -> /* LexerError */
+        is Result.Ok -> {
+            if (peeked.value.type == "EOF") break
+            when (val parsed = parser.parseNextStatement(lexer)) {
+                is Result.Err -> /* ParserError */
+                is Result.Ok -> builder.add(parsed.value)
+            }
+        }
+    }
 }
 
-val report = DefaultTypeCheckerFactory.create(typeSystem).check(program)
+val report = DefaultTypeCheckerFactory.create(typeSystem).check(builder.build())
 if (!report.isOk) error("El chequeo de tipos falló:…")
-return program
+return builder.build()
 ```
 
 El parser es **streaming por statement**: no parsea el archivo de una. Cada llamada consume tokens hasta terminar un `statement` (regla `start` de la gramática).
@@ -211,9 +220,9 @@ Ver [modules/COMMON.md](modules/COMMON.md).
 
 - Matching: `RuleEvaluator` (exact = igualdad/prefijo; regex = `matcher` + `partial`)
 - Empate entre categorías: `RuleDrawResolver` — **gana la categoría con menor índice en `LanguageConfig.order`** (la **primera** de la lista)
-- Factory: `DefaultLexerFactory.create(codeReader, langConfig)`
+- Factory: `Lexer.create(codeReader, langConfig)` (`DefaultLexerFactory` es `internal`)
+- `nextToken` / `peek` devuelven `Result<Token, LexerError>`
 - `Token.type` es el string `token` de la regla (`"LET"`, `"ID"`, `"NUMBER_LITERAL"`, `"EOF"`, …)
-- `TokenRegistry` no se usa
 
 JSON y código coinciden: `order` es keywords → types → operators → literals → identifiers. Si invertís esa lista, `let` se tokeniza como `ID`.
 
@@ -320,7 +329,7 @@ Ver [modules/BUILD_LOGIC.md](modules/BUILD_LOGIC.md).
 2. **Tokens genéricos.** `Token.type: String`. El enum `TokenType` es leftover; no lo uses en código nuevo.
 3. **Parser genérico.** El parser no conoce `let` ni `println`. Esas palabras están en los JSON. Un handler nuevo = data class en `common` + serializer + `RuleHandler` + registro.
 4. **Árbol de sintaxis.** El pipeline camina `SyntaxNode` (`child` / `find` / `value`). No hay AST tipado aparte.
-5. **Errores por capa.** Lexer tira `Error` / `IllegalStateException`. Parser tira `ParseException`. Type-checker acumula en `Report` / `Result` (su `TypeError` data class, no lanza). `interpretCode` / `formatCode` / `checkFormat` **no** lanzan: devuelven `Report` / `Result`. Interpreter reporta `Result.Err(RuntimeError)` y no lanza.
+5. **Errores por capa.** Lexer devuelve `Result.Err(LexerError)` (`UnexpectedToken`, `UnexpectedEnfOfLine`, …). Parser tira `ParseException` en algunos caminos y en otros `Result.Err(ParserError)`. Type-checker acumula en `Report` / `Result` (su `TypeError` data class, no lanza). `interpretCode` / `formatCode` / `checkFormat` **no** lanzan: devuelven `Report` / `Result`. Interpreter reporta `Result.Err(RuntimeError)` y no lanza.
 6. **Streaming.** Ni lexer ni parser cargan el programa entero de una: caracteres → tokens on demand → un statement por llamada.
 
 El interpreter despacha por nombres de regla (`node.name`) y registra `CallHandler`s (`println`). Extenderlo es registrar executor/evaluator/handler, no tocar el motor de dispatch ni un enum.
@@ -393,13 +402,12 @@ Tratalos como deuda conocida, no como “código muerto a borrar en silencio” 
 | Qué | Dónde | Impacto |
 |---|---|---|
 | `interpretCode` no ejecuta | `InterpretCode.kt` | El CLI `run` usa `ExecuteCode`; `interpretCode` sigue siendo solo type-check |
-| Lexer/parser tiran excepciones | lexer, parser | El CLI las atrapa y imprime `ERROR`; el resto del pipeline usa `Result`/`Report` |
+| Parser tira excepciones en algunos caminos | parser | `LexerTokenSource` mapea `LexerError` a `UnexpectedException`; el resto del pipeline usa `Result`/`Report` |
 | `string + number` diverge | type-system JSON vs `DefaultTypeConfiguration` | El type-checker acepta `"a" + 1`; el interpreter responde `InvalidOperands` |
 | Tabla de ops del interpreter hardcodeada | `interpreter/.../DefaultTypeConfiguration.kt` | No comparte `type-system.config.v1.0.json` con el type-checker |
 | `partial` de números en el JSON | `language.config.v1.0.json` (`^[0-9]`) | `1.5` no tokeniza con el resource; strings `"..."` y `'...'` sí |
 | Dos `TypeError` | `common/.../error/TypeError.kt` vs `type-checker/.../TypeError.kt` | El pipeline de application usa el data class del módulo; el sealed de common lo usa el interpreter (variantes compartidas) |
 | `TokenType` enum | `common/.../TokenType.kt` | No lo usa nadie |
-| `TokenRegistry` | `lexer/.../TokenRegistry.kt` | No lo usa el `TokenStream` |
 | `repeat` listo, no usado en v1 | grammar + `RepeatRuleHandler` | Sirve para `if` / bloques |
 | `COMMA` tokenizado, no parseado | language config | Pensado para args múltiples |
 

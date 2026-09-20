@@ -105,7 +105,7 @@ class RuleDrawResolverTest {
     inner class PrintScriptPriority {
         private val printScript = RuleDrawResolver(PrintScriptLanguage.config())
         private val reversed = RuleDrawResolver(PrintScriptLanguage.reversedOrder())
-        private val rules = PrintScriptLanguage.config().config
+        private val rules = PrintScriptLanguage.rules()
         private val letRule = rules.getValue("keywords")[0]
         private val idRule = rules.getValue("identifiers")[0]
         private val typeRule = rules.getValue("types")[0]

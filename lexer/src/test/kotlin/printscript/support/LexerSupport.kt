@@ -109,7 +109,14 @@ private fun assertLexed(
     )
 }
 
-fun castTokenResult(tokenResult: Result<Token, Error>): Token = (tokenResult as Result.Ok<Token>).value
+fun castTokenResult(tokenResult: Result<Token, Error>): Token =
+    when (tokenResult) {
+        is Result.Ok -> tokenResult.value
+        is Result.Err -> throw AssertionError("Expected Result.Ok, got Result.Err: ${tokenResult.error}")
+    }
 
 fun castTokenListResult(tokenList: Result<List<Token>, Error>): List<Token> =
-    (tokenList as Result.Ok<List<Token>>).value
+    when (tokenList) {
+        is Result.Ok -> tokenList.value
+        is Result.Err -> throw AssertionError("Expected Result.Ok, got Result.Err: ${tokenList.error}")
+    }

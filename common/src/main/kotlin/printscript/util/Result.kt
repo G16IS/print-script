@@ -1,5 +1,9 @@
 package printscript.util
 
+fun <E> err(error: E) = Result.Err<E>(error)
+
+fun <T> ok(payload: T) = Result.Ok<T>(payload)
+
 sealed interface Result<out T, out E> {
     data class Ok<T>(
         val value: T,
@@ -10,6 +14,7 @@ sealed interface Result<out T, out E> {
     ) : Result<Nothing, E>
 }
 
+// TODO: refactor to be sealed interface
 data class Report<T, E>(
     val value: T? = null,
     val errors: List<E> = emptyList(),

@@ -2,7 +2,6 @@ package printscript.support
 
 import java.io.File
 import java.rmi.UnexpectedException
-import printscript.DefaultLexerFactory
 import printscript.DefaultParserFactory
 import printscript.Lexer
 import printscript.domain.ExactRule
@@ -29,7 +28,7 @@ object LinterPsSupport {
     fun parse(code: String): SyntaxProgram {
         val file = File.createTempFile("printscript-linter-test", ".ps").apply { writeText(code) }
         val codeReader = FileCodeReader(file.absolutePath)
-        val lexer = DefaultLexerFactory.create(codeReader, language())
+        val lexer = Lexer.create(codeReader, language())
         val parser =
             (
                 (
@@ -54,7 +53,7 @@ object LinterPsSupport {
     }
 
     private fun peekNextToken(lexer: Lexer): Token {
-        when (val token = lexer.peek(null)) {
+        when (val token = lexer.peek()) {
             is Result.Err -> throw UnexpectedException("Token error")
             is Result.Ok -> return token.value
         }
@@ -63,7 +62,7 @@ object LinterPsSupport {
     private fun language(): LanguageConfig =
         LanguageConfig(
             order = listOf("keywords", "types", "operators", "literals", "identifiers"),
-            config =
+            rulesByCategory =
                 mapOf(
                     "keywords" to keywords(),
                     "types" to types(),

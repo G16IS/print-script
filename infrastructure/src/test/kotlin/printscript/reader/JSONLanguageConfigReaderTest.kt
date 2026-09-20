@@ -14,12 +14,13 @@ class JSONLanguageConfigReaderTest {
                 requireNotNull(javaClass.classLoader.getResourceAsStream("language.config.v1.0.json")),
             )
 
+        val byCategory = config.rulesInOrder().toMap()
         assertEquals(
             listOf("keywords", "types", "operators", "literals", "identifiers"),
-            config.order,
+            config.rulesInOrder().map { it.first },
         )
-        assertTrue(config.config["keywords"]!!.any { it is ExactRule && it.token == "LET" })
-        assertTrue(config.config["literals"]!!.any { it is RegexRule && it.token == "STRING_LITERAL" })
+        assertTrue(byCategory["keywords"]!!.any { it is ExactRule && it.token == "LET" })
+        assertTrue(byCategory["literals"]!!.any { it is RegexRule && it.token == "STRING_LITERAL" })
     }
 
     @Test
@@ -32,7 +33,7 @@ class JSONLanguageConfigReaderTest {
             JSONLanguageConfigReader.read(
                 requireNotNull(javaClass.classLoader.getResourceAsStream("language.config.v1.1.json")),
             )
-        assertEquals(v10.order, v11.order)
-        assertEquals(v10.config.keys, v11.config.keys)
+        assertEquals(v10.rulesInOrder().map { it.first }, v11.rulesInOrder().map { it.first })
+        assertEquals(v10.rulesInOrder().toMap().keys, v11.rulesInOrder().toMap().keys)
     }
 }
