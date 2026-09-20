@@ -46,7 +46,6 @@ class SeqRuleHandler(
                             ParseErrors.unexpectedToken(ctx.tokens.peek(), describe(step)),
                         )
                     }
-                    // The first step may be a rule reference that consumed tokens before missing.
                     ctx.tokens.restore(start)
                     return ParseResult.Missing
                 }
