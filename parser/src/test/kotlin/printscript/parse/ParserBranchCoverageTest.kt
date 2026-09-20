@@ -210,7 +210,7 @@ class ParserBranchCoverageTest {
         override fun nextToken(): Result<printscript.domain.Token, LexerError> =
             Result.Err(UnexpectedToken(Location.empty()))
 
-        override fun peek(offset: Int?): Result<printscript.domain.Token, LexerError> =
+        override fun peek(offset: Int): Result<printscript.domain.Token, LexerError> =
             Result.Err(UnexpectedToken(Location.empty()))
     }
 }

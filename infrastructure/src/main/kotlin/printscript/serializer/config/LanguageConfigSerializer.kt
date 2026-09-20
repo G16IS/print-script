@@ -29,7 +29,12 @@ object LanguageConfigSerializer : KSerializer<LanguageConfig> {
         encoder: Encoder,
         value: LanguageConfig,
     ) {
-        val surrogate = LanguageConfigSurrogate(value.order, value.config)
+        val ordered = value.rulesInOrder()
+        val surrogate =
+            LanguageConfigSurrogate(
+                order = ordered.map { it.first },
+                config = ordered.toMap(),
+            )
         encoder.encodeSerializableValue(surrogateSerializer, surrogate)
     }
 

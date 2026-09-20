@@ -10,7 +10,7 @@ class TokenLexemesTest {
         val config =
             LanguageConfig(
                 order = listOf("keywords"),
-                config =
+                rulesByCategory =
                     mapOf(
                         "keywords" to
                             listOf(
@@ -31,7 +31,7 @@ class TokenLexemesTest {
         val config =
             LanguageConfig(
                 order = listOf("operators"),
-                config =
+                rulesByCategory =
                     mapOf(
                         "operators" to
                             listOf(
@@ -48,7 +48,7 @@ class TokenLexemesTest {
         val config =
             LanguageConfig(
                 order = listOf("identifiers"),
-                config =
+                rulesByCategory =
                     mapOf(
                         "identifiers" to
                             listOf(
@@ -67,7 +67,7 @@ class TokenLexemesTest {
 
     @Test
     fun `lexemeFor is null when the token type is unknown`() {
-        val lexemes = TokenLexemes.from(LanguageConfig(order = emptyList(), config = emptyMap()))
+        val lexemes = TokenLexemes.from(LanguageConfig(order = emptyList(), rulesByCategory = emptyMap()))
 
         assertNull(lexemes.lexemeFor("LET"))
     }
@@ -77,7 +77,7 @@ class TokenLexemesTest {
         val config =
             LanguageConfig(
                 order = listOf("a", "b"),
-                config =
+                rulesByCategory =
                     mapOf(
                         "a" to listOf(ExactRule(listOf("let"), "LET", capture = false)),
                         "b" to listOf(ExactRule(listOf("LET"), "LET", capture = false)),

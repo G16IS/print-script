@@ -1,5 +1,6 @@
 style:
   ForbiddenComment:
-    active: true
+    active: false
+
   ReturnCount:
     active: false

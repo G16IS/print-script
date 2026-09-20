@@ -1,6 +1,7 @@
 package printscript.util
 
 fun <E> err(error: E) = Result.Err<E>(error)
+
 fun <T> ok(payload: T) = Result.Ok<T>(payload)
 
 sealed interface Result<out T, out E> {

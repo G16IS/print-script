@@ -84,7 +84,7 @@ Pipeline de PrintScript (streaming: caracteres → tokens on demand → un state
 | Módulo | Rol | Dependencias de producción |
 |---|---|---|
 | `:common` | Contratos: Token, Grammar, SyntaxNode, configs, `Result`/`Report`, errores, puertos de I/O. Sin serializers ni filesystem. | ninguna (solo JDK) |
-| `:lexer` | Código → tokens. `DefaultLexerFactory.create`. `Token.type` es `String`. | `:common` |
+| `:lexer` | Código → tokens. `Lexer.create`. `Token.type` es `String`. | `:common` |
 | `:parser` | Tokens → `SyntaxProgram`. Parser genérico dirigido por `Grammar`. | `:common`, `:lexer` |
 | `:type-checker` | Tipos y símbolos sobre el árbol. `check` acumula; `checkStrict` corta. | `:common` |
 | `:interpreter` | `SyntaxProgram` → `Result<List<SideEffect>, RuntimeError>`. Fail-fast. | `:common` |
@@ -143,7 +143,7 @@ detekt: `buildUponDefaultConfig = true`, `allRules = false`, config `config/dete
 
 ### Factories y casos de uso
 
-Patrón repetido: interface (`Lexer`, `Parser`, `Interpreter`, `Linter`, `Formatter`, `TypeChecker`) + `DefaultX` + `object DefaultXFactory` con `create(...)`.
+Patrón repetido: interface (`Parser`, `Interpreter`, `Linter`, `Formatter`, `TypeChecker`) + `DefaultX` + `object DefaultXFactory` con `create(...)`. El lexer es la excepción: `Lexer.create(...)`; `DefaultLexerFactory` es `internal`.
 
 Application: `object`s (`InterpretCode`, `FormatCode`, `CheckFormat`, `LintProgram`, `ParseProgram`, `LoadFormatter`). `ParseProgram` / `LoadFormatter` / `LintProgram` son `internal`.
 
@@ -151,7 +151,7 @@ Application: `object`s (`InterpretCode`, `FormatCode`, `CheckFormat`, `LintProgr
 
 | Capa | Qué hace |
 |---|---|
-| Lexer | Lanza `IllegalArgumentException` (token inesperado) / `IllegalStateException` (EOF a mitad de token). Hay un `TODO-future` para `TerminalToken` en vez del `Token("EOF", …)` actual. |
+| Lexer | No lanza en tokenización. `nextToken` / `peek` → `Result<Token, LexerError>` (`UnexpectedToken`, `UnexpectedEnfOfLine`, `MultipleRulesWithSamePriority`, `RuleNotFound`). EOF es `Token("EOF", …)`. |
 | Parser | Lanza `ParseException` (sintaxis). |
 | Type-checker | No lanza. `Report` / `Result` con **su propio** `printscript.typechecker.TypeError` (data class `message` + `location`), no el sealed de `common`. |
 | Interpreter | `Result.Err(RuntimeError)` end-to-end (`map` / `flatMap`). Fail-fast. No lanza: wiring incompleto o nodo malformado también es `Err` (`UnresolvableExpression` / `UnrecognizedNode`). |
@@ -159,7 +159,7 @@ Application: `object`s (`InterpretCode`, `FormatCode`, `CheckFormat`, `LintProgr
 | Linter | Violaciones → `Report<SyntaxProgram, LintError>`. Config inválida en factory → `IllegalArgumentException` / `require`. |
 | `interpretCode` | Devuelve el `Report` del type-checker. **No interpreta.** Hay `TODO` explícitos en `InterpretCode.kt`. |
 | `formatCode` / `checkFormat` | No lanzan; `Result` / `Report`. |
-| `ParseProgram.parse` | Sí puede lanzar lo que lancen lexer/parser. |
+| `ParseProgram.parse` | `Result<SyntaxProgram, Error>` (`LexerError` o `ParserError`). No lanza por el lexer. |
 
 Jerarquía en `common` (`printscript.error`):
 
@@ -222,7 +222,6 @@ No hay tests de application para `LintProgram`.
 - **`partial` de literales en el JSON de producción es estrecho.** `language.config.v1.0.json`: números `^[0-9]`, strings `^"`. Eso no tokeniza `1.5` ni strings a mitad. Los tests de lexer/interpreter usan un `partial` más amplio (`^[0-9]+(\\.[0-9]*)?$`, `^"[^"]*$`). Application tests del lexer en código usan el `partial` estrecho de números (igual que el JSON).
 - **Locations.** `FileCodeReader` arranca en `(1,1)`. `MockReader` (tests del lexer) y `StringCodeReader` cuentan `(line = 0, col = index)`. No compares locations entre esos mundos.
 - **`DefaultParser` cachea el `TokenSource` por identidad del lexer.** No reutilices un parser con **otro** lexer sin crear un parser nuevo.
-- **`TokenRegistry` no lo usa `TokenStream`.** Leftover, igual que el enum `TokenType`.
 - **El interpreter despacha por `node.name`** (regla de `grammar.config.v1.0.json`). `CallEvaluator` registra `CallHandler`s (`PrintlnHandler`). La tabla de ops **no** lee `type-system.config.v1.0.json`.
 - **`repeat` en el parser está listo** y la gramática v1 no lo usa (pensado para bloques/`if`). `COMMA` se tokeniza y no se parsea.
 - **ktlint/detekt ≠ linter/formatter de PrintScript.** Lo primero es calidad del Kotlin (`printscript.quality`). Lo segundo son módulos del lenguaje.

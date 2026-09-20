@@ -4,11 +4,12 @@ class LanguageConfig(
     private val order: List<String>,
     private val rulesByCategory: Map<String, List<TokenRule>>,
 ) {
-    fun rulesInOrder(): List<Pair<String, List<TokenRule>>> =
-        order.map { category -> category to rulesOf(category) }
+    fun rulesInOrder(): List<Pair<String, List<TokenRule>>> = order.map { category -> category to rulesOf(category) }
 
-    fun categoryOf(rule: TokenRule): String? = rulesByCategory.entries
-        .find { it.value.contains(rule) }?.key
+    fun categoryOf(rule: TokenRule): String? =
+        rulesByCategory.entries
+            .find { it.value.contains(rule) }
+            ?.key
 
     fun findPriority(category: String): Int {
         val index = order.indexOf(category)
@@ -19,4 +20,12 @@ class LanguageConfig(
         assert(category in order) { "Category '$category' not found in language configuration." }
         return rulesByCategory[category] ?: emptyList()
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is LanguageConfig) return false
+        return order == other.order && rulesByCategory == other.rulesByCategory
+    }
+
+    override fun hashCode(): Int = 31 * order.hashCode() + rulesByCategory.hashCode()
 }

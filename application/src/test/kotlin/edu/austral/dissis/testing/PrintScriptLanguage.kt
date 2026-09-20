@@ -13,7 +13,7 @@ object PrintScriptLanguage {
     fun config(): LanguageConfig =
         LanguageConfig(
             order = listOf("keywords", "types", "operators", "literals", "identifiers"),
-            config =
+            rulesByCategory =
                 mapOf(
                     "keywords" to keywords(),
                     "types" to types(),

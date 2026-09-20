@@ -13,7 +13,6 @@ import printscript.syntax.SyntaxProgram
 import printscript.util.Result
 
 internal object ParseProgram {
-
     fun parseStatements(
         langConfig: LanguageConfig,
         grammar: Grammar,
