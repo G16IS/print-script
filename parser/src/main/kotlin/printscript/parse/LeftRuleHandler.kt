@@ -17,50 +17,31 @@ class LeftRuleHandler : RuleHandler {
         rule: GrammarRule,
         ctx: ParseContext,
     ): ParseResult<SyntaxNode> {
-        val left = rule as LeftRule
-        return when (val first = ctx.evaluate(left.left)) {
-            is ParseResult.Matched -> consumeOperators(name, left, first.node, ctx)
-            ParseResult.Missing -> ParseResult.Missing
-            is ParseResult.Failed -> ParseResult.Failed(first.error)
-        }
+        val leftRule = rule as LeftRule
+        val first = ctx.evaluate(leftRule.left)
+        if (first !is ParseResult.Matched) return first
+        return foldOperators(name, leftRule, first.node, ctx)
     }
 
-    private fun consumeOperators(
+    private fun foldOperators(
         name: String,
-        left: LeftRule,
+        spec: LeftRule,
         first: SyntaxNode,
         ctx: ParseContext,
     ): ParseResult<SyntaxNode> {
         var acc = first
-        var combined = false
-        while (matchesOp(ctx.tokens.peek(), left.op)) {
-            when (val extended = extend(name, acc, left, ctx)) {
-                is ParseResult.Matched -> {
-                    acc = extended.node
-                    combined = true
-                }
-
-                is ParseResult.Failed -> return extended
+        while (matchesOp(ctx.tokens.peek(), spec.op)) {
+            val op = ctx.tokens.advance()
+            when (val right = ctx.evaluate(spec.left)) {
+                is ParseResult.Matched -> acc = binary(name, acc, op, right.node)
+                is ParseResult.Failed -> return right
                 ParseResult.Missing ->
-                    error("Left operand of '$name' matched without producing a node")
+                    return ParseResult.Failed(
+                        ParseErrors.unexpectedToken(ctx.tokens.peek(), spec.left),
+                    )
             }
         }
-        return ParseResult.Matched(if (combined) acc else wrap(name, first))
-    }
-
-    private fun extend(
-        name: String,
-        acc: SyntaxNode,
-        left: LeftRule,
-        ctx: ParseContext,
-    ): ParseResult<SyntaxNode> {
-        val op = ctx.tokens.advance()
-        return when (val right = ctx.evaluate(left.left)) {
-            is ParseResult.Matched -> ParseResult.Matched(binary(name, acc, op, right.node))
-            is ParseResult.Failed -> ParseResult.Failed(right.error)
-            ParseResult.Missing ->
-                ParseResult.Failed(ParseErrors.unexpectedToken(ctx.tokens.peek(), left.left))
-        }
+        return ParseResult.Matched(if (acc === first) wrap(name, first) else acc)
     }
 
     private fun matchesOp(
