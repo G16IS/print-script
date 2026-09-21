@@ -1,6 +1,9 @@
-package printscript.error
+package printscript.parser
 
 import printscript.domain.Token
+import printscript.error.MissingToken
+import printscript.error.ParserError
+import printscript.error.UnexpectedStart
 
 object ParseErrors {
     fun unexpectedToken(

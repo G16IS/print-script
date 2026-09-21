@@ -1,9 +1,9 @@
-package printscript.parse
+package printscript.parser.parse
 
 import printscript.domain.Grammar
 import printscript.domain.GrammarRule
+import printscript.parser.token.TokenSource
 import printscript.syntax.SyntaxNode
-import printscript.token.TokenSource
 
 class RuleEvaluator(
     private val grammar: Grammar,

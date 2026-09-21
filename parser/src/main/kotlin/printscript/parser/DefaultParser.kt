@@ -1,13 +1,13 @@
-package printscript
+package printscript.parser
 
+import printscript.Lexer
 import printscript.domain.Grammar
-import printscript.error.ParseErrors
 import printscript.error.ParserError
-import printscript.parse.ParseResult
-import printscript.parse.RuleEvaluator
+import printscript.parser.parse.ParseResult
+import printscript.parser.parse.RuleEvaluator
+import printscript.parser.token.LexerTokenSource
+import printscript.parser.token.TokenSource
 import printscript.syntax.SyntaxNode
-import printscript.token.LexerTokenSource
-import printscript.token.TokenSource
 import printscript.util.Result
 
 class DefaultParser(

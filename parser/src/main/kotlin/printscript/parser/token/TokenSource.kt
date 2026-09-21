@@ -1,4 +1,4 @@
-package printscript.token
+package printscript.parser.token
 
 import printscript.domain.Token
 

@@ -1,4 +1,4 @@
-package printscript.parse.step
+package printscript.parser.parse.step
 
 import printscript.error.ParserError
 import printscript.syntax.Location

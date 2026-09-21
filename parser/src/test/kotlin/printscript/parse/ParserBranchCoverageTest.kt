@@ -5,14 +5,17 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import printscript.DefaultParser
 import printscript.Lexer
 import printscript.domain.GrammarRule
 import printscript.domain.SeqStep
 import printscript.error.LexerError
 import printscript.error.UnexpectedToken
-import printscript.parse.step.StepEvaluator
-import printscript.parse.step.StepOutcome
+import printscript.parser.DefaultParser
+import printscript.parser.parse.ParseContext
+import printscript.parser.parse.ParseResult
+import printscript.parser.parse.step.StepEvaluator
+import printscript.parser.parse.step.StepOutcome
+import printscript.parser.token.LexerTokenSource
 import printscript.support.Tokens
 import printscript.support.atom
 import printscript.support.capture
@@ -27,7 +30,6 @@ import printscript.support.seq
 import printscript.support.source
 import printscript.syntax.Location
 import printscript.syntax.SyntaxProgram
-import printscript.token.LexerTokenSource
 import printscript.util.Result
 
 class ParserBranchCoverageTest {

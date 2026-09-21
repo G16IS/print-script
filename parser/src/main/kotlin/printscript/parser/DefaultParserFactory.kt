@@ -1,10 +1,10 @@
-package printscript
+package printscript.parser
 
 import printscript.domain.Grammar
-import printscript.parse.RuleEvaluator
-import printscript.parse.RuleHandler
+import printscript.parser.parse.RuleEvaluator
+import printscript.parser.parse.RuleHandler
 
-object DefaultParserFactory {
+internal object DefaultParserFactory {
     fun create(
         grammar: Grammar,
         handlers: List<RuleHandler>,

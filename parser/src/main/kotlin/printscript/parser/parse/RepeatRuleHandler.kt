@@ -1,11 +1,11 @@
-package printscript.parse
+package printscript.parser.parse
 
 import printscript.domain.GrammarRule
 import printscript.domain.RepeatRule
 import printscript.error.ParserError
+import printscript.parser.util.Locations
 import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
-import printscript.util.Locations
 
 class RepeatRuleHandler : RuleHandler {
     override fun supports(rule: GrammarRule): Boolean = rule is RepeatRule

@@ -1,13 +1,13 @@
-package printscript.parse
+package printscript.parser.parse
 
 import printscript.domain.GrammarRule
 import printscript.domain.LeftRule
 import printscript.domain.OperatorSpec
 import printscript.domain.Token
-import printscript.error.ParseErrors
+import printscript.parser.ParseErrors
+import printscript.parser.util.binary
+import printscript.parser.util.wrap
 import printscript.syntax.SyntaxNode
-import printscript.util.binary
-import printscript.util.wrap
 
 class LeftRuleHandler : RuleHandler {
     override fun supports(rule: GrammarRule): Boolean = rule is LeftRule

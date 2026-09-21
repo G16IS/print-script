@@ -2,7 +2,6 @@ package printscript.support
 
 import java.io.File
 import java.rmi.UnexpectedException
-import printscript.DefaultParserFactory
 import printscript.Lexer
 import printscript.domain.ExactRule
 import printscript.domain.Grammar
@@ -12,6 +11,7 @@ import printscript.domain.Token
 import printscript.domain.TokenRule
 import printscript.edition.LanguageCatalog
 import printscript.io.DefaultSideEffectManager
+import printscript.parser.Parser
 import printscript.reader.FileCodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.syntax.SyntaxProgram
@@ -33,7 +33,7 @@ object LinterPsSupport {
             (
                 (
                     LanguageCatalog.of("1.0", DefaultSideEffectManager()).map { kit ->
-                        DefaultParserFactory.create(grammar(), kit.parserHandlers)
+                        Parser.create(grammar(), kit.parserHandlers)
                     }
                 ) as Result.Ok
             ).value

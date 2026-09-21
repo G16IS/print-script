@@ -1,13 +1,13 @@
-package printscript.parse
+package printscript.parser.parse
 
 import printscript.domain.GrammarRule
 import printscript.domain.RuleRefStep
 import printscript.domain.SeqRule
 import printscript.domain.SeqStep
 import printscript.domain.TokenStep
-import printscript.error.ParseErrors
-import printscript.parse.step.StepEvaluator
-import printscript.parse.step.StepOutcome
+import printscript.parser.ParseErrors
+import printscript.parser.parse.step.StepEvaluator
+import printscript.parser.parse.step.StepOutcome
 import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 
