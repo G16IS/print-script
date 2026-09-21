@@ -15,7 +15,6 @@ import printscript.reader.CharPosition
 import printscript.reader.CodeReader
 import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
-import printscript.typechecker.DefaultTypeCheckerFactory
 import printscript.typechecker.ScopeStack
 import printscript.typechecker.TypeChecker
 import printscript.util.Report
@@ -30,7 +29,7 @@ object ExecuteCode {
         kit: LanguageKit,
     ): Report<Unit, Error> =
         try {
-            val typeChecker = DefaultTypeCheckerFactory.create(typeSystem, kit.kindHandlerFactory)
+            val typeChecker = TypeChecker.create(typeSystem, kit.kindHandlerFactory)
             val interpreter = DefaultInterpreterFactory.create(kit.evaluators, kit.executors)
 
             var scope = ScopeStack()

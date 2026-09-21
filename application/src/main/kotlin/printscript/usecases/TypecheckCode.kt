@@ -8,8 +8,8 @@ import printscript.error.Error
 import printscript.error.TypeErrorWithMessage
 import printscript.reader.CodeReader
 import printscript.syntax.SyntaxProgram
-import printscript.typechecker.DefaultTypeCheckerFactory
 import printscript.typechecker.ScopeStack
+import printscript.typechecker.TypeChecker
 import printscript.util.Report
 import printscript.util.Result
 
@@ -21,7 +21,7 @@ object TypecheckCode {
         reader: CodeReader,
         kit: LanguageKit,
     ): Report<SyntaxProgram, Error> {
-        val typeChecker = DefaultTypeCheckerFactory.create(typeSystem, kit.kindHandlerFactory)
+        val typeChecker = TypeChecker.create(typeSystem, kit.kindHandlerFactory)
         val builder = SyntaxProgram.builder()
         val errors = mutableListOf<Error>()
         var scope = ScopeStack()
@@ -49,7 +49,7 @@ object TypecheckCode {
         reader: CodeReader,
         kit: LanguageKit,
     ): Report<Unit, Error> {
-        val typeChecker = DefaultTypeCheckerFactory.create(typeSystem, kit.kindHandlerFactory)
+        val typeChecker = TypeChecker.create(typeSystem, kit.kindHandlerFactory)
         val errors = mutableListOf<Error>()
         var scope = ScopeStack()
 
