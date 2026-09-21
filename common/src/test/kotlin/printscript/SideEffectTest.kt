@@ -2,6 +2,7 @@ package printscript
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import printscript.definitions.PrintEffect
 
 class SideEffectTest {
     @Test

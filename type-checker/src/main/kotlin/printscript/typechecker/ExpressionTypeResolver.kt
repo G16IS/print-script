@@ -3,7 +3,7 @@ package printscript.typechecker
 import printscript.domain.TypeSystemConfig
 import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
-import printscript.typechecker.handlers.ExpressionKindHandler
+import printscript.typechecker.expression.ExpressionKindHandler
 import printscript.util.Result
 
 class ExpressionTypeResolver(

@@ -1,7 +1,7 @@
 package printscript.support
 
-import printscript.SideEffect
-import printscript.SideEffectManager
+import printscript.definitions.SideEffect
+import printscript.definitions.SideEffectManager
 
 class RecordingSideEffectManager : SideEffectManager {
     val effects = mutableListOf<SideEffect>()

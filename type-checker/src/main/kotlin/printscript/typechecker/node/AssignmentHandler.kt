@@ -1,4 +1,4 @@
-package printscript.typechecker.handlers
+package printscript.typechecker.node
 
 import printscript.domain.TypeSystemConfig
 import printscript.error.TypeError

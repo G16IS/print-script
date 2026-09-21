@@ -1,4 +1,4 @@
-package printscript
+package printscript.definitions
 
 interface SideEffectHandler {
     fun applies(effect: SideEffect): Boolean

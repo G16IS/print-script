@@ -1,11 +1,11 @@
-package printscript.typechecker.handlers
+package printscript.typechecker.node
 
 import printscript.domain.TypeSystemConfig
 import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.ScopeStack
-import printscript.util.Result
+import printscript.util.fold
 
 class ExpressionStmtHandler(
     private val resolver: ExpressionTypeResolver,
@@ -19,11 +19,17 @@ class ExpressionStmtHandler(
     ): Checked {
         val expression =
             config.nodes[node.name]?.expression?.let { node.childOrNull(it) }
-                ?: return Checked(scope, TypeError("Statement de expresión inválido", node.location))
+                ?: return Checked(
+                    scope,
+                    TypeError(
+                        "Statement de expresión inválido",
+                        node.location,
+                    ),
+                )
 
-        return when (val resolved = resolver.resolve(expression, scope, config)) {
-            is Result.Err -> Checked(scope, resolved.error)
-            is Result.Ok -> Checked(scope)
-        }
+        return resolver.resolve(expression, scope, config).fold(
+            onErr = { resolved -> Checked(scope, resolved) },
+            onOk = { Checked(scope) },
+        )
     }
 }

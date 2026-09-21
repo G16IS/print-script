@@ -1,4 +1,4 @@
-package printscript.typechecker.handlers
+package printscript.typechecker.expression
 
 import printscript.domain.Operation
 import printscript.domain.TypeSystemConfig
@@ -7,7 +7,9 @@ import printscript.syntax.SyntaxNode
 import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.ScopeStack
 import printscript.util.Result
+import printscript.util.err
 import printscript.util.flatMap
+import printscript.util.ok
 
 class BinaryOrPrimaryHandler(
     private val resolver: ExpressionTypeResolver,
@@ -19,13 +21,11 @@ class BinaryOrPrimaryHandler(
         scope: ScopeStack,
         config: TypeSystemConfig,
     ): Result<String, TypeError> {
-        val parts = binaryParts(node)
+        val parts =
+            binaryParts(node)
+                ?: return resolvePrimary(node, scope, config)
 
-        return if (parts == null) {
-            resolvePrimary(node, scope, config)
-        } else {
-            resolveBinary(parts, node, scope, config)
-        }
+        return resolveBinary(parts, node, scope, config)
     }
 
     private fun resolvePrimary(
@@ -33,13 +33,11 @@ class BinaryOrPrimaryHandler(
         scope: ScopeStack,
         config: TypeSystemConfig,
     ): Result<String, TypeError> {
-        val child = node.children.singleOrNull()
+        val child =
+            node.children.singleOrNull()
+                ?: return err(TypeError("Expresión primaria inválida", node.location))
 
-        return if (child == null) {
-            Result.Err(TypeError("Expresión primaria inválida", node.location))
-        } else {
-            resolver.resolve(child, scope, config)
-        }
+        return resolver.resolve(child, scope, config)
     }
 
     private fun resolveBinary(
@@ -51,15 +49,20 @@ class BinaryOrPrimaryHandler(
         val (lhs, operator, rhs) = parts
 
         val op =
-            operator.token?.value?.orElse(null) ?: return Result.Err(
-                TypeError("Operador inválido", node.location),
-            )
+            operator.token?.value?.orElse(null)
+                ?: return err(
+                    TypeError("Operador inválido", node.location),
+                )
 
-        return resolver.resolve(lhs, scope, config).flatMap { leftType ->
-            resolver.resolve(rhs, scope, config).flatMap { rightType ->
-                match(op, leftType, rightType, node, config)
+        return resolver
+            .resolve(lhs, scope, config)
+            .flatMap { leftType ->
+                resolver
+                    .resolve(rhs, scope, config)
+                    .flatMap { rightType ->
+                        match(op, leftType, rightType, node, config)
+                    }
             }
-        }
     }
 
     private fun match(
@@ -69,15 +72,11 @@ class BinaryOrPrimaryHandler(
         node: SyntaxNode,
         config: TypeSystemConfig,
     ): Result<String, TypeError> {
-        val result = resultType(op, leftType, rightType, config.operations)
+        val result =
+            resultType(op, leftType, rightType, config.operations)
+                ?: return err(TypeError("El operador '$op' no acepta $leftType y $rightType", node.location))
 
-        return if (result == null) {
-            Result.Err(
-                TypeError("El operador '$op' no acepta $leftType y $rightType", node.location),
-            )
-        } else {
-            Result.Ok(result)
-        }
+        return ok(result)
     }
 
     private fun resultType(

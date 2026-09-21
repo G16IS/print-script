@@ -1,6 +1,6 @@
 package printscript.edition
 
-import printscript.SideEffectManager
+import printscript.definitions.SideEffectManager
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.binaryoperation.TypeConfiguration
 import printscript.parse.RuleHandler

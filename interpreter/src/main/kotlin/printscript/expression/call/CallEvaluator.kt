@@ -1,7 +1,7 @@
 package printscript.expression.call
 
 import printscript.InterpreterContext
-import printscript.SideEffectManager
+import printscript.definitions.SideEffectManager
 import printscript.error.RuntimeError
 import printscript.error.UnresolvableCall
 import printscript.expression.EvalResult

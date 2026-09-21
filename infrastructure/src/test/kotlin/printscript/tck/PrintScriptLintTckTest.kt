@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.ErrorHandler
+import printscript.definitions.ErrorHandler
 
 /**
  * Replica los casos de `printscript-tck/src/test/resources/linter/1.0/`.

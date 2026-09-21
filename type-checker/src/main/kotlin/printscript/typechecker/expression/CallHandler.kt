@@ -1,4 +1,4 @@
-package printscript.typechecker.handlers
+package printscript.typechecker.expression
 
 import printscript.domain.TypeSystemConfig
 import printscript.error.TypeError
@@ -7,6 +7,7 @@ import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.ScopeStack
 import printscript.util.Result
 import printscript.util.isOk
+import printscript.util.ok
 
 class CallHandler(
     private val resolver: ExpressionTypeResolver,
@@ -32,7 +33,7 @@ class CallHandler(
                 .map { resolver.resolve(it, scope, config) }
                 .firstOrNull { !it.isOk }
 
-        return failed ?: Result.Ok(returnType(node, config))
+        return failed ?: ok(returnType(node, config))
     }
 
     private fun returnType(

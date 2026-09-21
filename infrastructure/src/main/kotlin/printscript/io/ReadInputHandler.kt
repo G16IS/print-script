@@ -1,10 +1,10 @@
 package printscript.io
 
-import printscript.InputChannel
-import printscript.PrintChannel
-import printscript.ReadInputEffect
-import printscript.SideEffect
-import printscript.SideEffectHandler
+import printscript.definitions.InputChannel
+import printscript.definitions.PrintChannel
+import printscript.definitions.ReadInputEffect
+import printscript.definitions.SideEffect
+import printscript.definitions.SideEffectHandler
 
 class ReadInputHandler(
     val inputChannel: InputChannel,

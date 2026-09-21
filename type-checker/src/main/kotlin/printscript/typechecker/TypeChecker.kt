@@ -21,8 +21,3 @@ interface TypeChecker {
         scope: ScopeStack,
     ): Result<Pair<ScopeStack, SyntaxNode>, NodeCheckError>
 }
-
-data class NodeCheckError(
-    val scope: ScopeStack,
-    val error: TypeError,
-)

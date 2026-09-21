@@ -1,7 +1,7 @@
 package printscript.edition
 
 import printscript.DefaultInterpreterComponents
-import printscript.SideEffectManager
+import printscript.definitions.SideEffectManager
 import printscript.error.LanguageVersionNotFound
 import printscript.error.RuntimeError
 import printscript.parse.RuleHandlers

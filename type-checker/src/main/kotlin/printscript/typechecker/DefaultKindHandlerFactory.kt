@@ -1,12 +1,12 @@
 package printscript.typechecker
 
-import printscript.typechecker.handlers.BinaryOrPrimaryHandler
-import printscript.typechecker.handlers.CallHandler
-import printscript.typechecker.handlers.ExpressionKindHandler
-import printscript.typechecker.handlers.GroupHandler
-import printscript.typechecker.handlers.IdentifierHandler
-import printscript.typechecker.handlers.LiteralHandler
-import printscript.typechecker.handlers.PrimaryHandler
+import printscript.typechecker.expression.BinaryOrPrimaryHandler
+import printscript.typechecker.expression.CallHandler
+import printscript.typechecker.expression.ExpressionKindHandler
+import printscript.typechecker.expression.GroupHandler
+import printscript.typechecker.expression.IdentifierHandler
+import printscript.typechecker.expression.LiteralHandler
+import printscript.typechecker.expression.PrimaryHandler
 
 class DefaultKindHandlerFactory : ExpressionKindHandlerFactory {
     override fun create(expressionTypeResolver: ExpressionTypeResolver): List<ExpressionKindHandler> =

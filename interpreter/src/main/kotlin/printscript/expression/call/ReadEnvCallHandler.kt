@@ -1,8 +1,8 @@
 package printscript.expression.call
 
 import printscript.RawInputValue
-import printscript.ReadEnvEffect
-import printscript.SideEffectManager
+import printscript.definitions.ReadEnvEffect
+import printscript.definitions.SideEffectManager
 import printscript.error.MissingEnvVariable
 import printscript.error.RuntimeError
 import printscript.expression.EvalResult

@@ -1,4 +1,4 @@
-package printscript
+package printscript.definitions
 
 sealed interface SideEffect
 

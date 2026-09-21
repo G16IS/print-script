@@ -1,4 +1,4 @@
-package printscript.typechecker.handlers
+package printscript.typechecker.expression
 
 import printscript.domain.TypeSystemConfig
 import printscript.error.TypeError
@@ -6,6 +6,7 @@ import printscript.syntax.SyntaxNode
 import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.ScopeStack
 import printscript.util.Result
+import printscript.util.err
 
 class PrimaryHandler(
     private val resolver: ExpressionTypeResolver,
@@ -17,12 +18,10 @@ class PrimaryHandler(
         scope: ScopeStack,
         config: TypeSystemConfig,
     ): Result<String, TypeError> {
-        val child = node.children.singleOrNull()
+        val child =
+            node.children.singleOrNull()
+                ?: return err(TypeError("Primario inválido", node.location))
 
-        return if (child == null) {
-            Result.Err(TypeError("Primario inválido", node.location))
-        } else {
-            resolver.resolve(child, scope, config)
-        }
+        return resolver.resolve(child, scope, config)
     }
 }

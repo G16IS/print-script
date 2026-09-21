@@ -1,10 +1,12 @@
-package printscript.typechecker.handlers
+package printscript.typechecker.expression
 
 import printscript.domain.TypeSystemConfig
 import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ScopeStack
 import printscript.util.Result
+import printscript.util.err
+import printscript.util.ok
 
 class LiteralHandler : ExpressionKindHandler {
     override val kind: String = "literal"
@@ -16,21 +18,21 @@ class LiteralHandler : ExpressionKindHandler {
     ): Result<String, TypeError> {
         val token =
             node.token
-                ?: return Result.Err(
-                    TypeError("El literal no tiene token", node.location),
+                ?: return err(
+                    TypeError(
+                        "El literal no tiene token",
+                        node.location,
+                    ),
                 )
 
-        val type = config.literals[token.type]
-
-        return if (type == null) {
-            Result.Err(
+        val type =
+            config.literals[token.type] ?: return err(
                 TypeError(
                     "Literal de token '${token.type}' no tiene tipo en la configuración",
                     node.location,
                 ),
             )
-        } else {
-            Result.Ok(type)
-        }
+
+        return ok(type)
     }
 }

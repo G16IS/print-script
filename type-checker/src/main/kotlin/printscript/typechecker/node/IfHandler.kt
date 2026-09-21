@@ -1,4 +1,4 @@
-package printscript.typechecker.handlers
+package printscript.typechecker.node
 
 import printscript.domain.NodeConfig
 import printscript.domain.TypeSystemConfig
@@ -68,7 +68,9 @@ class IfHandler(
         parent: ScopeStack,
     ): TypeError? {
         if (block == null) return null
-        val statements = block.childOrNull(nodeConfig?.block.orEmpty())?.children ?: emptyList()
+        val statements =
+            block.childOrNull(nodeConfig?.block.orEmpty())?.children
+                ?: emptyList()
         var inner = parent.push()
         for (statement in statements) {
             val checked = checkStatement(statement, inner)

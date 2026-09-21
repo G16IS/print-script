@@ -1,21 +1,17 @@
-package printscript.typechecker.handlers
+package printscript.typechecker.expression
 
 import printscript.domain.TypeSystemConfig
 import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ScopeStack
+import printscript.util.Result
 
-data class Checked(
-    val scope: ScopeStack,
-    val error: TypeError? = null,
-)
-
-interface NodeHandler {
+interface ExpressionKindHandler {
     val kind: String
 
-    fun check(
+    fun resolve(
         node: SyntaxNode,
         scope: ScopeStack,
         config: TypeSystemConfig,
-    ): Checked
+    ): Result<String, TypeError>
 }

@@ -8,9 +8,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.PrintEffect
-import printscript.SideEffect
-import printscript.SideEffectManager
+import printscript.definitions.PrintEffect
+import printscript.definitions.SideEffect
+import printscript.definitions.SideEffectManager
 import printscript.domain.Grammar
 import printscript.domain.TypeSystemConfig
 import printscript.edition.LanguageCatalog

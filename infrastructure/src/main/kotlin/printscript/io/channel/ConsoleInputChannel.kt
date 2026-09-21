@@ -1,6 +1,6 @@
 package printscript.io.channel
 
-import printscript.InputChannel
+import printscript.definitions.InputChannel
 
 class ConsoleInputChannel : InputChannel {
     override fun input(askMessage: String): String {

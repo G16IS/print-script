@@ -1,8 +1,8 @@
 package printscript.expression.call
 
-import printscript.PrintEffect
-import printscript.SideEffectManager
 import printscript.UnitValue
+import printscript.definitions.PrintEffect
+import printscript.definitions.SideEffectManager
 import printscript.error.RuntimeError
 import printscript.expression.EvalResult
 import printscript.syntax.SyntaxNode

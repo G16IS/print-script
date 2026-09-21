@@ -1,9 +1,9 @@
 package printscript.io
 
-import printscript.EnvChannel
-import printscript.ReadEnvEffect
-import printscript.SideEffect
-import printscript.SideEffectHandler
+import printscript.definitions.EnvChannel
+import printscript.definitions.ReadEnvEffect
+import printscript.definitions.SideEffect
+import printscript.definitions.SideEffectHandler
 import printscript.io.channel.SystemEnvChannel
 
 class ReadEnvHandler(

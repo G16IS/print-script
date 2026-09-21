@@ -1,6 +1,6 @@
 package printscript.typechecker
 
-import printscript.typechecker.handlers.ExpressionKindHandler
+import printscript.typechecker.expression.ExpressionKindHandler
 
 interface ExpressionKindHandlerFactory {
     fun create(expressionTypeResolver: ExpressionTypeResolver): List<ExpressionKindHandler>

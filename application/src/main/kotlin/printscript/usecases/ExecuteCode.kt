@@ -1,10 +1,10 @@
 package printscript.usecases
 
 import printscript.DefaultInterpreterFactory
-import printscript.ErrorHandler
 import printscript.Interpreter
 import printscript.InterpreterContext
 import printscript.config.PrintScriptConfigs
+import printscript.definitions.ErrorHandler
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
