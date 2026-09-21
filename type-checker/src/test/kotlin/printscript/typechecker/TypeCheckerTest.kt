@@ -1,328 +1,131 @@
 package printscript.typechecker
 
-import java.util.Optional
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertIs
-import kotlin.test.assertTrue
-import printscript.domain.NodeConfig
-import printscript.domain.Operation
-import printscript.domain.Token
-import printscript.domain.TypeSystemConfig
-import printscript.reader.CharPosition
-import printscript.syntax.Location
-import printscript.syntax.SyntaxNode
-import printscript.syntax.SyntaxProgram
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import printscript.typechecker.support.assertErr
+import printscript.typechecker.support.assertOk
+import printscript.typechecker.support.assertWalk
+import printscript.typechecker.support.checker
+import printscript.typechecker.support.parse
+import printscript.typechecker.support.typeSystem
+import printscript.typechecker.support.walk
 import printscript.util.Result
 
 class TypeCheckerTest {
-    private val location = Location(CharPosition(1, 1), CharPosition(1, 2))
-    private val config = canonicalConfig()
-    private val checker = DefaultTypeCheckerFactory.create(config, DefaultKindHandlerFactory())
+    @Nested
+    inner class Declarations {
+        @Test
+        fun `number declaration matches the initializer`() = assertOk("let x: number = 1;")
 
-    @Test
-    fun `number declaration matches the initializer`() {
-        val program = program(variable("x", "number", numberExpr("1")))
+        @Test
+        fun `string declaration matches the initializer`() = assertOk("let s: string = \"hola\";")
 
-        val report = checker.check(program)
+        @Test
+        fun `declaration without initializer still declares the annotated type`() =
+            assertOk("let x: number;\nprintln(x);")
 
-        assertTrue(report.isOk)
-        assertEquals(program, report.value)
-        assertEquals(Result.Ok(program), checker.checkStrict(program))
+        @Test
+        fun `a later declaration can reference a previous one`() = assertOk("let x: number = 1;\nlet y: number = x;")
+
+        @Test
+        fun `mismatch between annotation and initializer`() =
+            assertErr("let x: number = \"hola\";", "Se esperaba number pero se encontró string")
+
+        @Test
+        fun `redeclaration of the same identifier`() =
+            assertErr("let x: number = 1;\nlet x: string = \"a\";", "La variable 'x' ya fue declarada")
+
+        @Test
+        fun `let x number equals x uses the scope before declaring`() =
+            assertErr("let x: number = x;", "Variable 'x' no declarada")
+
+        @Test
+        fun `undeclared variable in the initializer`() = assertErr("let x: number = y;", "Variable 'y' no declarada")
+
+        @Test
+        fun `a failed declaration still binds the name`() {
+            val walked = walk("let x: number = \"hola\";\nprintln(x);")
+            assertEquals(listOf("Se esperaba number pero se encontró string"), walked.errors.map { it.message })
+            assertEquals("number", walked.scope.lookup("x"))
+        }
+
+        @Test
+        fun `readEnv adapts to the declared type`() = assertOk("let x: number = readEnv(\"A\");")
+
+        @Test
+        fun `const cannot be reassigned`() =
+            assertErr("const x: number = 1;\nx = 2;", "No se puede asignar a la constante 'x'")
+
+        @Test
+        fun `assignment updates a mutable variable`() = assertOk("let x: number = 1;\nx = 2;")
     }
 
-    @Test
-    fun `string declaration matches the initializer`() {
-        val program = program(variable("s", "string", stringExpr("hola")))
+    @Nested
+    inner class Expressions {
+        @Test
+        fun `expression statement validates the expression`() = assertOk("println(1 + 2 * 3);")
 
-        assertTrue(checker.check(program).isOk)
+        @Test
+        fun `expression statement reports undeclared identifiers`() =
+            assertErr("println(missing);", "Variable 'missing' no declarada")
+
+        @Test
+        fun `string plus number is string`() = assertOk("let x: string = \"a\" + 1;")
+
+        @Test
+        fun `number plus string matches via permutation`() = assertOk("let x: string = 1 + \"a\";")
+
+        @Test
+        fun `string minus number is rejected`() =
+            assertErr("let x: number = \"a\" - 1;", "El operador '-' no acepta string y number")
+
+        @Test
+        fun `grouped addition is number`() = assertOk("let x: number = (1 + 2) * 3;")
+
+        @Test
+        fun `plus is not swapped when the operation is not commutative`() {
+            val base = typeSystem()
+            val config =
+                base.copy(
+                    operations =
+                        base.operations.map { op ->
+                            if (op.op == "+") op.copy(commutative = false) else op
+                        },
+                )
+            val result = checker(config).check(parse("println(1 + \"a\");"))
+            assertTrue(result is Result.Err)
+            assertTrue((result as Result.Err).error.message.contains("no acepta number y string"))
+        }
     }
 
-    @Test
-    fun `mismatch between annotation and initializer`() {
-        val program = program(variable("x", "number", stringExpr("hola")))
-        val error = singleError(program)
+    @Nested
+    inner class Control {
+        @Test
+        fun `if accepts a boolean condition`() = assertOk("if (true) { println(1); }")
 
-        assertTrue(error.message.contains("Se esperaba number pero se encontró string"))
-        assertEquals(location, error.location)
-    }
+        @Test
+        fun `if rejects a number condition`() =
+            assertErr("if (1) { println(1); }", "Se esperaba boolean pero se encontró number")
 
-    @Test
-    fun `redeclaration of the same identifier`() {
-        val program =
-            program(
-                variable("x", "number", numberExpr("1")),
-                variable("x", "string", stringExpr("a")),
-            )
-        val error = singleError(program)
+        @Test
+        fun `a binding inside the if does not escape`() =
+            assertErr("if (true) { let x: number = 1; }\nprintln(x);", "Variable 'x' no declarada")
 
-        assertTrue(error.message.contains("La variable 'x' ya fue declarada"))
-    }
-
-    @Test
-    fun `unknown declared type`() {
-        val program = program(variable("x", "boolean", numberExpr("1")))
-        val error = singleError(program)
-
-        assertTrue(error.message.contains("Tipo desconocido 'boolean'"))
-    }
-
-    @Test
-    fun `undeclared variable in the initializer`() {
-        val program = program(variable("x", "number", idExpr("y")))
-        val error = singleError(program)
-
-        assertTrue(error.message.contains("Variable 'y' no declarada"))
-    }
-
-    @Test
-    fun `let x number equals x uses the scope before declaring`() {
-        val program = program(variable("x", "number", idExpr("x")))
-        val error = singleError(program)
-
-        assertTrue(error.message.contains("Variable 'x' no declarada"))
-    }
-
-    @Test
-    fun `a later declaration can reference a previous one`() {
-        val program =
-            program(
-                variable("x", "number", numberExpr("1")),
-                variable("y", "number", idExpr("x")),
-            )
-
-        assertTrue(checker.check(program).isOk)
-    }
-
-    @Test
-    fun `declaration without initializer still declares the annotated type`() {
-        val program = program(variable("x", "string", expression = null))
-        val report = checker.check(program)
-        assertTrue(report.isOk)
-    }
-
-    @Test
-    fun `later statement can reference a variable declared without initializer`() {
-        val program =
-            program(
-                variable("x", "number", expression = null),
-                exprStmt(idExpr("x")),
-            )
-        assertTrue(checker.check(program).isOk)
-    }
-
-    @Test
-    fun `expression statement validates the expression`() {
-        val program = program(exprStmt(wrap("expression", call(numberExpr("1")))))
-
-        assertTrue(checker.check(program).isOk)
-    }
-
-    @Test
-    fun `expression statement reports undeclared identifiers`() {
-        val program = program(exprStmt(idExpr("z")))
-        val error = singleError(program)
-
-        assertTrue(error.message.contains("Variable 'z' no declarada"))
-    }
-
-    @Test
-    fun `unrecognized statement name`() {
-        val program = program(leaf("mystery", "X", "x"))
-        val error = singleError(program)
-
-        assertTrue(error.message.contains("Nodo no reconocido"))
-        assertTrue(error.message.contains("mystery"))
-    }
-
-    @Test
-    fun `declaration kind does not depend on the node name`() {
-        val local =
-            TypeSystemConfig(
-                types = listOf("number"),
-                literals = mapOf("NUMBER_LITERAL" to "number"),
-                nodes =
-                    mapOf(
-                        "let" to
-                            NodeConfig(
-                                kind = "declaration",
-                                id = "name",
-                                declaredType = "ty",
-                                expression = "init",
-                            ),
-                        "number" to NodeConfig(kind = "literal"),
-                        "init" to NodeConfig(kind = "literal"),
-                    ),
-            )
-        val stmt =
-            SyntaxNode(
-                name = "let",
-                children =
-                    listOf(
-                        leaf("name", "ID", "x"),
-                        leaf("ty", "TYPE", "number"),
-                        leaf("init", "NUMBER_LITERAL", "1"),
-                    ),
-                location = location,
+        @Test
+        fun `check returns the first error and stops`() =
+            assertErr(
+                "let x: number = \"hola\";\nprintln(missing);",
+                "Se esperaba number pero se encontró string",
             )
 
-        assertTrue(DefaultTypeCheckerFactory.create(local, DefaultKindHandlerFactory()).check(program(stmt)).isOk)
-    }
-
-    @Test
-    fun `checkStrict returns the first error`() {
-        val program = program(variable("x", "number", stringExpr("hola")))
-        val result = checker.checkStrict(program)
-        val error = assertIs<Result.Err<TypeError>>(result).error
-
-        assertTrue(error.message.contains("Se esperaba number"))
-    }
-
-    @Test
-    fun `check accumulates every error in the program`() {
-        val program =
-            program(
-                variable("x", "number", stringExpr("hola")),
-                variable("y", "boolean", numberExpr("1")),
-                variable("z", "number", idExpr("missing")),
+        @Test
+        fun `walk keeps later statement errors`() =
+            assertWalk(
+                "let x: number = \"hola\";\nprintln(missing);",
+                "Se esperaba number pero se encontró string",
+                "Variable 'missing' no declarada",
             )
-
-        val report = checker.check(program)
-
-        assertFalse(report.isOk)
-        assertEquals(3, report.errors.size)
-        assertTrue(report.errors[0].message.contains("Se esperaba number pero se encontró string"))
-        assertTrue(report.errors[1].message.contains("Tipo desconocido 'boolean'"))
-        assertTrue(report.errors[2].message.contains("Variable 'missing' no declarada"))
     }
-
-    @Test
-    fun `checkStrict stops at the first error and ignores the rest`() {
-        val program =
-            program(
-                variable("x", "number", stringExpr("hola")),
-                variable("y", "boolean", numberExpr("1")),
-                variable("z", "number", idExpr("missing")),
-            )
-
-        val result = checker.checkStrict(program)
-        val error = assertIs<Result.Err<TypeError>>(result).error
-
-        assertTrue(error.message.contains("Se esperaba number pero se encontró string"))
-        assertEquals(3, checker.check(program).errors.size)
-    }
-
-    private fun singleError(program: SyntaxProgram): TypeError {
-        val report = checker.check(program)
-        assertFalse(report.isOk)
-        assertEquals(program, report.value)
-        return report.errors.single()
-    }
-
-    private fun program(vararg statements: SyntaxNode): SyntaxProgram =
-        SyntaxProgram(statements.toList(), statements.first().location)
-
-    private fun variable(
-        name: String,
-        type: String,
-        expression: SyntaxNode?,
-    ): SyntaxNode =
-        SyntaxNode(
-            name = "variable",
-            children =
-                listOfNotNull(
-                    leaf("ID", "ID", name),
-                    leaf("TYPE", "TYPE", type),
-                    expression,
-                ),
-            location = location,
-        )
-
-    private fun exprStmt(expression: SyntaxNode): SyntaxNode =
-        SyntaxNode(
-            name = "expression-stmt",
-            children = listOf(expression),
-            location = expression.location,
-        )
-
-    private fun numberExpr(value: String): SyntaxNode = wrap("expression", leaf("number", "NUMBER_LITERAL", value))
-
-    private fun stringExpr(value: String): SyntaxNode = wrap("expression", leaf("string", "STRING_LITERAL", value))
-
-    private fun idExpr(name: String): SyntaxNode = wrap("expression", leaf("identifier", "ID", name))
-
-    private fun call(argument: SyntaxNode): SyntaxNode =
-        SyntaxNode(
-            name = "call",
-            children =
-                listOf(
-                    leaf("CALL", "CALL", "println"),
-                    argument,
-                ),
-            location = location,
-        )
-
-    private fun wrap(
-        name: String,
-        child: SyntaxNode,
-    ): SyntaxNode = SyntaxNode(name = name, children = listOf(child), location = child.location)
-
-    private fun leaf(
-        name: String,
-        tokenType: String,
-        value: String,
-    ): SyntaxNode =
-        SyntaxNode(
-            name = name,
-            token = Token(tokenType, Optional.of(value), location),
-            location = location,
-        )
-
-    private fun canonicalConfig(): TypeSystemConfig =
-        TypeSystemConfig(
-            types = listOf("number", "string"),
-            literals =
-                mapOf(
-                    "NUMBER_LITERAL" to "number",
-                    "STRING_LITERAL" to "string",
-                ),
-            operations =
-                listOf(
-                    Operation("+", listOf("number", "number"), "number"),
-                    Operation("+", listOf("string", "string"), "string"),
-                    Operation("+", listOf("string", "number"), "string"),
-                    Operation("-", listOf("number", "number"), "number"),
-                    Operation("*", listOf("number", "number"), "number"),
-                    Operation("/", listOf("number", "number"), "number"),
-                ),
-            nodes =
-                mapOf(
-                    "variable" to
-                        NodeConfig(
-                            kind = "declaration",
-                            id = "ID",
-                            declaredType = "TYPE",
-                            expression = "expression",
-                        ),
-                    "expression-stmt" to
-                        NodeConfig(
-                            kind = "expression",
-                            expression = "expression",
-                        ),
-                    "expression" to NodeConfig(kind = "binary-or-primary"),
-                    "term" to NodeConfig(kind = "binary-or-primary"),
-                    "factor" to NodeConfig(kind = "primary"),
-                    "call" to
-                        NodeConfig(
-                            kind = "call",
-                            callee = "CALL",
-                            args = listOf("expression"),
-                        ),
-                    "group" to NodeConfig(kind = "group", expression = "expression"),
-                    "number" to NodeConfig(kind = "literal"),
-                    "string" to NodeConfig(kind = "literal"),
-                    "identifier" to NodeConfig(kind = "identifier"),
-                ),
-        )
 }

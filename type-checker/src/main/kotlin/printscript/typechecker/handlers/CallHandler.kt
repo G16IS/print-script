@@ -1,10 +1,10 @@
 package printscript.typechecker.handlers
 
 import printscript.domain.TypeSystemConfig
+import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.ScopeStack
-import printscript.typechecker.TypeError
 import printscript.util.Result
 import printscript.util.isOk
 
@@ -35,10 +35,6 @@ class CallHandler(
         return failed ?: Result.Ok(returnType(node, config))
     }
 
-    /**
-     * Un call no tiene tipo salvo que el config lo declare por callee
-     * (`readInput` / `readEnv`). Sin entrada devuelve `""`, como antes.
-     */
     private fun returnType(
         node: SyntaxNode,
         config: TypeSystemConfig,
@@ -55,7 +51,6 @@ class CallHandler(
     }
 
     private companion object {
-        /** Un call sin retorno declarado no aporta tipo. */
         const val NO_TYPE = ""
     }
 }

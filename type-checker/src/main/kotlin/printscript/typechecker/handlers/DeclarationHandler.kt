@@ -1,12 +1,12 @@
 package printscript.typechecker.handlers
 
 import printscript.domain.TypeSystemConfig
+import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.ScopeStack
 import printscript.typechecker.TypeCompat
-import printscript.typechecker.TypeError
-import printscript.util.fold
+import printscript.util.Result
 
 class DeclarationHandler(
     private val resolver: ExpressionTypeResolver,
@@ -17,98 +17,55 @@ class DeclarationHandler(
         node: SyntaxNode,
         scope: ScopeStack,
         config: TypeSystemConfig,
-    ): StatementCheck {
-        val parts = parts(node, config)
+    ): Checked {
+        val nodeConfig = config.nodes[node.name] ?: return incomplete(node, scope)
+        val expressionName = nodeConfig.expression ?: return incomplete(node, scope)
+        val id = nodeConfig.id?.let { node.childOrNull(it) } ?: return incomplete(node, scope)
+        val typeNode = nodeConfig.declaredType?.let { node.childOrNull(it) } ?: return incomplete(node, scope)
+        val name = id.token?.value?.orElse(null) ?: return incomplete(node, scope)
+        val declared = typeNode.token?.value?.orElse(null) ?: return incomplete(node, scope)
 
-        return if (parts == null) {
-            StatementCheck(scope, listOf(TypeError("Declaración incompleta", node.location)))
-        } else {
-            checkParts(parts, scope, config)
-        }
+        val expression = node.findOrNull(expressionName)
+        val resolved = expression?.let { resolver.resolve(it, scope, config) }
+        val error =
+            if (declared !in config.types) {
+                TypeError("Tipo desconocido '$declared'", typeNode.location)
+            } else {
+                initializerError(declared, expression, resolved)
+            }
+
+        if (declared !in config.types) return Checked(scope, error)
+
+        val updated =
+            scope.declare(name, declared, nodeConfig.mutable)
+                ?: return Checked(
+                    scope,
+                    error ?: TypeError("La variable '$name' ya fue declarada", id.location),
+                )
+        return Checked(updated, error)
     }
 
-    private fun checkParts(
-        parts: DeclarationParts,
-        scope: ScopeStack,
-        config: TypeSystemConfig,
-    ): StatementCheck {
-        val errors = mutableListOf<TypeError>()
-        if (parts.declared !in config.types) {
-            errors += TypeError("Tipo desconocido '${parts.declared}'", parts.typeNode.location)
-        }
-
-        parts.expression?.let { expression ->
-            resolver.resolve(expression, scope, config).fold(
-                onOk = { resolved ->
-                    if (parts.declared in config.types && !TypeCompat.compatible(parts.declared, resolved)) {
-                        errors +=
-                            TypeError(
-                                "Se esperaba ${parts.declared} pero se encontró $resolved",
-                                expression.location,
-                            )
-                    }
-                },
-                onErr = { errors += it },
-            )
-        }
-
-        return StatementCheck(declare(parts, scope, config, errors), errors)
-    }
-
-    private fun declare(
-        parts: DeclarationParts,
-        scope: ScopeStack,
-        config: TypeSystemConfig,
-        errors: MutableList<TypeError>,
-    ): ScopeStack {
-        if (parts.declared !in config.types) return scope
-        val declared = scope.declare(parts.name, parts.declared, parts.mutable)
-
-        return if (declared == null) {
-            errors += TypeError("La variable '${parts.name}' ya fue declarada", parts.id.location)
-            scope
-        } else {
-            declared
-        }
-    }
-
-    private fun parts(
+    private fun incomplete(
         node: SyntaxNode,
-        config: TypeSystemConfig,
-    ): DeclarationParts? {
-        val nodeConfig = config.nodes[node.name]
-        val id = nodeConfig?.id?.let { node.childOrNull(it) }
-        val typeNode = nodeConfig?.declaredType?.let { node.childOrNull(it) }
-        val expressionName = nodeConfig?.expression
-        return if (expressionName == null || id == null || typeNode == null) {
-            null
-        } else {
-            namedParts(id, typeNode, node.findOrNull(expressionName), nodeConfig.mutable)
-        }
-    }
+        scope: ScopeStack,
+    ) = Checked(scope, TypeError("Declaración incompleta", node.location))
 
-    private fun namedParts(
-        id: SyntaxNode,
-        typeNode: SyntaxNode,
+    private fun initializerError(
+        declared: String,
         expression: SyntaxNode?,
-        mutable: Boolean,
-    ): DeclarationParts? {
-        val name = id.token?.value?.orElse(null)
-        val declared = typeNode.token?.value?.orElse(null)
-
-        return if (name == null || declared == null) {
-            null
-        } else {
-            DeclarationParts(id, name, typeNode, declared, expression, mutable)
+        resolved: Result<String, TypeError>?,
+    ): TypeError? =
+        when (resolved) {
+            null -> null
+            is Result.Err -> resolved.error
+            is Result.Ok ->
+                if (expression == null || TypeCompat.compatible(declared, resolved.value)) {
+                    null
+                } else {
+                    TypeError(
+                        "Se esperaba $declared pero se encontró ${resolved.value}",
+                        expression.location,
+                    )
+                }
         }
-    }
-
-    private data class DeclarationParts(
-        val id: SyntaxNode,
-        val name: String,
-        val typeNode: SyntaxNode,
-        val declared: String,
-        val expression: SyntaxNode?,
-        val mutable: Boolean,
-    )
 }

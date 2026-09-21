@@ -1,10 +1,9 @@
 package printscript.typechecker
 
 import printscript.domain.TypeSystemConfig
+import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
-import printscript.typechecker.handlers.StatementCheck
-import printscript.util.Report
 import printscript.util.Result
 
 interface TypeChecker {
@@ -12,15 +11,18 @@ interface TypeChecker {
         fun create(
             config: TypeSystemConfig,
             kindHandlerFactory: ExpressionKindHandlerFactory,
-        ) = DefaultTypeCheckerFactory.create(config, kindHandlerFactory)
+        ) = DefaultTypeChecker(config, ExpressionTypeResolver(kindHandlerFactory))
     }
 
-    fun check(program: SyntaxProgram): Report<SyntaxProgram, TypeError>
+    fun check(program: SyntaxProgram): Result<SyntaxProgram, TypeError>
 
-    fun checkStrict(program: SyntaxProgram): Result<SyntaxProgram, TypeError>
-
-    fun checkStatement(
+    fun checkNode(
         statement: SyntaxNode,
         scope: ScopeStack,
-    ): StatementCheck
+    ): Result<Pair<ScopeStack, SyntaxNode>, NodeCheckError>
 }
+
+data class NodeCheckError(
+    val scope: ScopeStack,
+    val error: TypeError,
+)

@@ -2,12 +2,12 @@ package printscript.typechecker.handlers
 
 import printscript.domain.Operation
 import printscript.domain.TypeSystemConfig
+import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.ScopeStack
-import printscript.typechecker.TypeError
 import printscript.util.Result
-import printscript.util.fold
+import printscript.util.flatMap
 
 class BinaryOrPrimaryHandler(
     private val resolver: ExpressionTypeResolver,
@@ -55,21 +55,11 @@ class BinaryOrPrimaryHandler(
                 TypeError("Operador inválido", node.location),
             )
 
-        return resolver
-            .resolve(lhs, scope, config)
-            .fold(
-                onOk = { leftType ->
-                    resolver
-                        .resolve(rhs, scope, config)
-                        .fold(
-                            onOk = { rightType ->
-                                match(op, leftType, rightType, node, config)
-                            },
-                            onErr = { Result.Err(it) },
-                        )
-                },
-                onErr = { Result.Err(it) },
-            )
+        return resolver.resolve(lhs, scope, config).flatMap { leftType ->
+            resolver.resolve(rhs, scope, config).flatMap { rightType ->
+                match(op, leftType, rightType, node, config)
+            }
+        }
     }
 
     private fun match(

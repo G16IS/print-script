@@ -3,6 +3,7 @@ package edu.austral.dissis.usecases
 import edu.austral.dissis.testing.ParseExample
 import edu.austral.dissis.testing.ast.AstBuilder
 import edu.austral.dissis.testing.ast.assertAst
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -152,6 +153,20 @@ class InterpretCodeTest {
                 it.message.contains("La variable 'x' ya fue declarada")
             },
         )
+    }
+
+    @Test
+    fun `typecheck reports every statement error and keeps the failed declaration`() {
+        val report = ParseExample.parse("several_type_errors.ps")
+
+        assertFalse(report.isOk)
+        assertEquals(2, report.errors.size)
+        assertTrue(
+            report.errors.all {
+                it.message.contains("Se esperaba number pero se encontró string")
+            },
+        )
+        assertTrue(report.errors.none { it.message.contains("no declarada") })
     }
 
     private fun AstBuilder.withInitializer(init: AstBuilder.() -> Unit) {

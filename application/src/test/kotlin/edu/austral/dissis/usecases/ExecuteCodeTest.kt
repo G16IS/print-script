@@ -23,6 +23,7 @@ import printscript.reader.JSONTypeSystemConfigReader
 import printscript.usecases.ExecuteCode
 import printscript.usecases.TypecheckCode
 import printscript.util.Result
+import printscript.util.isOk
 
 class ExecuteCodeTest {
     private val language = PrintScriptLanguage.config()
@@ -49,11 +50,29 @@ class ExecuteCodeTest {
     }
 
     @Test
+    fun `type error stops execution before later statements`() {
+        val seen = RecordingSideEffects()
+        val code = "println(\"before\");\nlet x: number = \"hola\";\nprintln(\"after\");"
+        val result =
+            ExecuteCode.execute(
+                language,
+                grammar,
+                typeSystem,
+                StringCodeReader(code),
+                LanguageCatalog.v10(seen),
+            )
+
+        assertFalse(result.isOk)
+        assertTrue((result as Result.Err).error is TypeErrorWithMessage)
+        assertEquals(listOf("before"), seen.printed())
+    }
+
+    @Test
     fun `type mismatch does not run the interpreter`() {
         val result = execute("type_mismatch.ps")
 
         assertFalse(result.isOk)
-        assertTrue(result.errors.first() is TypeErrorWithMessage)
+        assertTrue((result as Result.Err).error is TypeErrorWithMessage)
     }
 
     @Test

@@ -1,10 +1,10 @@
 package printscript.typechecker.handlers
 
 import printscript.domain.TypeSystemConfig
+import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ExpressionTypeResolver
 import printscript.typechecker.ScopeStack
-import printscript.typechecker.TypeError
 import printscript.util.Result
 
 class GroupHandler(

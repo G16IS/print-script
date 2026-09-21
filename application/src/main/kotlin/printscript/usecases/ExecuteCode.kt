@@ -10,15 +10,19 @@ import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.edition.LanguageKit
 import printscript.error.Error
-import printscript.error.TypeErrorWithMessage
-import printscript.reader.CharPosition
 import printscript.reader.CodeReader
-import printscript.syntax.Location
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ScopeStack
 import printscript.typechecker.TypeChecker
-import printscript.util.Report
 import printscript.util.Result
+import printscript.util.err
+import printscript.util.flatMap
+import printscript.util.isOk
+import printscript.util.map
+import printscript.util.mapError
+import printscript.util.ok
+import printscript.util.safe
+import printscript.util.unwrapErr
 
 object ExecuteCode {
     fun execute(
@@ -27,38 +31,35 @@ object ExecuteCode {
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
         kit: LanguageKit,
-    ): Report<Unit, Error> =
-        try {
+    ): Result<Unit, Error> =
+        safe {
             val typeChecker = TypeChecker.create(typeSystem, kit.kindHandlerFactory)
             val interpreter = DefaultInterpreterFactory.create(kit.evaluators, kit.executors)
 
             var scope = ScopeStack()
             var context = InterpreterContext()
-            var errorReport: Report<Unit, Error>? = null
 
             for (parsed in ParseProgram.parseStatements(langConfig, grammar, reader, kit)) {
-                val failure =
-                    executeStatement(parsed, typeChecker, interpreter, scope, context) { newScope, newContext ->
-                        scope = newScope
-                        context = newContext
+                val result =
+                    parsed.flatMap { node ->
+                        checkAndExecute(
+                            node,
+                            typeChecker,
+                            interpreter,
+                            scope,
+                            context,
+                        ) { newScope, newContext ->
+                            scope = newScope
+                            context = newContext
+                        }
                     }
-                if (failure != null) {
-                    errorReport = failure
-                    break
+
+                if (!result.isOk) {
+                    return@safe err(result.unwrapErr())
                 }
             }
 
-            errorReport ?: Report(value = Unit)
-        } catch (_: OutOfMemoryError) {
-            Report(
-                errors =
-                    listOf(
-                        TypeErrorWithMessage(
-                            "Java heap space",
-                            Location(CharPosition(0, 0), CharPosition(0, 0)),
-                        ),
-                    ),
-            )
+            ok(Unit)
         }
 
     fun executeForTck(
@@ -67,25 +68,15 @@ object ExecuteCode {
         errorHandler: ErrorHandler,
         languageKit: LanguageKit,
     ) {
-        val report = execute(configs.lang, configs.grammar, configs.typeSystem, codeReader, languageKit)
+        val result = execute(configs.lang, configs.grammar, configs.typeSystem, codeReader, languageKit)
 
-        if (!report.isOk) {
-            report.errors.forEach { reportError(it, errorHandler) }
+        if (!result.isOk) {
+            reportError(
+                result.unwrapErr(),
+                errorHandler,
+            )
         }
     }
-
-    private fun executeStatement(
-        parsed: Result<SyntaxNode, Error>,
-        typeChecker: TypeChecker,
-        interpreter: Interpreter,
-        scope: ScopeStack,
-        context: InterpreterContext,
-        onSuccess: (ScopeStack, InterpreterContext) -> Unit,
-    ): Report<Unit, Error>? =
-        when (parsed) {
-            is Result.Err -> Report(errors = listOf(parsed.error))
-            is Result.Ok -> checkAndExecute(parsed.value, typeChecker, interpreter, scope, context, onSuccess)
-        }
 
     private fun checkAndExecute(
         statement: SyntaxNode,
@@ -94,23 +85,20 @@ object ExecuteCode {
         scope: ScopeStack,
         context: InterpreterContext,
         onSuccess: (ScopeStack, InterpreterContext) -> Unit,
-    ): Report<Unit, Error>? {
-        val checked = typeChecker.checkStatement(statement, scope)
-        if (checked.errors.isNotEmpty()) {
-            return Report(
-                errors = checked.errors.map { TypeErrorWithMessage(it.message, it.location) },
-            )
+    ): Result<Unit, Error> =
+        when (val checked = typeChecker.checkNode(statement, scope)) {
+            is Result.Err -> err(checked.error.error)
+            is Result.Ok ->
+                interpreter
+                    .executeStatement(checked.value.second, context)
+                    .asError()
+                    .map { newContext ->
+                        onSuccess(checked.value.first, newContext)
+                    }
         }
-
-        return when (val execResult = interpreter.executeStatement(statement, context)) {
-            is Result.Err -> Report(errors = listOf(execResult.error))
-            is Result.Ok -> {
-                onSuccess(checked.scope, execResult.value)
-                null
-            }
-        }
-    }
 }
+
+private fun <T, E : Error> Result<T, E>.asError(): Result<T, Error> = mapError { it }
 
 private fun reportError(
     error: Error,
