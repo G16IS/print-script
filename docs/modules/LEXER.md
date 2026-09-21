@@ -93,7 +93,7 @@ Evalúa **todas** las reglas de **todas** las categorías. No corta en la primer
 
 Strings: matcher `^"[^"]*"` , partial `^"[^"]*$` (JSON de resources y tests de application). Números: matcher `^[0-9]+(\.[0-9]+)?` ; partial `^[0-9]` (JSON, parte `1.5`) o `^[0-9]+(\.[0-9]*)?$` (tests del lexer). IDs: `^[a-zA-Z_][a-zA-Z0-9_]*` / `^[a-zA-Z_]`.
 
-Se recompila el `Regex` en cada evaluación. No hay cache.
+`RegexEvaluator` cachea un `Regex` por patrón (`matcher` y `partial`) en la instancia. `Lexer.create` arma un evaluator por stream: el primer carácter compila, el resto reusa. Sin cache, un archivo grande recompila `Pattern` en cada carácter y no entra en el heap de 15m del TCK.
 
 ---
 

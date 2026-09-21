@@ -10,10 +10,8 @@ interface CallHandler {
     val callee: String
 
     /**
-     * [effects] permite disparar un efecto y quedarse con lo que devuelve, que
-     * es lo que necesita `readInput` / `readEnv`. Un handler que sólo emite
-     * (como `println`) puede ignorarlo y sumar el efecto a [EvalResult
-     * .sideEffects]: de eso se encarga [CallEvaluator].
+     * Cada handler dispara su efecto con [effects.handle] en el momento.
+     * `readInput` / `readEnv` usan el String que devuelve; `println` no.
      */
     fun handle(
         result: EvalResult,

@@ -74,9 +74,9 @@ interpreter/src/main/kotlin/printscript/
       DefaultTypeConfiguration.kt object: number + - * /, string+string
       BinaryOperationEvaluator.kt dispatch plano → binaryParts / evalOperands / apply
     call/
-      CallHandler.kt              callee + handle(EvalResult)
-      PrintlnHandler.kt           println → PrintEffect + UnitValue (object)
-      CallEvaluator.kt            despacha handlers por nombre
+      CallHandler.kt              callee + handle(result, node, effects)
+      PrintlnHandler.kt           println → effects.handle(PrintEffect) + UnitValue (object)
+      CallEvaluator.kt            despacha handlers por nombre; no flushea efectos
 ```
 
 ---
@@ -108,7 +108,7 @@ Los evaluators evitan pirámides: un `when` raso de dispatch y helpers con nombr
 
 ## Modelo de ejecución
 
-**Efectos.** `println` es una expresión (`factor → call`). Cada evaluación devuelve `EvalResult(value, sideEffects)`. `PrintlnHandler` agrega el `PrintEffect`; `println(println(1))` acumula en orden de evaluación.
+**Efectos.** `println` es una expresión (`factor → call`). Cada `CallHandler` dispara su efecto con `SideEffectManager.handle` en el momento (`PrintlnHandler`, `ReadInputCallHandler`, `ReadEnvCallHandler`). `CallEvaluator` solo despacha; no recorre listas. `println(println(1))` imprime `"1"` y después `""` (el `UnitValue` del inner).
 
 **Valores.** `NumberValue(Double)` finito (`Infinity` / `NaN` → `InvalidLiteral`). `StringValue` sin comillas; el literal tiene que venir wrapped en `"..."`. `UnitValue` es el resultado de un call: como operando aritmético pega `InvalidOperands`.
 

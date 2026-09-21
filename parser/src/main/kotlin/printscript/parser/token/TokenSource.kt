@@ -17,4 +17,6 @@ interface TokenSource {
     fun checkpoint(): Int
 
     fun restore(mark: Int)
+
+    fun releaseConsumed() {}
 }

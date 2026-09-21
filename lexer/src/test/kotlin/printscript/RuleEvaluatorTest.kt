@@ -138,6 +138,29 @@ class RuleEvaluatorTest {
             assertEquals(MatchType.INVALID, match("", identifier))
             assertEquals(MatchType.INVALID, match("", number))
         }
+
+        @Test
+        fun `compiles each pattern once per evaluator instance`() {
+            var compiles = 0
+            val regexEvaluator =
+                RegexEvaluator { pattern ->
+                    compiles += 1
+                    Regex(pattern)
+                }
+            val cached =
+                RuleEvaluator(
+                    LanguageConfig(
+                        order = listOf("literals"),
+                        rulesByCategory = mapOf("literals" to listOf(number)),
+                    ),
+                    listOf(regexEvaluator),
+                )
+
+            repeat(20) { cached.evaluate("42") }
+            repeat(20) { cached.evaluate("1.") }
+
+            assertEquals(2, compiles)
+        }
     }
 
     @Nested

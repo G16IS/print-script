@@ -191,6 +191,23 @@ class ParserBranchCoverageTest {
         assertEquals(2, builder.build().statements.size)
     }
 
+    @Test
+    fun `parser does not retain tokens of already parsed statements`() {
+        Tokens.reset()
+        val lexer =
+            printscript.support.MockLexer(
+                (1..50).flatMap { listOf(Tokens.number("$it"), Tokens.semicolon()) },
+            )
+        val parser = DefaultParser(simpleExprGrammar(), evaluator(simpleExprGrammar()))
+
+        repeat(50) {
+            val parsed = parser.parseNextStatement(lexer)
+            assertTrue(parsed is Result.Ok)
+        }
+
+        assertTrue(parser.retainedTokenCount() <= 8)
+    }
+
     private fun simpleExprGrammar() =
         grammar(
             "statement",

@@ -3,7 +3,11 @@ package printscript.evaluator
 import printscript.domain.RegexRule
 import printscript.domain.TokenRule
 
-class RegexEvaluator : MatchingRuleEvaluator {
+class RegexEvaluator(
+    private val compile: (String) -> Regex = ::Regex,
+) : MatchingRuleEvaluator {
+    private val compiled = HashMap<String, Regex>()
+
     override fun applies(rule: TokenRule): Boolean = rule is RegexRule
 
     override fun evaluate(
@@ -16,10 +20,12 @@ class RegexEvaluator : MatchingRuleEvaluator {
 
         val matchType =
             MatchType.of(
-                exact = { text.isNotEmpty() && regexRule.matcher.any { Regex(it).matches(text) } },
-                partial = { text.isNotEmpty() && Regex(regexRule.partial).matches(text) },
+                exact = { text.isNotEmpty() && regexRule.matcher.any { regex(it).matches(text) } },
+                partial = { text.isNotEmpty() && regex(regexRule.partial).matches(text) },
             )
 
         return MatchResult(regexRule, matchType, category)
     }
+
+    private fun regex(pattern: String): Regex = compiled.getOrPut(pattern) { compile(pattern) }
 }

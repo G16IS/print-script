@@ -218,7 +218,7 @@ Ver [modules/COMMON.md](modules/COMMON.md).
 
 `TokenStream` lee caracteres, salta whitespace, y agranda el lexema mientras alguna regla sea `VALID` o `PARTIAL`. Cuando el próximo carácter deja todo `INVALID`, emite el token del match previo.
 
-- Matching: `RuleEvaluator` (exact = igualdad/prefijo; regex = `matcher` + `partial`)
+- Matching: `RuleEvaluator` (exact = igualdad/prefijo; regex = `matcher` + `partial`, `Regex` cacheado por patrón en el evaluator)
 - Empate entre categorías: `RuleDrawResolver` — **gana la categoría con menor índice en `LanguageConfig.order`** (la **primera** de la lista)
 - Factory: `Lexer.create(codeReader, langConfig)` (`DefaultLexerFactory` es `internal`)
 - `nextToken` / `peek` devuelven `Result<Token, LexerError>`
@@ -234,7 +234,7 @@ Parser dirigido por la `Grammar`. No hay AST tipado de salida.
 
 - `DefaultParser.parseNextStatement(lexer, program)` evalúa `grammar.start` (hoy `"statement"`)
 - Handlers: `Atom`, `Seq`, `Or`, `Left`, `Repeat` — registrados en `RuleHandlers.defaults()`
-- Cursor con backtracking: `TokenSource` / `LexerTokenSource` (`checkpoint` / `restore`)
+- Cursor con backtracking: `TokenSource` / `LexerTokenSource` (`checkpoint` / `restore`). Después de cada statement, `releaseConsumed()` tira los tokens ya avanzados (el buffer no crece con el archivo)
 - `Or`: primera alternativa que matchea; si falla, restaura
 - `Seq`: si falla el **primer** step → `null` + restore; si falla **después** → `ParseException`
 - `Left`: expresiones infix asociativas a izquierda; envuelve el operando aunque no haya operador
@@ -265,7 +265,7 @@ Módulo Gradle `:interpreter` (`implementation` solo `common`). Recorre el `Synt
 
 Dispatch por `node.name` (el nombre de regla de `grammar.config.v1.0.json`). `DefaultInterpreter` despacha statements; `DefaultExpressionSolver` despacha expresiones. Un handler declara `nodeNames`; no hay enum ni mapping aparte.
 
-`println` es una **expresión** (`factor → call`), no un statement. Los efectos viajan en `EvalResult(value, sideEffects)` y se combinan de hijos a padres. `PrintlnHandler` emite `PrintEffect`.
+`println` es una **expresión** (`factor → call`), no un statement. `PrintlnHandler` llama `SideEffectManager.handle(PrintEffect)` igual que `readInput` / `readEnv`. No hay un flush central en `CallEvaluator`.
 
 Valores: `NumberValue(Double)`, `StringValue` (sin comillas), `UnitValue` (resultado de un call), `UninitializedValue` (`let` sin `=`). Números enteros se imprimen sin `.0` (`toPrintableString()`). Leer una no inicializada es `UninitializedVariable`.
 

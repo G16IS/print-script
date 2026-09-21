@@ -68,13 +68,10 @@ object ExecuteCode {
         errorHandler: ErrorHandler,
         languageKit: LanguageKit,
     ) {
-        try {
-            val report = execute(configs.lang, configs.grammar, configs.typeSystem, codeReader, languageKit)
-            if (!report.isOk) {
-                report.errors.forEach { reportError(it, errorHandler) }
-            }
-        } catch (_: OutOfMemoryError) {
-            errorHandler.handleErrorMessage("4")
+        val report = execute(configs.lang, configs.grammar, configs.typeSystem, codeReader, languageKit)
+
+        if (!report.isOk) {
+            report.errors.forEach { reportError(it, errorHandler) }
         }
     }
 
