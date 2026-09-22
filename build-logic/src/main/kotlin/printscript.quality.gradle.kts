@@ -1,5 +1,4 @@
 import dev.detekt.gradle.extensions.DetektExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import printscript.InstallGitHooks
 
@@ -8,9 +7,6 @@ if (project != rootProject) {
     pluginManager.apply("org.jlleitschuh.gradle.ktlint")
     pluginManager.apply("dev.detekt")
 
-    extensions.configure<KotlinJvmProjectExtension> {
-        jvmToolchain(21)
-    }
 
     extensions.configure<KtlintExtension> {
         android.set(false)
