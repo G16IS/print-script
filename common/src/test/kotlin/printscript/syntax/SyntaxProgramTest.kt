@@ -47,4 +47,36 @@ class SyntaxProgramTest {
         assertEquals(first.location.start, program.location.start)
         assertEquals(second.location.end, program.location.end)
     }
+
+    @Test
+    fun `builder without statements yields an empty program`() {
+        val program = SyntaxProgram.builder().build()
+
+        assertEquals(SyntaxProgram.empty(), program)
+    }
+
+    @Test
+    fun `builder accumulates statements and spans from first start to last end`() {
+        val first =
+            SyntaxNode(
+                name = "variable",
+                location = loc(startLine = 1, startCol = 1, endLine = 1, endCol = 10),
+            )
+        val second =
+            SyntaxNode(
+                name = "call",
+                location = loc(startLine = 2, startCol = 1, endLine = 2, endCol = 12),
+            )
+
+        val program =
+            SyntaxProgram
+                .builder()
+                .add(first)
+                .add(second)
+                .build()
+
+        assertEquals(listOf(first, second), program.statements)
+        assertEquals(first.location.start, program.location.start)
+        assertEquals(second.location.end, program.location.end)
+    }
 }
