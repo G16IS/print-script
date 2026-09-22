@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://github.com/G16IS/print-script/actions/workflows/ci.yml">
     <img src="https://img.shields.io/github/actions/workflow/status/G16IS/print-script/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white" alt="CI">
-      <img src="https://img.shields.io/github/actions/workflow/status/G16IS/print-script/publish.yml?branch=main&style=for-the-badge&label=CD&logo=githubactions&logoColor=white" alt="CD">
+      <img src="https://img.shields.io/github/actions/workflow/status/G16IS/print-script/version.yml?branch=main&style=for-the-badge&label=CD&logo=githubactions&logoColor=white" alt="CD">
   </a>
 </p>
 
