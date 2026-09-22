@@ -3,12 +3,12 @@ package printscript.typechecker.support
 import java.util.Optional
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import printscript.DefaultParserFactory
 import printscript.Lexer
 import printscript.TokenStream.Companion.END_TOKEN
 import printscript.domain.TypeSystemConfig
 import printscript.error.TypeError
-import printscript.parse.RuleHandlers
+import printscript.parser.Parser
+import printscript.parser.parse.RuleHandlers
 import printscript.reader.CharPosition
 import printscript.reader.CodeReader
 import printscript.reader.JSONGrammarConfigReader
@@ -31,7 +31,8 @@ fun typeSystem(): TypeSystemConfig = PrintScriptV11.typeSystem
 
 fun parse(source: String): SyntaxProgram {
     val lexer = Lexer.create(SourceReader(source), PrintScriptV11.language)
-    val parser = DefaultParserFactory.create(PrintScriptV11.grammar, RuleHandlers.defaults())
+    val parser = Parser.create(PrintScriptV11.grammar, RuleHandlers.defaults())
+
     val builder = SyntaxProgram.builder()
     while (true) {
         when (val peeked = lexer.peek()) {
@@ -81,6 +82,7 @@ fun walk(source: String): Walk {
                 errors += checked.error.error
                 scope = checked.error.scope
             }
+
             is Result.Ok -> scope = checked.value.first
         }
     }
