@@ -1,4 +1,4 @@
-package printscript.parse
+package printscript.parser.parse
 
 import printscript.domain.AtomRule
 import printscript.domain.GrammarRule

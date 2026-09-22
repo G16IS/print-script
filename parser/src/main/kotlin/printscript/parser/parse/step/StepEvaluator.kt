@@ -1,11 +1,11 @@
-package printscript.parse.step
+package printscript.parser.parse.step
 
 import printscript.domain.RuleRefStep
 import printscript.domain.SeqStep
 import printscript.domain.TokenStep
-import printscript.parse.ParseContext
-import printscript.parse.ParseResult
-import printscript.util.tokenLeaf
+import printscript.parser.parse.ParseContext
+import printscript.parser.parse.ParseResult
+import printscript.parser.util.tokenLeaf
 
 class StepEvaluator {
     fun evaluate(

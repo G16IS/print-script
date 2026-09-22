@@ -1,12 +1,12 @@
 package printscript.usecases
 
-import printscript.DefaultParserFactory
 import printscript.Lexer
 import printscript.TokenStream.Companion.END_TOKEN
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.edition.LanguageKit
 import printscript.error.Error
+import printscript.parser.Parser
 import printscript.reader.CodeReader
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
@@ -21,7 +21,7 @@ internal object ParseProgram {
     ): Sequence<Result<SyntaxNode, Error>> =
         sequence {
             val lexer = Lexer.create(reader, langConfig)
-            val parser = DefaultParserFactory.create(grammar, kit.parserHandlers)
+            val parser = Parser.create(grammar, kit.parserHandlers)
 
             var running = true
             while (running) {
@@ -54,7 +54,7 @@ internal object ParseProgram {
         kit: LanguageKit,
     ): Result<SyntaxProgram, Error> {
         val lexer = Lexer.create(reader, langConfig)
-        val parser = DefaultParserFactory.create(grammar, kit.parserHandlers)
+        val parser = Parser.create(grammar, kit.parserHandlers)
 
         val builder = SyntaxProgram.builder()
         var error: Error? = null

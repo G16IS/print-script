@@ -1,4 +1,4 @@
-package printscript.util
+package printscript.parser.util
 
 import printscript.syntax.Location
 import printscript.syntax.SyntaxNode

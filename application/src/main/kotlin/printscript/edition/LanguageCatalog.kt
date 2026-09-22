@@ -4,7 +4,7 @@ import printscript.DefaultInterpreterComponents
 import printscript.definitions.SideEffectManager
 import printscript.error.LanguageVersionNotFound
 import printscript.error.RuntimeError
-import printscript.parse.RuleHandlers
+import printscript.parser.parse.RuleHandlers
 import printscript.typechecker.DefaultKindHandlerFactory
 import printscript.util.Result
 import printscript.util.flatMap

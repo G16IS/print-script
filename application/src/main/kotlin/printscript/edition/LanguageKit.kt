@@ -3,7 +3,7 @@ package printscript.edition
 import printscript.definitions.SideEffectManager
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.binaryoperation.TypeConfiguration
-import printscript.parse.RuleHandler
+import printscript.parser.parse.RuleHandler
 import printscript.statement.StatementExecutor
 import printscript.typechecker.ExpressionKindHandlerFactory
 
