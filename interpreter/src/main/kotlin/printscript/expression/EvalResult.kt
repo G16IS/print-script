@@ -1,7 +1,7 @@
 package printscript.expression
 
 import printscript.RuntimeValue
-import printscript.SideEffect
+import printscript.definitions.SideEffect
 
 /**
  * Result of evaluating an expression: its value plus any side effects produced

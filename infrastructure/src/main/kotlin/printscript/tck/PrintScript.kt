@@ -2,11 +2,11 @@ package printscript.tck
 
 import java.io.InputStream
 import java.io.Writer
-import printscript.ErrorHandler
-import printscript.InputChannel
-import printscript.PrintChannel
-import printscript.SideEffectHandler
 import printscript.config.PrintScriptConfigs
+import printscript.definitions.ErrorHandler
+import printscript.definitions.InputChannel
+import printscript.definitions.PrintChannel
+import printscript.definitions.SideEffectHandler
 import printscript.edition.LanguageCatalog
 import printscript.io.DefaultSideEffectManager
 import printscript.io.PrintHandler

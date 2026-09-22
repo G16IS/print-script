@@ -1,5 +1,6 @@
 package printscript
 
+import printscript.definitions.SideEffectManager
 import printscript.expression.ExpressionEvaluator
 import printscript.expression.GroupEvaluator
 import printscript.expression.binaryoperation.BinaryOperationEvaluator

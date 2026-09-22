@@ -4,9 +4,9 @@ import java.util.Optional
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.ErrorHandler
-import printscript.InputChannel
-import printscript.PrintChannel
+import printscript.definitions.ErrorHandler
+import printscript.definitions.InputChannel
+import printscript.definitions.PrintChannel
 import printscript.reader.CharPosition
 import printscript.reader.CodeReader
 

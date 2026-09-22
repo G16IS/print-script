@@ -5,11 +5,11 @@ import printscript.domain.LanguageConfig
 import printscript.domain.TypeSystemConfig
 import printscript.edition.LanguageKit
 import printscript.error.Error
-import printscript.error.TypeErrorWithMessage
 import printscript.reader.CodeReader
+import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
-import printscript.typechecker.DefaultTypeCheckerFactory
 import printscript.typechecker.ScopeStack
+import printscript.typechecker.TypeChecker
 import printscript.util.Report
 import printscript.util.Result
 
@@ -21,24 +21,11 @@ object TypecheckCode {
         reader: CodeReader,
         kit: LanguageKit,
     ): Report<SyntaxProgram, Error> {
-        val typeChecker = DefaultTypeCheckerFactory.create(typeSystem, kit.kindHandlerFactory)
         val builder = SyntaxProgram.builder()
-        val errors = mutableListOf<Error>()
-        var scope = ScopeStack()
-
-        for (parsed in ParseProgram.parseStatements(langConfig, grammar, reader, kit)) {
-            when (parsed) {
-                is Result.Err -> return Report(errors = errors + parsed.error)
-                is Result.Ok -> {
-                    val stmt = parsed.value
-                    builder.add(stmt)
-                    val checked = typeChecker.checkStatement(stmt, scope)
-                    errors += checked.errors.map { TypeErrorWithMessage(it.message, it.location) }
-                    scope = checked.scope
-                }
+        val errors =
+            walk(langConfig, grammar, typeSystem, reader, kit) { statement ->
+                builder.add(statement)
             }
-        }
-
         return Report(value = builder.build(), errors = errors)
     }
 
@@ -48,23 +35,48 @@ object TypecheckCode {
         typeSystem: TypeSystemConfig,
         reader: CodeReader,
         kit: LanguageKit,
-    ): Report<Unit, Error> {
-        val typeChecker = DefaultTypeCheckerFactory.create(typeSystem, kit.kindHandlerFactory)
+    ): Report<Unit, Error> =
+        Report(
+            value = Unit,
+            errors = walk(langConfig, grammar, typeSystem, reader, kit) {},
+        )
+
+    private fun walk(
+        langConfig: LanguageConfig,
+        grammar: Grammar,
+        typeSystem: TypeSystemConfig,
+        reader: CodeReader,
+        kit: LanguageKit,
+        onStatement: (SyntaxNode) -> Unit,
+    ): List<Error> {
+        val typeChecker = TypeChecker.create(typeSystem, kit.kindHandlerFactory)
         val errors = mutableListOf<Error>()
         var scope = ScopeStack()
 
         for (parsed in ParseProgram.parseStatements(langConfig, grammar, reader, kit)) {
             when (parsed) {
-                is Result.Err -> return Report(errors = errors + parsed.error)
+                is Result.Err -> return errors + parsed.error
                 is Result.Ok -> {
-                    val stmt = parsed.value
-                    val checked = typeChecker.checkStatement(stmt, scope)
-                    errors += checked.errors.map { TypeErrorWithMessage(it.message, it.location) }
-                    scope = checked.scope
+                    onStatement(parsed.value)
+                    scope = record(typeChecker, parsed.value, scope, errors)
                 }
             }
         }
 
-        return Report(value = Unit, errors = errors)
+        return errors
     }
+
+    private fun record(
+        typeChecker: TypeChecker,
+        statement: SyntaxNode,
+        scope: ScopeStack,
+        errors: MutableList<Error>,
+    ): ScopeStack =
+        when (val checked = typeChecker.checkNode(statement, scope)) {
+            is Result.Ok -> checked.value.first
+            is Result.Err -> {
+                errors += checked.error.error
+                checked.error.scope
+            }
+        }
 }

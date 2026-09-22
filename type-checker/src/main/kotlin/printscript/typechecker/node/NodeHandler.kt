@@ -1,13 +1,13 @@
-package printscript.typechecker.handlers
+package printscript.typechecker.node
 
 import printscript.domain.TypeSystemConfig
+import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ScopeStack
-import printscript.typechecker.TypeError
 
-data class StatementCheck(
+data class Checked(
     val scope: ScopeStack,
-    val errors: List<TypeError> = emptyList(),
+    val error: TypeError? = null,
 )
 
 interface NodeHandler {
@@ -17,5 +17,5 @@ interface NodeHandler {
         node: SyntaxNode,
         scope: ScopeStack,
         config: TypeSystemConfig,
-    ): StatementCheck
+    ): Checked
 }

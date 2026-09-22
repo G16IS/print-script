@@ -65,3 +65,8 @@ data class TypeErrorWithMessage(
     override val message: String,
     override val location: Location,
 ) : TypeError
+
+fun TypeError(
+    message: String,
+    location: Location,
+): TypeError = TypeErrorWithMessage(message, location)

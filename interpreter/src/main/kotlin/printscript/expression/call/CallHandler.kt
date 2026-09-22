@@ -1,6 +1,6 @@
 package printscript.expression.call
 
-import printscript.SideEffectManager
+import printscript.definitions.SideEffectManager
 import printscript.error.RuntimeError
 import printscript.expression.EvalResult
 import printscript.syntax.SyntaxNode

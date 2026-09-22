@@ -4,8 +4,8 @@ import printscript.DefaultInterpreterComponents
 import printscript.DefaultInterpreterFactory
 import printscript.Interpreter
 import printscript.InterpreterContext
-import printscript.SideEffect
-import printscript.SideEffectManager
+import printscript.definitions.SideEffect
+import printscript.definitions.SideEffectManager
 import printscript.edition.LanguageCatalog
 import printscript.expression.ExpressionEvaluator
 import printscript.statement.StatementExecutor

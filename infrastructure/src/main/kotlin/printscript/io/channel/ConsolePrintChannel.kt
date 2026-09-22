@@ -1,6 +1,6 @@
 package printscript.io.channel
 
-import printscript.PrintChannel
+import printscript.definitions.PrintChannel
 
 class ConsolePrintChannel : PrintChannel {
     override fun print(text: String) {

@@ -8,9 +8,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import printscript.PrintEffect
-import printscript.SideEffect
-import printscript.SideEffectManager
+import printscript.definitions.PrintEffect
+import printscript.definitions.SideEffect
+import printscript.definitions.SideEffectManager
 import printscript.domain.Grammar
 import printscript.domain.TypeSystemConfig
 import printscript.edition.LanguageCatalog
@@ -23,6 +23,7 @@ import printscript.reader.JSONTypeSystemConfigReader
 import printscript.usecases.ExecuteCode
 import printscript.usecases.TypecheckCode
 import printscript.util.Result
+import printscript.util.isOk
 
 class ExecuteCodeTest {
     private val language = PrintScriptLanguage.config()
@@ -49,11 +50,29 @@ class ExecuteCodeTest {
     }
 
     @Test
+    fun `type error stops execution before later statements`() {
+        val seen = RecordingSideEffects()
+        val code = "println(\"before\");\nlet x: number = \"hola\";\nprintln(\"after\");"
+        val result =
+            ExecuteCode.execute(
+                language,
+                grammar,
+                typeSystem,
+                StringCodeReader(code),
+                LanguageCatalog.v10(seen),
+            )
+
+        assertFalse(result.isOk)
+        assertTrue((result as Result.Err).error is TypeErrorWithMessage)
+        assertEquals(listOf("before"), seen.printed())
+    }
+
+    @Test
     fun `type mismatch does not run the interpreter`() {
         val result = execute("type_mismatch.ps")
 
         assertFalse(result.isOk)
-        assertTrue(result.errors.first() is TypeErrorWithMessage)
+        assertTrue((result as Result.Err).error is TypeErrorWithMessage)
     }
 
     @Test

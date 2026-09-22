@@ -1,9 +1,9 @@
-package printscript.typechecker.handlers
+package printscript.typechecker.expression
 
 import printscript.domain.TypeSystemConfig
+import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.typechecker.ScopeStack
-import printscript.typechecker.TypeError
 import printscript.util.Result
 
 interface ExpressionKindHandler {

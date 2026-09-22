@@ -1,8 +1,8 @@
 package printscript.expression.call
 
 import printscript.RawInputValue
-import printscript.ReadInputEffect
-import printscript.SideEffectManager
+import printscript.definitions.ReadInputEffect
+import printscript.definitions.SideEffectManager
 import printscript.error.MissingInput
 import printscript.error.RuntimeError
 import printscript.expression.EvalResult

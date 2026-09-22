@@ -1,18 +1,23 @@
 package printscript.typechecker
 
+import printscript.domain.TypeSystemConfig
+import printscript.error.TypeError
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
-import printscript.typechecker.handlers.StatementCheck
-import printscript.util.Report
 import printscript.util.Result
 
 interface TypeChecker {
-    fun check(program: SyntaxProgram): Report<SyntaxProgram, TypeError>
+    companion object {
+        fun create(
+            config: TypeSystemConfig,
+            kindHandlerFactory: ExpressionKindHandlerFactory,
+        ) = DefaultTypeChecker(config, ExpressionTypeResolver(kindHandlerFactory))
+    }
 
-    fun checkStrict(program: SyntaxProgram): Result<SyntaxProgram, TypeError>
+    fun check(program: SyntaxProgram): Result<SyntaxProgram, TypeError>
 
-    fun checkStatement(
+    fun checkNode(
         statement: SyntaxNode,
         scope: ScopeStack,
-    ): StatementCheck
+    ): Result<Pair<ScopeStack, SyntaxNode>, NodeCheckError>
 }

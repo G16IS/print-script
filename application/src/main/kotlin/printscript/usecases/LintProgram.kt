@@ -1,7 +1,7 @@
 package printscript.usecases
 
-import printscript.ErrorHandler
 import printscript.config.PrintScriptConfigs
+import printscript.definitions.ErrorHandler
 import printscript.domain.Grammar
 import printscript.domain.LanguageConfig
 import printscript.domain.LinterConfig

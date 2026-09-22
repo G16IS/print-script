@@ -1,8 +1,8 @@
 package printscript.io
 
-import printscript.SideEffect
-import printscript.SideEffectHandler
-import printscript.SideEffectManager
+import printscript.definitions.SideEffect
+import printscript.definitions.SideEffectHandler
+import printscript.definitions.SideEffectManager
 import printscript.io.channel.ConsoleInputChannel
 import printscript.io.channel.ConsolePrintChannel
 

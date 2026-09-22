@@ -6,14 +6,12 @@ import printscript.util.Report
 import printscript.util.Result
 import printscript.util.fold
 
-internal fun presentRun(block: () -> Report<Unit, Error>): CommandResult =
+internal fun presentRun(block: () -> Result<Unit, Error>): CommandResult =
     catching {
-        val report = block()
-        if (report.isOk) {
-            CommandResult.Ok
-        } else {
-            CommandResult.Failed(report.errors.map(::formatError))
-        }
+        block().fold(
+            onOk = { CommandResult.Ok },
+            onErr = { CommandResult.Failed(listOf(formatError(it))) },
+        )
     }
 
 internal fun presentFormat(block: () -> Result<String, Error>): CommandResult =
