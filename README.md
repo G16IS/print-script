@@ -1,4 +1,4 @@
-<h1 align="center">PrintScript G16</h1>
+<h1 align="center">PrintScript - Grupo 16</h1>
 
 <p align="center">
   Un intérprete de <strong>PrintScript</strong> construido como un pipeline de análisis:<br>
