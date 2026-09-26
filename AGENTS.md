@@ -9,12 +9,12 @@ Guía operativa para trabajar en este repo. El detalle de diseño está en [`doc
 | Pieza | Versión / dato | Fuente |
 |---|---|---|
 | Lenguaje | Kotlin **2.4.10** | `gradle/libs.versions.toml` |
-| JVM | **21** (`kotlin.jvmToolchain(21)` en cada módulo y en `build-logic`) | `*/build.gradle.kts`, CI Temurin 21 |
+| JVM | **21** (`kotlin.jvmToolchain(21)` en cada módulo y en `buildSrc`) | `*/build.gradle.kts`, CI Temurin 21 |
 | Build | Gradle **9.6.1** (wrapper), Kotlin DSL, monorepo | `gradle/wrapper/gradle-wrapper.properties` |
 | Root | `print-script-g16` | `settings.gradle.kts` |
 | Tests | JUnit Platform (`useJUnitPlatform()` en todos los módulos) | `*/build.gradle.kts` |
 | Serialización | kotlinx.serialization **1.9.0** + kaml **0.73.0** — **solo** en `:infrastructure` | `gradle/libs.versions.toml`, `infrastructure/build.gradle.kts` |
-| Calidad Kotlin | ktlint plugin **14.2.0**, detekt **2.0.0-alpha.6** | `build-logic/build.gradle.kts` |
+| Calidad Kotlin | ktlint plugin **14.2.0**, detekt **2.0.0-alpha.6** | plugin `com.g16is.conventions.quality` 1.0.0 (GitHub Packages) |
 | JDK en CI | Temurin 21 + cache de Gradle | `.github/workflows/*.yml` |
 | Toolchains | Foojay resolver `1.0.0` (descarga JDKs) | `settings.gradle.kts` |
 
@@ -59,7 +59,7 @@ Hace falta **JDK 21**. El wrapper es `./gradlew`. CI le pone `chmod +x` al wrapp
 ./gradlew installGitHooks
 ```
 
-Pre-commit: `hooks/pre-commit`. Bypass: `git commit --no-verify`. Auto-format sugerido por el hook: `./gradlew ktlintFormat`.
+Pre-commit / post-commit los instala el plugin `com.g16is.conventions.quality` (`./gradlew installGitHooks` copia los scripts a `hooks/` y setea `core.hooksPath`). Bypass: `git commit --no-verify`. Auto-format sugerido por el hook: `./gradlew ktlintFormat`.
 
 Configuration cache está prendido: `org.gradle.configuration-cache=true` en `gradle.properties`.
 
@@ -77,7 +77,7 @@ Pipeline de PrintScript (streaming: caracteres → tokens on demand → un state
                     ↘ interpreter       ← módulo listo; application no depende de él
 ```
 
-`settings.gradle.kts` incluye: `common`, `lexer`, `infrastructure`, `parser`, `type-checker`, `application`, `interpreter`, `linter`, `formatter`. `build-logic` es included build (`pluginManagement`), no un `include(...)`.
+`settings.gradle.kts` incluye: `common`, `lexer`, `infrastructure`, `parser`, `type-checker`, `application`, `interpreter`, `linter`, `formatter`, `cli`. Los convention plugins `com.g16is.conventions.*` se resuelven desde GitHub Packages. `buildSrc` tiene `PrintScriptExec`.
 
 ### Módulos
 
@@ -92,7 +92,7 @@ Pipeline de PrintScript (streaming: caracteres → tokens on demand → un state
 | `:linter` | Estilo estático sobre el árbol (`identifier-format`, `println-simple-argument`). | `:common` |
 | `:infrastructure` | Único módulo con kotlinx.serialization. Readers JSON/YAML + `FileCodeReader` / `StringCodeReader`. Resources en `src/main/resources/`. | `:common` + serialization-json + kaml |
 | `:application` | Casos de uso. Paquete de producción: `usecases`. | `:common`, `:lexer`, `:parser`, `:type-checker`, `:formatter`, `:linter`, `:infrastructure`. **No** `:interpreter`. |
-| `build-logic` | Convention plugin `printscript.quality` (ktlint + detekt + `installGitHooks`). No es el linter/formatter de PrintScript. | — |
+| `buildSrc` | `PrintScriptExec` para tasks `ps-*`. Quality/coverage/publishing son `com.g16is.conventions.*` 1.0.0 desde Packages. | — |
 
 Resources de lenguaje (classpath de infrastructure):
 
@@ -224,9 +224,9 @@ No hay tests de application para `LintProgram`.
 - **`DefaultParser` cachea el `TokenSource` por identidad del lexer.** No reutilices un parser con **otro** lexer sin crear un parser nuevo.
 - **El interpreter despacha por `node.name`** (regla de `grammar.config.v1.0.json`). `CallEvaluator` registra `CallHandler`s (`PrintlnHandler`). La tabla de ops **no** lee `type-system.config.v1.0.json`.
 - **`repeat` en el parser está listo** y la gramática v1 no lo usa (pensado para bloques/`if`). `COMMA` se tokeniza y no se parsea.
-- **ktlint/detekt ≠ linter/formatter de PrintScript.** Lo primero es calidad del Kotlin (`printscript.quality`). Lo segundo son módulos del lenguaje.
+- **ktlint/detekt ≠ linter/formatter de PrintScript.** Lo primero es calidad del Kotlin (`com.g16is.conventions.quality`). Lo segundo son módulos del lenguaje.
 - **CI de lint/format solo corre en `main` y PRs a `main`.** `tests.yml` corre en cualquier push/PR.
-- **No hace falta ninguna variable de entorno** para build/test. No hay secretos en el repo para este stack.
+- **GitHub Packages para conventions.** `./gradlew` resuelve `com.g16is.conventions.*` desde `maven.pkg.github.com/G16IS/gradle-conventions`. Credenciales como el TCK: `gpr.user` / `gpr.key` en `gradle.properties` (gitignored), o env `USERNAME` / `TOKEN`. CI usa `GITHUB_ACTOR` / `GITHUB_TOKEN` con `packages: read`.
 
 ### Invariantes cortos (copiados del código, no de deseo)
 

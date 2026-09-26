@@ -3,7 +3,7 @@ plugins {
     application
 
     // Continuous Deployment
-    id("printscript.publishing-conventions")
+    id("com.g16is.conventions.publishing")
 }
 
 repositories {

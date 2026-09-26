@@ -105,7 +105,7 @@ Monorepo Gradle. Cada carpeta es una pieza con un rol chico:
 - **`lexer` / `parser` / `type-checker`** — motores genéricos. No conocen `let` ni `println` a palo; conocen reglas y kinds de la config.
 - **`application`** — arma el pipeline. `interpretCode` lexea, parsea y type-chequea; `ExecuteCode` además interpreta.
 - **`cli`** — Clikt: `run` / `lint` / `check` / `format` / `typecheck`.
-- **`build-logic`** — calidad del *código Kotlin* (ktlint + detekt). No es el linter de PrintScript.
+- **`buildSrc`** — `PrintScriptExec` (`ps-run` / `ps-lint` / …). Calidad Kotlin (ktlint + detekt) viene de `com.g16is.conventions.quality` 1.0.0 (GitHub Packages). No es el linter de PrintScript.
 
 El detalle de cada módulo, invariantes y recetas de extensión está en [`docs/CONTEXT.md`](docs/CONTEXT.md).
 

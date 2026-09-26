@@ -6,8 +6,21 @@
  */
 
 pluginManagement {
-    includeBuild("build-logic")
     repositories {
+        maven {
+            name = "GitHubPackagesConventions"
+            url = uri("https://maven.pkg.github.com/G16IS/gradle-conventions")
+            credentials {
+                username = providers.gradleProperty("gpr.user")
+                    .orElse(providers.environmentVariable("USERNAME"))
+                    .orElse(providers.environmentVariable("GITHUB_ACTOR"))
+                    .getOrElse("")
+                password = providers.gradleProperty("gpr.key")
+                    .orElse(providers.environmentVariable("TOKEN"))
+                    .orElse(providers.environmentVariable("GITHUB_TOKEN"))
+                    .getOrElse("")
+            }
+        }
         gradlePluginPortal()
         mavenCentral()
     }
