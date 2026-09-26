@@ -1,17 +1,18 @@
+import com.g16is.conventions.CoverageReportTask
 import org.gradle.api.tasks.SourceSetContainer
 import printscript.PrintScriptExec
-import printscript.CoverageReportTask
 
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
-    id("printscript.quality")
-    id("printscript.coverage")
+    id("com.g16is.conventions.quality") version "1.0.0"
+    id("com.g16is.conventions.coverage") version "1.0.0"
+    id("com.g16is.conventions.publishing") version "1.0.0" apply false
 }
 
 gradle.beforeProject {
     if (this != rootProject) {
-        pluginManager.apply("printscript.quality")
-        pluginManager.apply("printscript.coverage")
+        pluginManager.apply("com.g16is.conventions.quality")
+        pluginManager.apply("com.g16is.conventions.coverage")
     }
 }
 

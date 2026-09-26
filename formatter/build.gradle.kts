@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
 
     // Continuous Deployment
-    id("printscript.publishing-conventions")
+    id("com.g16is.conventions.publishing")
 }
 
 repositories {

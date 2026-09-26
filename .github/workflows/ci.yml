@@ -25,6 +25,11 @@ concurrency:
 
 permissions:
     contents: read
+    packages: read
+
+env:
+    GITHUB_ACTOR: ${{ github.actor }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
     wrapper:
@@ -82,7 +87,7 @@ jobs:
             - name: Grant execute permission for gradlew
               run: chmod +x gradlew
 
-            # Findings por consola (reportes archivo apagados en printscript.quality).
+            # Findings por consola (reportes archivo apagados en com.g16is.conventions.quality).
             - name: Run detekt
               run: ./gradlew detekt --continue
 
