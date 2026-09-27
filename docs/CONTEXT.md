@@ -39,7 +39,7 @@ Ninguno: el pipeline de v1 está cableado. El interpreter se llama desde `Execut
 
 | Módulo | Archivo | Una línea |
 |---|---|---|
-| `build-logic` | [modules/BUILD_LOGIC.md](modules/BUILD_LOGIC.md) | Included build: convention plugin `printscript.quality` (ktlint + detekt) |
+| calidad / publish | [modules/BUILD_LOGIC.md](modules/BUILD_LOGIC.md) | Plugins `com.g16is.conventions.*` 1.0.0 desde GitHub Packages; `PrintScriptExec` en `buildSrc` |
 
 ### Configuración del lenguaje
 
@@ -154,7 +154,8 @@ DefaultInterpreterFactory.create().interpret(InterpreterContext(), program)
 ```
 settings.gradle.kts incluye:
   common, lexer, infrastructure, parser, type-checker, application, interpreter, formatter, linter, cli
-  pluginManagement { includeBuild("build-logic") }  — convention plugin, no es library
+  pluginManagement resuelve com.g16is.conventions.* 1.0.0 desde GitHub Packages
+  buildSrc/ — PrintScriptExec (ps-run / ps-lint / …)
 ```
 
 No hay módulo `:semantic`.
@@ -315,9 +316,9 @@ Plugin `application`, `mainClass = printscript.cli.MainKt`. Carga configs (reade
 
 Ver [modules/CLI.md](modules/CLI.md).
 
-### `build-logic` — calidad del repo (no del lenguaje)
+### Calidad del repo (no del lenguaje)
 
-Included build. Convention plugin `printscript.quality`: ktlint (`ktlintCheck` / `ktlintFormat`) + detekt, y `installGitHooks` en el root. Se aplica al root y a los subproyectos desde el `build.gradle.kts` raíz. **No** es el linter/formatter de PrintScript.
+Convention plugins `com.g16is.conventions.quality` / `.coverage` / `.publishing` versión `1.0.0`, resueltos desde `https://maven.pkg.github.com/G16IS/gradle-conventions`. ktlint (`ktlintCheck` / `ktlintFormat`) + detekt + `installGitHooks` en el root. Se aplican al root y a los subproyectos desde el `build.gradle.kts` raíz. **No** es el linter/formatter de PrintScript. `PrintScriptExec` vive en `buildSrc/`.
 
 Ver [modules/BUILD_LOGIC.md](modules/BUILD_LOGIC.md).
 
@@ -514,7 +515,7 @@ Correr: `./gradlew test` (o `:lexer:test`, etc.). CI: `.github/workflows/ci.yml`
 | Nueva construcción a ejecutar | INTERPRETER | executor/evaluator con `nodeNames` + registro en factory |
 | Reglas de estilo | LINTER | módulo a futuro |
 | Pretty-print / bloques | FORMATTER | gramática de `if`/`{` + bump de `indentLevel` en `emitSyntheticToken` (el render ya existe) |
-| Lint/format del Kotlin del repo | BUILD_LOGIC | `build-logic` / `printscript.quality` |
+| Lint/format del Kotlin del repo | BUILD_LOGIC | `com.g16is.conventions.quality` (GitHub Packages) |
 | CLI / correr un archivo | CLI + INFRASTRUCTURE | `./gradlew ps-run examples/hello.ps` |
 | Nuevo subcomando | CLI + INFRASTRUCTURE | comando en `:cli` (use case) + `*Effects` en infra + factory |
 | Leer un `.ps` de otro lado (stdin, string) | common `CodeReader` + infrastructure | nueva impl de `CodeReader` |

@@ -16,3 +16,9 @@ Thumbs.db
 *.log
 *.db
 .agents
+
+# Copied from com.g16is.conventions.quality by ./gradlew installGitHooks
+/hooks/
+
+# Credenciales GPR (mismo criterio que printscript-tck)
+gradle.properties

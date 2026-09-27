@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 
     // Continuous Deployment
-    id("printscript.publishing-conventions")
+    id("com.g16is.conventions.publishing")
 }
 
 repositories {
