@@ -4,9 +4,9 @@ import printscript.PrintScriptExec
 
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
-    id("com.g16is.conventions.quality") version "1.0.0"
-    id("com.g16is.conventions.coverage") version "1.0.0"
-    id("com.g16is.conventions.publishing") version "1.0.0" apply false
+    id("com.g16is.conventions.quality") version "1.0.1"
+    id("com.g16is.conventions.coverage") version "1.0.1"
+    id("com.g16is.conventions.publishing") version "1.0.1" apply false
 }
 
 gradle.beforeProject {
