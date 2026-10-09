@@ -1,38 +1,19 @@
-import com.g16is.conventions.CoverageReportTask
 import org.gradle.api.tasks.SourceSetContainer
 import printscript.PrintScriptExec
 
 plugins {
-    alias(libs.plugins.kotlin.jvm) apply false
-    id("com.g16is.conventions.quality") version "1.0.1"
-    id("com.g16is.conventions.coverage") version "1.0.1"
-    id("com.g16is.conventions.publishing") version "1.0.1" apply false
+    id("com.g16is.conventions.quality") version "1.0.2"
+    id("com.g16is.conventions.coverage") version "1.0.2"
+    id("com.g16is.conventions.publishing") version "1.0.2" apply false
 }
 
 gradle.beforeProject {
     if (this != rootProject) {
-        pluginManager.apply("com.g16is.conventions.quality")
         pluginManager.apply("com.g16is.conventions.coverage")
+        pluginManager.apply("com.g16is.conventions.quality")
     }
 }
 
-val coverageModules = listOf(
-    "common", "lexer", "infrastructure", "parser", "type-checker",
-    "application", "interpreter", "linter", "formatter", "cli",
-)
-
-dependencies {
-    kover(project(":common"))
-    kover(project(":lexer"))
-    kover(project(":infrastructure"))
-    kover(project(":parser"))
-    kover(project(":type-checker"))
-    kover(project(":application"))
-    kover(project(":interpreter"))
-    kover(project(":linter"))
-    kover(project(":formatter"))
-    kover(project(":cli"))
-}
 
 allprojects {
     group = "com.g16is.printscript"
@@ -71,29 +52,4 @@ listOf(
         }
         notCompatibleWithConfigurationCache("PrintScript CLI takes a source file from the command line")
     }
-}
-
-kover {
-    reports {
-        verify {
-            rule { minBound(80) }
-        }
-    }
-}
-
-tasks.register<CoverageReportTask>("coverageReport") {
-    group = "verification"
-    description = "Imprime un resumen de cobertura por módulo"
-    dependsOn(coverageModules.map { ":$it:koverXmlReport" })
-    moduleReports.set(
-        coverageModules.associateWith { name ->
-            "${project(":$name").layout.buildDirectory.get()}/reports/kover/report.xml"
-        },
-    )
-}
-
-tasks.register("verifyAllCoverage") {
-    group = "verification"
-    description = "Corre koverVerify (80% mínimo) en todos los módulos"
-    dependsOn(coverageModules.map { ":$it:koverVerify" })
 }
