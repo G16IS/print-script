@@ -2,9 +2,9 @@ import org.gradle.api.tasks.SourceSetContainer
 import printscript.PrintScriptExec
 
 plugins {
-    id("com.g16is.conventions.quality") version "1.0.5"
-    id("com.g16is.conventions.coverage") version "1.0.5"
-    id("com.g16is.conventions.publishing") version "1.0.5" apply false
+    id("com.g16is.conventions.quality") version "1.0.6"
+    id("com.g16is.conventions.coverage") version "1.0.6"
+    id("com.g16is.conventions.publishing") version "1.0.6" apply false
 }
 
 gradle.beforeProject {
