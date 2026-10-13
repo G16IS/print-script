@@ -31,6 +31,7 @@ listOf(
         group = "printscript"
         description = taskDescription
         command.set(commandName)
+        providers.gradleProperty("psVersion").orNull?.let(languageVersion::set)
         dependsOn(":cli:classes")
         mainClass.set("printscript.cli.MainKt")
         classpath(
