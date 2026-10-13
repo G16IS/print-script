@@ -1,6 +1,4 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-
     // Continuous Deployment
     id("com.g16is.conventions.publishing")
 }

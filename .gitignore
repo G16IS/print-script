@@ -22,3 +22,4 @@ Thumbs.db
 
 # Credenciales GPR (mismo criterio que printscript-tck)
 gradle.properties
+.env
