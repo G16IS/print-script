@@ -3,23 +3,14 @@ package printscript.validation
 import java.io.InputStream
 import printscript.edition.LanguageCatalog
 import printscript.error.Error
-import printscript.error.InvalidOperands
 import printscript.error.LexerError
-import printscript.error.MissingToken
 import printscript.error.MultipleRulesWithSamePriority
 import printscript.error.NoRulesProvided
 import printscript.error.ParserError
-import printscript.error.Redeclaration
 import printscript.error.RuleNotFound
 import printscript.error.TypeError
-import printscript.error.TypeErrorWithMessage
-import printscript.error.TypeMismatch
-import printscript.error.UndeclaredIdentifier
 import printscript.error.UnexpectedEnfOfLine
-import printscript.error.UnexpectedStart
 import printscript.error.UnexpectedToken
-import printscript.error.UnknownType
-import printscript.error.UnrecognizedNode
 import printscript.io.DefaultSideEffectManager
 import printscript.reader.JSONGrammarConfigReader
 import printscript.reader.JSONLanguageConfigReader
@@ -70,15 +61,22 @@ object PrintScriptValidation {
 }
 
 /**
- * Los códigos son parte del contrato con quien consume la librería: cambiarlos rompe a los clientes.
- * Solo los errores léxicos, de parseo y de tipos pueden salir de un chequeo; cualquier otro es un bug.
+ * El código distingue solo la fase que falló ([IssueCodes]); el detalle va en el mensaje. Solo los errores
+ * léxicos, de parseo y de tipos pueden salir de un chequeo; cualquier otro es un bug.
  */
 internal fun Error.toIssue(): ValidationIssue =
     when (this) {
-        is LexerError -> issue(lexerCode(), message, location)
-        is ParserError -> issue(parserCode(), message, location)
-        is TypeError -> issue(typeCode(), message, location)
+        is LexerError -> syntaxIssue()
+        is ParserError -> issue(IssueCodes.SYNTAX, message, location)
+        is TypeError -> issue(IssueCodes.TYPE, message, location)
         else -> error("Unexpected ${this::class.simpleName} while validating: $message")
+    }
+
+private fun LexerError.syntaxIssue(): ValidationIssue =
+    when (this) {
+        is UnexpectedToken, is UnexpectedEnfOfLine -> issue(IssueCodes.SYNTAX, message, location)
+        is MultipleRulesWithSamePriority, is NoRulesProvided, is RuleNotFound ->
+            error("Broken language configuration: $message")
     }
 
 private fun issue(
@@ -90,28 +88,3 @@ private fun issue(
     check(start.line >= 1 && start.col >= 1) { "Error '$code' has no position: $message" }
     return ValidationIssue(code, message, start.line, start.col)
 }
-
-private fun LexerError.lexerCode(): String =
-    when (this) {
-        is UnexpectedToken -> "unexpected-token"
-        is UnexpectedEnfOfLine -> "unexpected-end-of-file"
-        is MultipleRulesWithSamePriority, is NoRulesProvided, is RuleNotFound ->
-            error("Broken language configuration: $message")
-    }
-
-private fun ParserError.parserCode(): String =
-    when (this) {
-        is MissingToken -> "missing-token"
-        is UnexpectedStart -> "unexpected-start"
-    }
-
-private fun TypeError.typeCode(): String =
-    when (this) {
-        is UnknownType -> "unknown-type"
-        is TypeMismatch -> "type-mismatch"
-        is Redeclaration -> "redeclaration"
-        is UndeclaredIdentifier -> "undeclared-identifier"
-        is InvalidOperands -> "invalid-operands"
-        is UnrecognizedNode -> "unrecognized-node"
-        is TypeErrorWithMessage -> "type-error"
-    }

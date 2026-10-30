@@ -4,9 +4,15 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import printscript.error.MissingToken
 import printscript.error.NoRulesProvided
+import printscript.error.Redeclaration
+import printscript.error.TypeError
 import printscript.error.TypeMismatch
 import printscript.error.UndeclaredIdentifier
+import printscript.error.UnexpectedEnfOfLine
+import printscript.error.UnexpectedStart
+import printscript.error.UnexpectedToken
 import printscript.reader.CharPosition
 import printscript.syntax.Location
 
@@ -43,7 +49,7 @@ class PrintScriptValidationTest {
         val issues = checked("1.0", "let x: number = \"hola\";")
 
         assertEquals(1, issues.size)
-        assertEquals("type-mismatch", issues[0].code)
+        assertEquals(IssueCodes.TYPE, issues[0].code)
         assertEquals(1, issues[0].line)
         assertTrue(issues[0].message.isNotBlank())
     }
@@ -53,15 +59,16 @@ class PrintScriptValidationTest {
         val issues = checked("1.0", "let x: number = 1;\nprintln(y);")
 
         assertEquals(1, issues.size)
-        assertEquals("undeclared-identifier", issues[0].code)
+        assertEquals(IssueCodes.TYPE, issues[0].code)
         assertEquals(2, issues[0].line)
+        assertTrue(issues[0].message.contains("'y'"), "the message names the variable: ${issues[0].message}")
     }
 
     @Test
     fun `a redeclaration is reported`() {
         val issues = checked("1.0", "let x: number = 1;\nlet x: string = \"a\";")
 
-        assertEquals(listOf("redeclaration"), issues.map { it.code })
+        assertEquals(listOf(IssueCodes.TYPE), issues.map { it.code })
         assertEquals(2, issues[0].line)
     }
 
@@ -71,7 +78,7 @@ class PrintScriptValidationTest {
 
         val issues = checked("1.0", source)
 
-        assertEquals(listOf("type-mismatch", "type-mismatch"), issues.map { it.code })
+        assertEquals(listOf(IssueCodes.TYPE, IssueCodes.TYPE), issues.map { it.code })
         assertEquals(listOf(1, 3), issues.map { it.line })
     }
 
@@ -80,6 +87,7 @@ class PrintScriptValidationTest {
         val issues = checked("1.0", "let x number = 1;")
 
         assertEquals(1, issues.size)
+        assertEquals(IssueCodes.SYNTAX, issues[0].code)
         assertTrue(issues[0].line >= 1)
         assertTrue(issues[0].column >= 1)
     }
@@ -140,8 +148,27 @@ class PrintScriptValidationTest {
         val at = Location(CharPosition(3, 7), CharPosition(3, 8))
 
         assertEquals(
-            ValidationIssue("undeclared-identifier", "Variable 'y' no declarada", 3, 7),
+            ValidationIssue(IssueCodes.TYPE, "Variable 'y' no declarada", 3, 7),
             UndeclaredIdentifier("y", at).toIssue(),
         )
+    }
+
+    @Test
+    fun `lexer and parser errors are syntax issues`() {
+        val at = Location(CharPosition(2, 5), CharPosition(2, 6))
+
+        assertEquals(IssueCodes.SYNTAX, UnexpectedToken(at).toIssue().code)
+        assertEquals(IssueCodes.SYNTAX, UnexpectedEnfOfLine(at, "STRING").toIssue().code)
+        assertEquals(IssueCodes.SYNTAX, MissingToken(at).toIssue().code)
+        assertEquals(IssueCodes.SYNTAX, UnexpectedStart(at).toIssue().code)
+    }
+
+    @Test
+    fun `every type error is a type issue, whatever its class`() {
+        val at = Location(CharPosition(1, 1), CharPosition(1, 2))
+
+        assertEquals(IssueCodes.TYPE, TypeError("anything", at).toIssue().code)
+        assertEquals(IssueCodes.TYPE, TypeMismatch("number", "string", at).toIssue().code)
+        assertEquals(IssueCodes.TYPE, Redeclaration("x", at).toIssue().code)
     }
 }

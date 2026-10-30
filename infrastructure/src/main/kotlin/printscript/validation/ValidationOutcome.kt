@@ -18,10 +18,19 @@ sealed interface ValidationOutcome {
     }
 }
 
+/** Valores posibles de [ValidationIssue.code]. Son parte del contrato con quien consume la librería. */
+object IssueCodes {
+    /** El código no se pudo leer: error léxico o de parseo. */
+    const val SYNTAX = "syntax"
+
+    /** El código se leyó pero no pasa el type-checker. */
+    const val TYPE = "type"
+}
+
 /**
  * Un problema encontrado en el código.
  *
- * @property code identificador estable del tipo de error (por ejemplo `type-mismatch`).
+ * @property code fase que falló: [IssueCodes.SYNTAX] o [IssueCodes.TYPE]. El detalle está en [message].
  * @property line línea donde empieza el error, desde 1.
  * @property column columna donde empieza el error, desde 1.
  */
