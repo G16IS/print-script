@@ -1,11 +1,9 @@
-package printscript.tck
+package printscript.reader
 
 import java.util.Optional
-import printscript.reader.CharPosition
-import printscript.reader.CodeReader
 
-/** [CodeReader] in-memory; las posiciones coinciden con [printscript.reader.FileCodeReader] (1-based). */
-internal class StringCodeReader(
+/** [CodeReader] in-memory; las posiciones coinciden con [FileCodeReader] (1-based). */
+class StringCodeReader(
     source: String,
 ) : CodeReader {
     private val realReader = source.reader().buffered()

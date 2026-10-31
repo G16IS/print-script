@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import printscript.definitions.ErrorHandler
+import printscript.reader.StringCodeReader // se borro el StringCodeReader de test y se hizo uno para uso general. Ahora se usa ese.
 
 /**
  * Replica los casos de `printscript-tck/src/test/resources/linter/1.0/`.
