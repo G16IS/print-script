@@ -7,6 +7,7 @@ import printscript.domain.LanguageConfig
 import printscript.edition.LanguageKit
 import printscript.error.Error
 import printscript.parser.Parser
+import printscript.parser.token.LexerReadException
 import printscript.reader.CodeReader
 import printscript.syntax.SyntaxNode
 import printscript.syntax.SyntaxProgram
@@ -34,7 +35,7 @@ internal object ParseProgram {
                         if (peeked.value.type == END_TOKEN) {
                             running = false
                         } else {
-                            when (val parsed = parser.parseNextStatement(lexer)) {
+                            when (val parsed = parseNext(parser, lexer)) {
                                 is Result.Err -> {
                                     yield(Result.Err(parsed.error))
                                     running = false
@@ -65,7 +66,7 @@ internal object ParseProgram {
                 is Result.Ok -> {
                     if (peeked.value.type == END_TOKEN) break
 
-                    when (val parsed = parser.parseNextStatement(lexer)) {
+                    when (val parsed = parseNext(parser, lexer)) {
                         is Result.Err -> error = parsed.error
                         is Result.Ok -> builder.add(parsed.value)
                     }
@@ -76,4 +77,15 @@ internal object ParseProgram {
         error ?: return Result.Ok(builder.build())
         return Result.Err(error)
     }
+
+    /** El parser lanza [LexerReadException] si el lexer falla al mirar adelante; acá pasa a ser un error normal. */
+    private fun parseNext(
+        parser: Parser,
+        lexer: Lexer,
+    ): Result<SyntaxNode, Error> =
+        try {
+            parser.parseNextStatement(lexer)
+        } catch (failure: LexerReadException) {
+            Result.Err(failure.error)
+        }
 }

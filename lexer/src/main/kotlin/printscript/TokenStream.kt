@@ -57,7 +57,10 @@ class TokenStream(
 
     private fun readNextToken(): Result<Token, LexerError> {
         val first = skipWhitespace()
-        val initialPos = reader.currentPosition()
+        // skipWhitespace ya consumió el primer carácter del token (nunca un salto de línea):
+        // la posición actual queda una columna después de donde empieza.
+        val afterFirst = reader.currentPosition()
+        val initialPos = if (first.isPresent) CharPosition(afterFirst.line, afterFirst.col - 1) else afterFirst
 
         if (first.isEmpty) {
             return ok(getTerminalToken(initialPos))

@@ -1,6 +1,5 @@
 package printscript.parse
 
-import java.rmi.UnexpectedException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -15,6 +14,7 @@ import printscript.parser.parse.ParseContext
 import printscript.parser.parse.ParseResult
 import printscript.parser.parse.step.StepEvaluator
 import printscript.parser.parse.step.StepOutcome
+import printscript.parser.token.LexerReadException
 import printscript.parser.token.LexerTokenSource
 import printscript.support.Tokens
 import printscript.support.atom
@@ -154,7 +154,7 @@ class ParserBranchCoverageTest {
 
     @Test
     fun `token source throws when the lexer cannot read`() {
-        assertThrows<UnexpectedException> {
+        assertThrows<LexerReadException> {
             LexerTokenSource(FailingLexer()).peek()
         }
     }
