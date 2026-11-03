@@ -1,8 +1,8 @@
 package printscript.parser.token
 
-import java.rmi.UnexpectedException
 import printscript.Lexer
 import printscript.domain.Token
+import printscript.error.LexerError
 import printscript.util.fold
 
 class LexerTokenSource(
@@ -50,7 +50,7 @@ class LexerTokenSource(
         while (buffer.lastIndex < target) {
             lexer.nextToken().fold(
                 onOk = { buffer += it },
-                onErr = { throw UnexpectedException("Could not read next token") },
+                onErr = { throw LexerReadException(it) },
             )
         }
     }
@@ -59,3 +59,11 @@ class LexerTokenSource(
         const val EOF = "EOF"
     }
 }
+
+/**
+ * El lexer falló mientras el parser miraba hacia adelante. Conserva el error original (mensaje y
+ * posición) para que quien parsea pueda convertirlo en un resultado en vez de perderlo.
+ */
+class LexerReadException(
+    val error: LexerError,
+) : RuntimeException(error.message)
