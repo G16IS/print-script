@@ -1,6 +1,7 @@
 package printscript.validation
 
 import java.io.InputStream
+import java.io.InputStreamReader
 import printscript.edition.LanguageCatalog
 import printscript.error.Error
 import printscript.error.LexerError
@@ -12,9 +13,11 @@ import printscript.error.TypeError
 import printscript.error.UnexpectedEnfOfLine
 import printscript.error.UnexpectedToken
 import printscript.io.DefaultSideEffectManager
+import printscript.reader.CodeReader
 import printscript.reader.JSONGrammarConfigReader
 import printscript.reader.JSONLanguageConfigReader
 import printscript.reader.JSONTypeSystemConfigReader
+import printscript.reader.ReaderCodeReader
 import printscript.reader.StringCodeReader
 import printscript.syntax.Location
 import printscript.usecases.TypecheckCode
@@ -33,6 +36,25 @@ object PrintScriptValidation {
     fun validate(
         version: String,
         source: String,
+    ): ValidationOutcome = validateWith(version) { StringCodeReader(source) }
+
+    /**
+     * Igual que la versión con [String], pero lee el código de a poco desde [input] (UTF-8), sin cargarlo
+     * entero en memoria: sirve para archivos que no caben como texto. La memoria no depende del tamaño del
+     * código, y el análisis se corta en el primer error de sintaxis sin leer el resto.
+     *
+     * Los bytes que no son UTF-8 válido se reemplazan por `�`. Quien llama es dueño de [input]: no se
+     * cierra. Si la versión no existe, [input] no se toca.
+     */
+    fun validate(
+        version: String,
+        input: InputStream,
+    ): ValidationOutcome = validateWith(version) { ReaderCodeReader(InputStreamReader(input, Charsets.UTF_8)) }
+
+    // El reader se arma recién con la versión validada: al crearse ya lee el primer carácter del origen.
+    private fun validateWith(
+        version: String,
+        reader: () -> CodeReader,
     ): ValidationOutcome {
         // Sin handlers: validar nunca ejecuta, así que ningún efecto debería llegar al manager.
         val kit =
@@ -47,7 +69,7 @@ object PrintScriptValidation {
                 resource("language.config.v$suffix.json").use { JSONLanguageConfigReader.read(it) },
                 resource("grammar.config.v$suffix.json").use { JSONGrammarConfigReader.read(it) },
                 resource("type-system.config.v$suffix.json").use { JSONTypeSystemConfigReader.read(it) },
-                StringCodeReader(source),
+                reader(),
                 kit,
             )
 
