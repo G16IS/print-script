@@ -171,4 +171,20 @@ class PrintScriptValidationTest {
         assertEquals(IssueCodes.TYPE, TypeMismatch("number", "string", at).toIssue().code)
         assertEquals(IssueCodes.TYPE, Redeclaration("x", at).toIssue().code)
     }
+
+    @Test
+    fun `an invalid character in the middle of a statement is a syntax issue`() {
+        val issues = checked("1.0", "let @")
+
+        assertEquals(1, issues.size)
+        assertEquals(IssueCodes.SYNTAX, issues[0].code)
+        assertEquals(1, issues[0].line)
+        assertEquals(5, issues[0].column)
+    }
+
+    @Test
+    fun `columns are 1-based like an editor`() {
+        assertEquals(9, checked("1.0", "println(q);")[0].column)
+        assertEquals(1, checked("1.0", "@")[0].column)
+    }
 }

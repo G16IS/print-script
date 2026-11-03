@@ -136,13 +136,13 @@ class TokenStreamTest {
         @Test
         fun `string declaration locations match MockReader columns`() {
             val tokens = castTokenListResult(lex("let x: string = \"hello\";"))
-            assertLocation(tokens[0], startCol = 1, endCol = 3)
-            assertLocation(tokens[1], startCol = 5, endCol = 5)
-            assertLocation(tokens[2], startCol = 6, endCol = 6)
-            assertLocation(tokens[3], startCol = 8, endCol = 13)
-            assertLocation(tokens[4], startCol = 15, endCol = 15)
-            assertLocation(tokens[5], startCol = 17, endCol = 23)
-            assertLocation(tokens[6], startCol = 24, endCol = 24)
+            assertLocation(tokens[0], startCol = 0, endCol = 3)
+            assertLocation(tokens[1], startCol = 4, endCol = 5)
+            assertLocation(tokens[2], startCol = 5, endCol = 6)
+            assertLocation(tokens[3], startCol = 7, endCol = 13)
+            assertLocation(tokens[4], startCol = 14, endCol = 15)
+            assertLocation(tokens[5], startCol = 16, endCol = 23)
+            assertLocation(tokens[6], startCol = 23, endCol = 24)
             assertLocation(tokens[7], startCol = 24, endCol = 24)
         }
 
@@ -154,8 +154,8 @@ class TokenStreamTest {
         @Test
         fun `MockReader does not bump the line on newline`() {
             val tokens = castTokenListResult(lex("let\nx"))
-            assertLocation(tokens[0], startCol = 1, endCol = 3)
-            assertLocation(tokens[1], startCol = 5, endCol = 5)
+            assertLocation(tokens[0], startCol = 0, endCol = 3)
+            assertLocation(tokens[1], startCol = 4, endCol = 5)
         }
     }
 
