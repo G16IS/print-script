@@ -25,12 +25,19 @@ object IssueCodes {
 
     /** El código se leyó pero no pasa el type-checker. */
     const val TYPE = "type"
+
+    /** El código parsea pero rompe una regla de linteo. */
+    const val LINT = "lint"
+
+    /** El formatter no pudo emitir el código. */
+    const val FORMAT = "format"
 }
 
 /**
  * Un problema encontrado en el código.
  *
- * @property code fase que falló: [IssueCodes.SYNTAX] o [IssueCodes.TYPE]. El detalle está en [message].
+ * @property code fase que falló: [IssueCodes.SYNTAX], [IssueCodes.TYPE],
+ * [IssueCodes.LINT] o [IssueCodes.FORMAT]. El detalle está en [message].
  * @property line línea donde empieza el error, desde 1.
  * @property column columna donde empieza el error, desde 1.
  */
