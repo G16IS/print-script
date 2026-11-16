@@ -26,7 +26,8 @@ import printscript.validation.toIssue
 
 /**
  * Entrada de la librería para linteo, formateo y ejecución con reglas que manda quien llama, en cada pedido.
- * Solo usa tipos básicos y no ejecuta el código.
+ * Solo usa tipos básicos. lint y format solo analizan el código; execute corre el programa con las entradas y
+ * variables de ambiente que le pasa quien llama, sin tocar la consola ni el ambiente real.
  *
  * Las reglas de linteo **reemplazan** a las internas (una regla que no se manda queda apagada); las de
  * formato se apoyan sobre los defaults internos.
