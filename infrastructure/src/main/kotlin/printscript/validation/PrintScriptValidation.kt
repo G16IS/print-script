@@ -4,7 +4,9 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import printscript.edition.LanguageCatalog
 import printscript.error.Error
+import printscript.error.FormatError
 import printscript.error.LexerError
+import printscript.error.LintError
 import printscript.error.MultipleRulesWithSamePriority
 import printscript.error.NoRulesProvided
 import printscript.error.ParserError
@@ -84,13 +86,16 @@ object PrintScriptValidation {
 
 /**
  * El código distingue solo la fase que falló ([IssueCodes]); el detalle va en el mensaje. Solo los errores
- * léxicos, de parseo y de tipos pueden salir de un chequeo; cualquier otro es un bug.
+ * léxicos, de parseo, de tipos, de linteo y de formato pueden salir de un chequeo, lint o format; cualquier
+ * otro es un bug.
  */
 internal fun Error.toIssue(): ValidationIssue =
     when (this) {
         is LexerError -> syntaxIssue()
         is ParserError -> issue(IssueCodes.SYNTAX, message, location)
         is TypeError -> issue(IssueCodes.TYPE, message, location)
+        is LintError -> issue(IssueCodes.LINT, message, location)
+        is FormatError -> issue(IssueCodes.FORMAT, message, location)
         else -> error("Unexpected ${this::class.simpleName} while validating: $message")
     }
 

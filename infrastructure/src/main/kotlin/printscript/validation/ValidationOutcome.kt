@@ -25,6 +25,12 @@ object IssueCodes {
 
     /** El código se leyó pero no pasa el type-checker. */
     const val TYPE = "type"
+
+    /** El código parsea pero rompe una regla de linteo. */
+    const val LINT = "lint"
+
+    /** El formatter no pudo emitir el código. */
+    const val FORMAT = "format"
 }
 
 /**
