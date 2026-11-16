@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":application"))
     implementation(project(":formatter"))
+    implementation(project(":linter"))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kaml)
 

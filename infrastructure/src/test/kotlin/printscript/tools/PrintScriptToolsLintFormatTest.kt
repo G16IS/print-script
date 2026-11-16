@@ -92,6 +92,11 @@ class PrintScriptToolsLintFormatTest {
     }
 
     @Test
+    fun `format with malformed json is invalid rules`() {
+        assertTrue(PrintScriptTools.format("1.1", "let x: number = 1;", """{"rules":""") is FormatOutcome.InvalidRules)
+    }
+
+    @Test
     fun `format with an unknown version is unsupported`() {
         assertEquals(FormatOutcome.UnsupportedVersion("9.9"), PrintScriptTools.format("9.9", "", """{"rules": []}"""))
     }

@@ -2,6 +2,7 @@ package printscript.tools
 
 import printscript.edition.LanguageCatalog
 import printscript.edition.LanguageKit
+import printscript.factory.DefaultLinterFactory
 import printscript.io.DefaultSideEffectManager
 import printscript.reader.JSONFormatterRulesConfigReader
 import printscript.reader.JSONLinterConfigReader
@@ -27,15 +28,19 @@ object PrintScriptTools {
         rulesJson: String,
     ): LintOutcome {
         val kit = kitOf(version) ?: return LintOutcome.UnsupportedVersion(version)
-        return try {
-            val configs = PrintScriptConfigsLoader.load(version, JSONLinterConfigReader.read(rulesJson))
-            val report =
-                LintProgram.lint(configs.lang, configs.grammar, StringCodeReader(source), configs.linterConfig, kit)
-            LintOutcome.Checked(report.errors.map { it.toIssue() })
-        } catch (e: IllegalArgumentException) {
-            // Incluye SerializationException y "Unknown lint rule id" (lo lanza LintProgram.lint).
-            LintOutcome.InvalidRules(e.message ?: "Invalid lint rules")
-        }
+        val configs =
+            try {
+                PrintScriptConfigsLoader.load(version, JSONLinterConfigReader.read(rulesJson)).also {
+                    // Solo valida: tira IllegalArgumentException ante una regla u opción inválida.
+                    DefaultLinterFactory.create(it.linterConfig)
+                }
+            } catch (e: IllegalArgumentException) {
+                // Incluye SerializationException (JSON mal formado).
+                return LintOutcome.InvalidRules(e.message ?: "Invalid lint rules")
+            }
+        val report =
+            LintProgram.lint(configs.lang, configs.grammar, StringCodeReader(source), configs.linterConfig, kit)
+        return LintOutcome.Checked(report.errors.map { it.toIssue() })
     }
 
     /** [rulesJson] tiene el formato de `formatter-user-defaults.json`. */

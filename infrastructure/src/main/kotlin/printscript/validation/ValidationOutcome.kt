@@ -36,7 +36,8 @@ object IssueCodes {
 /**
  * Un problema encontrado en el código.
  *
- * @property code fase que falló: [IssueCodes.SYNTAX] o [IssueCodes.TYPE]. El detalle está en [message].
+ * @property code fase que falló: [IssueCodes.SYNTAX], [IssueCodes.TYPE],
+ * [IssueCodes.LINT] o [IssueCodes.FORMAT]. El detalle está en [message].
  * @property line línea donde empieza el error, desde 1.
  * @property column columna donde empieza el error, desde 1.
  */
