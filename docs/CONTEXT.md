@@ -296,6 +296,7 @@ Ver [modules/FORMATTER.md](modules/FORMATTER.md).
 - Serializers **surrogate** en `serializer/config`: el dominio no lleva `@Serializable`. `LanguageConfigSerializer` + `TokenRuleSerializer` (discrimina `type: exact|regex`)
 - Discriminación de `GrammarRule` por **clave JSON** (`or`, `seq`, `left`, `atom`, `repeat`, `optional`), no por campo `type`
 - Resources: `language.config.v1.0.json` / `v1.1.json` (hoy iguales), igual para grammar, type-system, formatter-language, linter; `formatter-user-defaults.json` sin versión
+- `PrintScriptTools` (`lint` / `format` / `execute`): entrada para servicios, con reglas, inputs y env por pedido y efectos aislados (no toca consola ni ambiente real)
 
 Ver [modules/INFRASTRUCTURE.md](modules/INFRASTRUCTURE.md).
 

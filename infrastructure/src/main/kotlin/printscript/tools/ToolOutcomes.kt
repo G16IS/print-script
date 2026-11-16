@@ -44,3 +44,17 @@ sealed interface FormatOutcome {
         val issues: List<ValidationIssue>,
     ) : FormatOutcome
 }
+
+/** Resultado de [PrintScriptTools.execute]. Usa solo tipos básicos. */
+sealed interface ExecutionOutcome {
+    /** La versión pedida no existe o no tiene el formato `major.minor`. */
+    data class UnsupportedVersion(
+        val version: String,
+    ) : ExecutionOutcome
+
+    /** [outputs] es todo lo impreso, en orden (con los prompts de readInput); [error] es null si terminó bien. */
+    data class Finished(
+        val outputs: List<String>,
+        val error: String?,
+    ) : ExecutionOutcome
+}

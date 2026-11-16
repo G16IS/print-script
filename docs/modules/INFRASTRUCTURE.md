@@ -65,6 +65,22 @@ Specs: [LANGUAGE_CONFIG.md](../configs/LANGUAGE_CONFIG.md), [GRAMMAR_CONFIG.md](
 
 ---
 
+## `PrintScriptTools` — lint / format / execute
+
+`printscript.tools.PrintScriptTools` es la entrada de la librería para un servicio que manda todo en cada pedido (versión, código, reglas) y solo maneja tipos básicos. Primero resuelve la versión (`LanguageCatalog.of`); una versión desconocida da `UnsupportedVersion`.
+
+| Función | Entrada | Resultado |
+|---|---|---|
+| `lint(version, source, rulesJson)` | `rulesJson` con el formato de `linter.config.v1.1.json`. Las reglas **reemplazan** a las internas: una regla que no se manda queda apagada | `LintOutcome`: `UnsupportedVersion`, `InvalidRules(message)`, `Checked(issues)` |
+| `format(version, source, rulesJson)` | `rulesJson` con el formato de `formatter-user-defaults.json`; se apoya **sobre** esos defaults | `FormatOutcome`: `UnsupportedVersion`, `InvalidRules(message)`, `Formatted(code)`, `Rejected(issues)` |
+| `execute(version, source, inputs, env)` | `inputs`: valores para `readInput`, en orden. `env`: variables para `readEnv` | `ExecutionOutcome`: `UnsupportedVersion`, `Finished(outputs, error)` |
+
+- Los `issues` son `ValidationIssue` con `IssueCodes.LINT` / `IssueCodes.FORMAT` (más `syntax` / `type` según el caso), con línea y columna.
+- `Finished.outputs` es todo lo impreso, en orden, incluidos los prompts de `readInput`; se conserva lo impreso antes de un error. `error` es `null` si terminó bien, o el mensaje con ubicación `(l:c-l:c)`.
+- `execute` arma sus efectos en cada llamada: **nunca** lee la consola, las variables de ambiente reales ni `.printscript/formatter.yml` del directorio de trabajo. `readInput` sin inputs restantes y `readEnv` de una variable que no está en `env` fallan la ejecución.
+
+---
+
 ## Config del lexer — `JSONLanguageConfigReader`
 
 Object singleton que implementa `LanguageConfigReader`:
